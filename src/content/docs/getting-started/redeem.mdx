@@ -26,6 +26,10 @@ change where they are paid, including you. Check the chain and the address befor
 - Burns of an amount at or below the release fee are **never paid**. On mainnet that is 5 USDT on Ethereum and
   0.50 USDT on BNB Chain (or 0.20 % of the amount if that is higher); on the testnet both vaults charge at least
   0.50 USDT.
+- Just above the fee, a burn is paid but the minimum fee takes most of it: on the testnet, 0.58 kUSDT pays
+  0.08 USDT. When the fee is more than 20 % of the amount, the wallet and the web app say so and name the amount
+  from which it is 20 % or less (five times the minimum fee: 2.50 kUSDT on the testnet). The burn stays
+  allowed.
 - One burn output is paid in one release, and a vault pays only from its own backing. The wallet and the web app
   refuse a burn the named vault cannot pay now: a payout above its release capacity (250 000 USDT by default) or
   its current `releaseAvailable`, an amount above its backing, or a vault that is paused. They offer the other
@@ -42,6 +46,14 @@ change where they are paid, including you. Check the chain and the address befor
 - The burn output carries the deployment's burn value, 0.3 KAS. Nothing can spend a burn, so that KAS is gone for
   good, and it is part of a redemption's cost. An ordinary kUSDT state carries 1.5 KAS instead, which comes back
   when it is spent.
+- What that means for your KAS balance:
+  - **Burning a whole kUSDT state:** its 1.5 KAS comes back less the 0.3 KAS burn and the network fee. On the
+    testnet that is about +1.08 KAS.
+  - **Burning part of a state:** the kUSDT you keep stays in a change state, which keeps carrying 1.5 KAS. That
+    KAS is still yours. Your balance pays only the 0.3 KAS burn and the network fee.
+
+  The wallet's review shows every part: locked with the burn, kept in your change, the network fee, and the net
+  change to your KAS balance.
 
 ## Steps
 
