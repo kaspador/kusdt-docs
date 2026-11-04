@@ -1,0 +1,113 @@
+---
+// One KasPool swap transaction: its inputs and outputs, coloured by the
+// covenant family each belongs to. `kind` selects buy (KAS in) or sell (kUSDT in).
+interface Props {
+  kind: 'buy' | 'sell';
+}
+const { kind } = Astro.props;
+
+type Row = { n: string; title: string; detail: string; family: 'pool' | 'token' | 'kas' };
+
+const buy = {
+  entry: 'Pool.buy(kas_in, buyer_state)',
+  inputs: [
+    { n: '#0', title: 'Pool', detail: 'entry buy; KasPool leader', family: 'pool' },
+    { n: '#1', title: 'kUSDT reserve (KCC20)', detail: 'transfer leader; owner = pool ID', family: 'token' },
+    { n: '#2', title: "Buyer's KAS coins", detail: 'pay kas_in and the network fee', family: 'kas' },
+  ] as Row[],
+  outputs: [
+    { n: '#0', title: 'Pool (successor)', detail: 'X + kas_in − cut; protocol KAS + cut', family: 'pool' },
+    { n: '#1', title: 'kUSDT reserve (successor)', detail: 'amount Y′ + protocol tokens', family: 'token' },
+    { n: '#2', title: "Buyer's kUSDT state", detail: 'amount = buyer_state.amount', family: 'token' },
+    { n: '#3', title: 'KAS change', detail: 'plain output', family: 'kas' },
+  ] as Row[],
+  check: ['(X + 0.997·kas_in) · Y′', '≥ X · Y'],
+};
+
+const sell = {
+  entry: 'Pool.sell(kas_out, change_state)',
+  inputs: [
+    { n: '#0', title: 'Pool', detail: 'entry sell; KasPool leader', family: 'pool' },
+    { n: '#1', title: 'kUSDT reserve (KCC20)', detail: 'transfer leader; owner = pool ID', family: 'token' },
+    { n: '#2', title: "Seller's kUSDT state", detail: 'transfer_delegator; owner signs', family: 'token' },
+  ] as Row[],
+  outputs: [
+    { n: '#0', title: 'Pool (successor)', detail: 'X − kas_out', family: 'pool' },
+    { n: '#1', title: 'kUSDT reserve (successor)', detail: 'amount Y′ + protocol tokens + cut', family: 'token' },
+    { n: '#2', title: "Seller's kUSDT change", detail: 'amount = change_state.amount', family: 'token' },
+    { n: '#3', title: 'KAS to the seller', detail: 'plain output, less the network fee', family: 'kas' },
+  ] as Row[],
+  check: ['(Y + 0.997·in) · X′', '≥ Y · X'],
+};
+
+const d = kind === 'buy' ? buy : sell;
+const rowY = (i: number) => 64 + i * 66;
+const boxH = 52;
+const cls = { pool: 'box-pool', token: 'box-token', kas: 'box-kas' };
+const txTop = 56;
+const txBottom = rowY(3) + boxH + 8;
+const id = `swap-${kind}`;
+const title = kind === 'buy' ? 'A KasPool buy transaction (KAS in, kUSDT out)' : 'A KasPool sell transaction (kUSDT in, KAS out)';
+const desc =
+  `Inputs: ${d.inputs.map((r) => `${r.n} ${r.title} (${r.detail})`).join('; ')}. ` +
+  `Outputs: ${d.outputs.map((r) => `${r.n} ${r.title} (${r.detail})`).join('; ')}. ` +
+  `The pool checks ${d.check.join(' ')}.`;
+---
+<figure class="diagram swap">
+  <div class="scroll">
+    <svg viewBox="0 0 960 400" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
+      <title id={`${id}-title`}>{title}</title>
+      <desc id={`${id}-desc`}>{desc}</desc>
+      <defs>
+        <marker id={`${id}-ah`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="arrowhead" />
+        </marker>
+      </defs>
+
+      <text class="t-h" x="20" y="36">Inputs</text>
+      <text class="t-h" x="940" y="36" text-anchor="end">Outputs</text>
+
+      <rect class="box-strong" x="380" y={txTop} width="200" height={txBottom - txTop} rx="8" />
+      <text class="t-h" x="480" y={txTop + 26} text-anchor="middle">One transaction</text>
+      <text class="t-m" x="480" y={txTop + 56} text-anchor="middle">{d.entry.split('(')[0]}</text>
+      <text class="t-ms" x="480" y={txTop + 74} text-anchor="middle">({d.entry.split('(')[1]}</text>
+      <text class="t-s" x="480" y={txTop + 112} text-anchor="middle">spends the exact pool UTXO</text>
+      <text class="t-s" x="480" y={txTop + 128} text-anchor="middle">it was built on</text>
+      <text class="t-s" x="480" y={txTop + 166} text-anchor="middle">checks, in 128-bit integers:</text>
+      <text class="t-m" x="480" y={txTop + 186} text-anchor="middle">{d.check[0]}</text>
+      <text class="t-m" x="480" y={txTop + 204} text-anchor="middle">{d.check[1]}</text>
+
+      {d.inputs.map((r, i) => (
+        <g>
+          <rect class={cls[r.family]} x="20" y={rowY(i)} width="300" height={boxH} rx="6" />
+          <text class="t-b" x="34" y={rowY(i) + 21}>{r.n}  {r.title}</text>
+          <text class="t-s" x="34" y={rowY(i) + 40}>{r.detail}</text>
+          <line class="line" x1="320" y1={rowY(i) + boxH / 2} x2="376" y2={rowY(i) + boxH / 2} marker-end={`url(#${id}-ah)`} />
+        </g>
+      ))}
+      {d.outputs.map((r, i) => (
+        <g>
+          <rect class={cls[r.family]} x="640" y={rowY(i)} width="300" height={boxH} rx="6" />
+          <text class="t-b" x="654" y={rowY(i) + 21}>{r.n}  {r.title}</text>
+          <text class="t-s" x="654" y={rowY(i) + 40}>{r.detail}</text>
+          <line class="line" x1="580" y1={rowY(i) + boxH / 2} x2="636" y2={rowY(i) + boxH / 2} marker-end={`url(#${id}-ah)`} />
+        </g>
+      ))}
+
+      <g transform="translate(20, 374)">
+        <rect class="box-pool" x="0" y="-11" width="22" height="14" rx="3" />
+        <text class="t-s" x="30" y="0">KasPool family</text>
+        <rect class="box-token" x="150" y="-11" width="22" height="14" rx="3" />
+        <text class="t-s" x="180" y="0">kUSDT family</text>
+        <rect class="box-kas" x="290" y="-11" width="22" height="14" rx="3" />
+        <text class="t-s" x="320" y="0">plain KAS (no covenant)</text>
+        <text class="t-s" x="920" y="0" text-anchor="end">X = KAS reserve, Y = kUSDT reserve, cut = 0.05 % protocol share</text>
+      </g>
+    </svg>
+  </div>
+  <figcaption>
+    {kind === 'buy'
+      ? 'A buy: KAS in, kUSDT out. Two covenant families move in one transaction; the pool forces the reserve’s successor.'
+      : 'A sell: kUSDT in, KAS out. The seller’s state is a delegator input; the reserve state leads the kUSDT transfer.'}
+  </figcaption>
+</figure>

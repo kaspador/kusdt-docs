@@ -1,0 +1,237 @@
+---
+title: KasPool
+description: The KAS⇄kUSDT constant-product pool on Kaspa L1, its exact math, its LP shares, and why every pool entry guards the reserve.
+---
+
+import PoolSwap from '../../../components/diagrams/PoolSwap.astro';
+
+KasPool (`bridge/kaspa/contracts/pool.ag`) is a constant-product pool for KAS and kUSDT that runs as covenants
+on Kaspa L1. It is its own app, in its own covenant family, and it observes the kUSDT family. Its covenant ID is
+the deployment's `poolId`; wallets pin it like kUSDT's. Specification: SPEC §15.
+
+| Actor | What it is |
+|---|---|
+| `Pool` | A singleton. Its UTXO holds the KAS reserve, a fixed base deposit and the protocol's accrued KAS. Its state also holds the circuit breaker and the pause |
+| `Position` | One per liquidity deposit: a number of shares and an owner key. Each carries 2 KAS |
+
+The pool's **kUSDT reserve** is one `KCC20` state in the kUSDT family, owned by the pool's covenant ID
+(owner scheme `0x04`), with borrowing disabled, holding `Y + protocol_tokens`.
+
+## Entries at a glance
+
+| Entry | Does | Checks (exact, with 128-bit products) |
+|---|---|---|
+| `init` | First deposit | `X = Y = S = 0` before; `S = kas_in`; the Position gets `kas_in − 1000` shares, and the 1000 unowned shares stay forever |
+| `buy` | KAS in, kUSDT out | Not paused; fee 0.30 %, of which 0.05 % of the input goes to `protocol_kas`; `(X + 0.997·in) · Y′ ≥ X · Y` |
+| `sell`, `sell_all` | kUSDT in, KAS out | Not paused; the same, with the protocol cut in kUSDT; and the [circuit breaker](#the-circuit-breaker), with `now_daa` covered by the transaction's lock time |
+| `add` | KAS and kUSDT in, a new Position | Not paused; `shares · X ≤ kas_in · S` and `shares · Y ≤ tokens_in · S` |
+| `remove` | Burns a Position (its owner signs) | Open while paused; `kas_out · S ≤ shares · X`, `tokens_out · S ≤ shares · Y`; `S` stays ≥ 1000 |
+| `collect` | The admin takes `protocol_kas` and `protocol_tokens` | Admin signature; X and Y unchanged |
+| `pause` | Stops swaps and new liquidity | The guardian's signature; no kUSDT input in the transaction |
+| `unpause` | Resumes them | The admin's signature; no kUSDT input |
+| `set_keys` | Hands the admin key, the guardian key or both over | Admin signature; no kUSDT input |
+| `Position.transfer` | Gives a Position to a new owner | Owner signature; no kUSDT input in the transaction |
+
+The details of each follow.
+
+## State
+
+| Field | Meaning |
+|---|---|
+| `token_covid` | The kUSDT covenant ID |
+| `kas_reserve` (*X*) | KAS in the reserve, in sompi |
+| `token_reserve` (*Y*) | kUSDT in the reserve, in base units |
+| `total_shares` (*S*) | All liquidity shares, including the unowned minimum |
+| `protocol_kas`, `protocol_tokens` | The protocol's accrued fees, kept apart from the reserves |
+| `base_value` | KAS the pool UTXO always keeps beyond the reserve (its storage deposit) |
+| `admin` | The key that collects protocol fees, resumes a paused pool and hands the keys over |
+| `max_out_bps`, `window_len` | The circuit breaker: the share of the KAS reserve sells may take per window, and the window's length in DAA. Fixed at genesis |
+| `window_start`, `window_ref`, `window_out` | The open window: its start (DAA), the KAS reserve it opened with, and the KAS sells took in it so far |
+| `paused` | Whether the guardian paused swaps and new liquidity |
+| `guardian` | The key that may pause the pool, and nothing else: the bridge's guardian |
+
+Two equalities always hold:
+
+```text
+pool UTXO value      = base_value + X + protocol_kas
+reserve state amount = Y + protocol_tokens
+```
+
+## Constants
+
+| Name | Value | Purpose |
+|---|---|---|
+| `FEE_BPS` | 30 | 0.30 % per swap |
+| `PROTOCOL_BPS` | 5 | 0.05 % of the input accrues to the protocol; the other 0.25 % stays with liquidity |
+| `MIN_LIQUIDITY` | 1 000 shares | Minted at the first deposit to nobody |
+| `LIMB` | 2³¹ | Limb size for the 128-bit products |
+| `MAX_OPERAND` | 2⁶¹ − 1 = 2 305 843 009 213 693 951 | Largest reserve, share count or amount the products accept |
+| `MAX_SWAP_INPUT` | 230 584 300 921 369 | Largest single swap input; keeps `input × 10 000` inside 64 bits |
+
+`MAX_OPERAND` is about 23 billion KAS on the KAS side. `MAX_SWAP_INPUT` is about 2.3 million KAS for a buy, or
+about 230 million kUSDT for a sell.
+
+## The swap math
+
+A **buy** (KAS in, kUSDT out) with input `kas_in` and output `out`:
+
+```text
+cut       = floor(kas_in × 5 / 10 000)                // protocol share
+effective = floor(kas_in × 9 970 / 10 000)            // input after the 0.30 % fee
+X'        = X + kas_in − cut
+Y'        = Y − out                                    // must stay > 0
+require   (X + effective) × Y' ≥ X × Y                 // exact, 128-bit
+protocol_kas' = protocol_kas + cut
+```
+
+A **sell** (kUSDT in, KAS out) is the mirror image, with `tokens_in` and `kas_out`:
+
+```text
+cut       = floor(tokens_in × 5 / 10 000)
+effective = floor(tokens_in × 9 970 / 10 000)
+Y'        = Y + tokens_in − cut
+X'        = X − kas_out                                // must stay > 0
+require   (Y + effective) × X' ≥ Y × X
+protocol_tokens' = protocol_tokens + cut
+```
+
+The check uses only the `effective` input, but the reserve keeps `input − cut`. The 0.25 % difference stays in the
+pool, so the product of the reserves grows with every swap. That growth is what liquidity providers earn.
+
+The best output a client can ask for is the quote:
+
+```text
+out = floor(reserve_out × effective / (reserve_in + effective))
+```
+
+One base unit more is rejected (tested).
+
+<PoolSwap kind="buy" />
+
+<PoolSwap kind="sell" />
+
+`sell_all` is a sell that spends the whole kUSDT state, with no change output.
+
+## The circuit breaker
+
+kUSDT minted with stolen bridge keys (3 of 5) is real kUSDT to the pool: the same token, with the same covenant
+ID. A forged mint and a sell into the pool can land in the same block, before any monitor sees them. So nothing
+off-chain can stop such a dump. The pool limits it on-chain instead.
+
+| Rule | Value |
+|---|---|
+| Window | `window_len` DAA: 36 000, an hour at 10 BPS |
+| Cap | Within a window, sells take at most `max_out_bps` (1 000, 10 %) of the KAS reserve the window opened with, or of the reserve now if that is smaller. So withdrawals shrink the cap too |
+| New window | A sell after the window ran its course (or the first sell ever) opens a new one, with the reserve of that moment |
+| Clock | The sell names `now_daa`. Its lock time must cover it, and consensus holds the transaction back until the DAG reaches it, so the clock cannot run ahead. It may not go back before the open window's start |
+| Who can change it | Nobody: both values are fixed at genesis |
+
+Buys are not capped: they bring KAS in. Then the monitor pauses the pool with everything else. A dump costs the
+liquidity providers at most about 10 % of the KAS side, and they can still withdraw.
+
+The local end-to-end run (`npm run local:e2e`) shows it: three stolen signer keys mint 400 000 kUSDT and sell them
+into the pool at once. The breaker refuses the whole sell, and the most it lets out is under 10 % of the pool's
+KAS. Within seconds the monitor pauses the pool.
+
+## Pause
+
+| Who | Entry | Effect |
+|---|---|---|
+| The guardian (the bridge's, held by the [monitor](/security/monitor/)) | `pause` | Swaps (`buy`, `sell`, `sell_all`) and new liquidity (`init`, `add`) stop |
+| The admin | `unpause` | They resume |
+
+`remove` stays open while paused, so liquidity providers can always withdraw. The monitor pauses the pool on any
+alarm, with the vaults and the minter.
+
+## Liquidity shares
+
+| Entry | Rule |
+|---|---|
+| `init` (first deposit) | Requires an empty pool. Sets the price as `kas_in : tokens_in`. `total_shares = kas_in`, of which the depositor's Position gets `kas_in − 1 000` and 1 000 belong to nobody. Requires `kas_in > 1 000` |
+| `add` | Adds `kas_in` and `tokens_in` for `shares` new shares, with `shares × X ≤ kas_in × S` and `shares × Y ≤ tokens_in × S`. The depositor gets a new Position |
+| `remove` | Burns a Position (its owner signs) for at most its share: `kas_out × S ≤ shares × X` and `tokens_out × S ≤ shares × Y`. At least 1 000 shares must remain, and both reserves stay above zero |
+
+`init` checks no key: whoever makes the first deposit into a new pool sets its starting price. Adding liquidity
+pays no fee. A Position can change hands with its owner's signature (`Position.transfer`).
+
+### Why `MIN_LIQUIDITY`
+
+The first deposit mints 1 000 shares that nobody owns and nobody can withdraw, because `remove` always leaves at
+least 1 000 shares. In the contract's words, they keep the share price from being manipulated while the pool is
+tiny. Separately, `remove` requires both reserves to stay above zero.
+
+## Exact 128-bit products
+
+Kaspa script numbers are 64-bit, but reserve products are not: 1 billion KAS against 100 million kUSDT is
+10¹⁷ × 10¹⁴ = 10³¹. KasPool therefore compares `a × b ≥ c × d` exactly, without overflow:
+
+1. Each operand must be between 0 and 2⁶¹ − 1.
+2. Each is split into 31-bit limbs: `a = a1 × 2³¹ + a0`.
+3. The partial products (`a0 × b0`, `a1 × b0 + a0 × b1`, `a1 × b1`) each fit in 64 bits.
+4. Carries are normalised so both sides have limbs below 2³¹, and the limbs are compared from the top.
+
+A test runs a buy against 1 billion KAS and 100 million kUSDT and confirms that the quote passes and one unit more
+fails.
+
+## Why it cannot be sandwiched
+
+A swap transaction spends the **exact** pool UTXO it was built on, and it names the exact amount the user
+receives. A competing swap that lands first spends that UTXO, so the user's transaction becomes invalid instead
+of executing at a worse price. Nobody can insert a trade before and after a signed swap.
+
+The cost is contention: only one swap can spend a given pool state. When several users swap at once, all but one
+must re-quote and re-sign. Wallets build on the newest pool state, mempool
+included (the coordinator API serves it), and rebuild when it moves.
+
+A front-runner can still make a wallet rebuild on a worse price. So wallets never take a worse price without
+asking: they go ahead on their own only if the new quote is at least the one you confirmed. A worse one needs your
+approval again. Your slippage minimum stays the hard floor. (The wallet used to re-quote by itself within your
+slippage; the fix is being built.)
+
+## Why every entry guards the reserve
+
+The reserve is owned by the pool's covenant ID. Under KCC-2's `covenant-id/v1` scheme, **any** input of the pool's
+family in a transaction counts as the pool approving, and that includes a Position. So two rules close every path:
+
+| Entry | Guard |
+|---|---|
+| Every `Pool` entry that moves kUSDT (`init`, `buy`, `sell`, `sell_all`, `add`, `remove`, `collect`) | Observes the kUSDT family exhaustively: only the reserve and the one user state the entry's shape allows may move, and the reserve's successor is forced |
+| `Pool.pause`, `Pool.unpause`, `Pool.set_keys` | Require `OpCovInputCount(token_covid) == 0`: no kUSDT may move in the transaction |
+| `Position.transfer` | Requires `OpCovInputCount(token_covid) == 0` |
+
+Tests prove that a thief who owns a Position, or who holds the admin key, cannot move the reserve: the guard
+itself rejects the transaction.
+
+## Protocol fees and the admin
+
+| Entry | Who | Effect |
+|---|---|---|
+| `collect` | The admin key | Takes all accrued protocol fees: the KAS leaves the pool UTXO to outputs the admin signs for, and the kUSDT goes to a `fees` state. Reserves are unchanged |
+| `unpause` | The admin key | Resumes a pool the guardian paused |
+| `set_keys` | The admin key | Hands the admin key, the guardian key or both to other keys (it replaced `set_admin`) |
+
+The admin can take only the accrued protocol fees, resume a paused pool and hand the keys over; it cannot touch
+X, Y, any position or the circuit breaker.
+Before mainnet, the operator holds the admin key offline ([mainnet checklist](/security/mainnet-checklist/), item 7).
+
+## Tests
+
+20 tests run the pool in Kaspa's script engine (`bridge/kaspa/tests/pool.rs`). Each transaction spends the pool
+and its kUSDT reserve together, two covenant families, and runs input by input:
+
+| Area | What is shown |
+|---|---|
+| First deposit | Sets the price and locks the minimum liquidity; only once |
+| Swaps | Buys and sells pay at most the quote; one unit more is rejected; a round trip loses only the fees |
+| Forced successors | A pool claiming more tokens than the reserve keeps, a reserve keeping fewer than the pool records, or a pool forgetting the protocol's cut is rejected |
+| Fees | Only the admin collects protocol fees |
+| Reserve guards | The reserve cannot ride along a Position transfer or an admin key change |
+| Large numbers | Exact 128-bit products with reserves whose product is far above 2⁶³ |
+| Liquidity | Liquidity comes in proportion and leaves with its share; only the Position's owner can burn it; Positions change hands with the owner's signature |
+| Circuit breaker | Sells are capped within a window; a window reopens with the reserve of that moment; the clock cannot run ahead of the lock time or back; withdrawals shrink the cap |
+| Pause and keys | Only the guardian pauses and only the admin resumes; withdrawals stay open while paused; the reserve cannot ride along a pause or a key change; the admin rotates the guardian |
+
+`tests/standard.rs` builds the pool's transactions with the real builders: a sell is about 108 000 transient mass,
+an add about 114 000. See [Storage mass](/kaspa/storage-mass/#after-toccata).
+
+The full pool flow (genesis, first deposit, buy, sell, add, remove, collect) also ran on a kaspad v2.1.0 simnet.

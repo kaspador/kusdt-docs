@@ -1,0 +1,104 @@
+---
+// A small sequence diagram drawn as inline SVG. Lanes are the parties;
+// items run top to bottom: messages between lanes, notes on one lane, and
+// bands across all lanes (waiting periods). Messages and notes are numbered.
+type Lane = { label: string; sub?: string };
+type Item =
+  | { kind: 'msg'; from: number; to: number; label: string; sub?: string; dashed?: boolean; mono?: boolean }
+  | { kind: 'note'; at: number; lines: string[] }
+  | { kind: 'band'; text: string };
+
+interface Props {
+  id: string;
+  title: string;
+  desc: string;
+  lanes: Lane[];
+  items: Item[];
+  caption?: string;
+}
+
+const { id, title, desc, lanes, items, caption } = Astro.props;
+
+const W = 1040;
+const margin = 120;
+const gap = (W - 2 * margin) / (lanes.length - 1);
+const laneX = (i: number) => margin + i * gap;
+const top = 84;
+const heights = { msg: 58, note: 70, band: 50 };
+
+let y = top + 12;
+let n = 0;
+const rows = items.map((item) => {
+  const h = heights[item.kind];
+  const row = { item, y, h, n: ++n };
+  y += h;
+  return row;
+});
+const H = y + 16;
+---
+<figure class="diagram seq">
+  <div class="scroll">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={`${id}-title ${id}-desc`}>
+      <title id={`${id}-title`}>{title}</title>
+      <desc id={`${id}-desc`}>{desc}</desc>
+      <defs>
+        <marker id={`${id}-ah`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="arrowhead" />
+        </marker>
+      </defs>
+
+      {lanes.map((lane, i) => (
+        <g>
+          <line class="life" x1={laneX(i)} y1={top - 14} x2={laneX(i)} y2={H - 10} />
+          <rect class="box-strong" x={laneX(i) - 86} y="14" width="172" height="56" rx="6" />
+          <text class="t-b" x={laneX(i)} y={lane.sub ? 38 : 47} text-anchor="middle">{lane.label}</text>
+          {lane.sub && <text class="t-s" x={laneX(i)} y="56" text-anchor="middle">{lane.sub}</text>}
+        </g>
+      ))}
+
+      {rows.map(({ item, y, h, n }) => {
+        if (item.kind === 'band') {
+          return (
+            <g>
+              <rect class="box" x="60" y={y + 6} width={W - 76} height={h - 12} rx="5" style="opacity:0.92" />
+              <circle class="step" cx="34" cy={y + h / 2} r="10" />
+              <text class="step-t" x="34" y={y + h / 2 + 4} text-anchor="middle">{n}</text>
+              <text class="t" x={(W + 44) / 2} y={y + h / 2 + 5} text-anchor="middle">{item.text}</text>
+            </g>
+          );
+        }
+        if (item.kind === 'note') {
+          const cx = laneX(item.at);
+          const lh = 18;
+          const boxH = item.lines.length * lh + 16;
+          const by = y + (h - boxH) / 2;
+          return (
+            <g>
+              <rect class="box" x={cx - 108} y={by} width="216" height={boxH} rx="5" />
+              {item.lines.map((line, k) => (
+                <text class="t-s" x={cx} y={by + 22 + k * lh} text-anchor="middle" style="fill:var(--d-text)">{line}</text>
+              ))}
+              <circle class="step" cx="34" cy={y + h / 2} r="10" />
+              <text class="step-t" x="34" y={y + h / 2 + 4} text-anchor="middle">{n}</text>
+            </g>
+          );
+        }
+        const x1 = laneX(item.from);
+        const x2 = laneX(item.to);
+        const ay = y + 30;
+        const dir = x2 > x1 ? 1 : -1;
+        const mid = (x1 + x2) / 2;
+        return (
+          <g>
+            <line class={item.dashed ? 'line-dash' : 'line'} x1={x1} y1={ay} x2={x2 - dir * 3} y2={ay} marker-end={`url(#${id}-ah)`} />
+            <text class={item.mono ? 't-m' : 't'} x={mid} y={ay - 8} text-anchor="middle">{item.label}</text>
+            {item.sub && <text class="t-s" x={mid} y={ay + 20} text-anchor="middle">{item.sub}</text>}
+            <circle class="step" cx="34" cy={ay} r="10" />
+            <text class="step-t" x="34" y={ay + 4} text-anchor="middle">{n}</text>
+          </g>
+        );
+      })}
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>

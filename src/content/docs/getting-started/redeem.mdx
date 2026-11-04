@@ -1,0 +1,94 @@
+---
+title: Redeem kUSDT
+description: Burn kUSDT on Kaspa L1 to receive USDT on Ethereum or BNB Chain.
+---
+
+import BridgeOut from '../../../components/diagrams/BridgeOut.astro';
+
+Redeeming turns kUSDT on Kaspa back into USDT on Ethereum, or BSC-USD on BNB Chain. You send kUSDT to a
+**burn owner** that names the chain and the EVM address to pay. After the burn is final, the signers approve a
+release and the vault pays you.
+
+:::note[Testnet only]
+kUSDT runs on testnet: TN10, Sepolia and BSC testnet (addresses on [Status](/overview/status/#addresses)). Its
+services run on the operator's machine for now, and the web app and the wallet extension are not public yet. Nothing is on mainnet.
+Do not send real USDT to any address.
+:::
+
+## Before you start
+
+:::caution[A burn cannot be undone]
+The burn owner commits to the payout chain and address. Tokens sent to it can never move again, and nobody can
+change where they are paid, including you. Check the chain and the address before you sign.
+:::
+
+- Burns of an amount at or below the release fee are **never paid**. On Ethereum that is 5 USDT, on BNB Chain
+  0.50 USDT (or 0.20 % of the amount if that is higher).
+- One burn output is paid in one release, and a vault pays only from its own backing. The wallet and the web app
+  refuse a burn the named vault cannot pay now: a payout above its release capacity (250 000 USDT by default) or
+  its current `releaseAvailable`, an amount above its backing, or a vault that is paused. They offer the other
+  chain when that one can pay.
+- The address must be one the vault would pay. Ethereum USDT keeps a blacklist; BSC-USD keeps none. The bridge
+  never pays an address the token blocks (see [Blocked recipients](/security/known-limits/#blocked-recipients)).
+  Before every burn, the wallet and the web app ask the coordinator (`GET /recipients/:chain/:address`) and refuse
+  an address it would not pay, with the reason. If they cannot ask, they refuse too, and offer to check again: a
+  burn cannot be undone. The wallet asks once more right before it sends. It offers the other chain only when that
+  vault would pay the address.
+- You need KAS as well as kUSDT: the burn output carries KAS (below), and the transaction pays a network fee.
+- Only a **plain** burn is paid: borrow scheme, borrow guard and extension commitment must all be zero. Signers
+  refuse any other burn state, and its kUSDT is lost. Wallets never build one.
+- The burn output carries the deployment's token value in KAS, 1.5 KAS, like every kUSDT state. That KAS is
+  locked with the tokens forever, so it is part of a redemption's cost.
+
+## Steps
+
+<BridgeOut />
+
+1. **Burn.** Your wallet builds a standard KCC-20 transfer that sends kUSDT to the burn owner for your chain and
+   address. It also writes the burn's details into the transaction *payload* (its free data field), so the
+   bridge can read them. See [Burn owner and payload](/protocol/burn-owner-and-payload/).
+2. **The burn state exists on Kaspa.** Its owner is a hash of a script that starts with `OP_RETURN`, which no
+   transaction can ever satisfy.
+3. **Finality.** The bridge waits until the burn's accepting block is at least 1 000 DAA scores below the
+   current virtual DAA score, about 100 seconds (300 DAA scores on testnet). See [Finality](/protocol/finality/).
+4. **Each signer reads the burn** from its own Kaspa node.
+5. **Each signer checks and signs.** It checks that the burn owner matches the chain and address, and that the
+   amount is above the release fee. It then signs an EIP-712 `Release` message.
+6. **The coordinator collects** at least 3 signatures, sorted by signer address.
+7. **Release.** Anyone can submit `release` to the vault; the coordinator normally does.
+8. **The vault checks** the signatures, that this burn was never paid before, the backing and the release
+   allowance.
+9. **You are paid** `units − fee` in USDT at the address the burn named.
+
+## What you receive
+
+The release fee is 0.20 % of the amount, with a minimum of 5 USDT on Ethereum and 0.50 USDT on BNB Chain.
+
+| kUSDT burned | Ethereum: fee | Ethereum: you receive | BNB Chain: fee | BNB Chain: you receive |
+|---|---|---|---|---|
+| 10 | 5.00 | 5.00 | 0.50 | 9.50 |
+| 100 | 5.00 | 95.00 | 0.50 | 99.50 |
+| 1 000 | 5.00 | 995.00 | 2.00 | 998.00 |
+| 2 500 | 5.00 | 2 495.00 | 5.00 | 2 495.00 |
+| 10 000 | 20.00 | 9 980.00 | 20.00 | 9 980.00 |
+| 100 000 | 200.00 | 99 800.00 | 200.00 | 99 800.00 |
+
+## How long it takes
+
+About 100 seconds of Kaspa finality, then the signers and an EVM transaction. If the vault's release allowance
+is used up, your release waits until it refills. See [Limits](/protocol/limits/).
+
+## If something goes wrong
+
+- **The payload is missing.** The burn is still valid. Anyone can later give the coordinator the burn's chain
+  and address; it checks them against the burn owner. See [Known limits](/security/known-limits/).
+- **The address is blocked by the token.** Ethereum USDT can blacklist an address; BSC-USD cannot. USDT would
+  still pay a blacklisted address, but the USDT would be frozen there for good, so the signers refuse to sign it.
+  The burn is held with status `blocked` and checked again every hour. It is paid if the token unblocks the
+  address. Nobody can send it elsewhere: the burn commits to that address, and no key can redirect it. Its USDT
+  stays in the vault as backing. See [Known limits](/security/known-limits/#blocked-recipients).
+- **The vault cannot pay yet.** If a burn lands that the vault cannot pay now, the relayer retries it with a backoff
+  of its own until the allowance refills or the backing arrives. It never holds up other burns. Its status shows
+  `attempts`, `nextTry` and `lastError` (see the [coordinator API](/protocol/coordinator-api/)).
+- **The vault can never pay it.** A burn at or below the release fee, or naming the zero address or the vault
+  itself, is marked `unpayable`. Its kUSDT is lost.

@@ -1,0 +1,55 @@
+---
+title: Architecture overview
+description: The parts of kUSDT, where each one runs, and how they connect.
+---
+
+import Architecture from '../../../components/diagrams/Architecture.astro';
+
+kUSDT has parts on three kinds of system: smart contracts on two EVM chains, covenants on Kaspa L1, and
+off-chain services run by the bridge operators. The user's apps sit on the user's device.
+
+<Architecture />
+
+1. **Deposit.** A user deposits USDT into a vault, from the web app or any EVM wallet.
+2. **Read.** Each of the 5 signers reads vault events and Kaspa state from **its own** nodes.
+3. **Sign.** Signers send their signatures to the coordinator.
+4. **Mint.** The coordinator submits mint transactions to BridgeMint on Kaspa.
+5. **Release and refund.** The coordinator submits release and refund transactions to the vaults.
+6. **Use kUSDT.** Users send kUSDT, swap in KasPool, add liquidity and burn to redeem, all as Kaspa L1
+   transactions.
+7. **Pause.** The monitor checks backing against supply, mints against deposits and releases against burns, from
+   its own nodes. The guardian key can pause both vaults and
+   BridgeMint, and do nothing else.
+8. **Configure.** The vault owner sets each vault's parameters within hard bounds, its signer set and its
+   guardian.
+9. **Status.** The coordinator serves status to the web app.
+
+## The pieces in one table
+
+| Part | Runs on | Trusted with |
+|---|---|---|
+| kUSDT covenant family: `KCC20`, `TokenSeed`, `BridgeMint` | Kaspa L1 | The token itself. `BridgeMint` is the only issuer |
+| KasPool covenant family: `Pool`, `Position` | Kaspa L1 | The pool's KAS and kUSDT reserves |
+| `KusdtVault`, one per chain | Ethereum, BNB Chain | All locked USDT; pays out only with 3 of 5 signatures, within a daily allowance |
+| Signers (5, independent) | Each on its own machine, with its own Kaspa node and EVM RPCs | One Kaspa Schnorr key and one EVM ECDSA key each |
+| Coordinator | Bridge server | Nothing that moves funds. It collects signatures, submits transactions and serves status |
+| Monitor and guardian | Monitoring server | One key that can pause the vaults, the minter and the pool, and nothing else |
+| Vault owner | A Safe behind a 48-hour timelock (mainnet) | Vault parameters within hard bounds, and the vault's signer set |
+| Web app and wallet | The user's device | The user's keys. They pin each deployment |
+
+[Components](/architecture/components/) describes each part in detail, and
+[Communication](/architecture/communication/) describes every message between them.
+
+## Design choices
+
+- **Kaspa L1 only.** Every Kaspa-side rule runs in Kaspa's script engine. See
+  [Kaspa L1, not a layer 2](/overview/why-kaspa-l1/).
+- **A federation, rate-limited on both sides.** Kaspa nodes cannot verify Ethereum or BNB Chain, so 5 signers
+  attest to deposits and burns. Both sides cap what a bad quorum could move per day. Zero-knowledge light-client
+  verification is the planned upgrade, not part of v1.
+- **The coordinator is not trusted.** Each signer checks every request against its own nodes. Anyone may submit
+  a correctly signed mint or release.
+- **The payout is fixed at burn time.** A burn commits to the payout chain and address, so a release cannot be
+  redirected.
+- **Standard token code.** kUSDT's `KCC20` actor is the unmodified reference, so existing KCC-20 wallets and
+  indexers work with it.

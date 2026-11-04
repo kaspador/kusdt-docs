@@ -1,0 +1,108 @@
+---
+title: kUSDT
+description: kUSDT is USDT locked on Ethereum and BNB Chain and issued 1:1 on Kaspa Layer 1 as a KCC-20 covenant token, with a KAS⇄kUSDT pool on Kaspa L1.
+template: splash
+hero:
+  title: kUSDT
+  tagline: USDT from Ethereum and BNB Chain, issued 1:1 on Kaspa Layer 1 as a KCC-20 covenant token.
+  actions:
+    - text: How it works
+      link: /architecture/overview/
+      variant: primary
+    - text: Protocol specification
+      link: /protocol/identifiers-and-units/
+      variant: minimal
+    - text: Security
+      link: /security/trust-model/
+      variant: minimal
+---
+
+:::caution[Testnet stage, not audited]
+kUSDT is in development. It runs on testnet only (Kaspa testnet-10, Sepolia and BSC testnet); the testnet
+addresses are on [Status](/overview/status/#addresses). The contracts have not been audited. Do not send real funds
+to any address that claims to be kUSDT. Mainnet addresses will be published in these docs.
+:::
+
+## What kUSDT is
+
+kUSDT is a token on **Kaspa Layer 1** (L1). Each kUSDT is backed by one USDT locked in a vault contract on
+Ethereum or on BNB Chain. kUSDT has 6 decimals, like USDT on Ethereum.
+
+- On Kaspa, kUSDT is a **KCC-20 covenant token**. KCC-20 is the Kaspa convention for fungible tokens. A kUSDT
+  balance is an ordinary Kaspa transaction output whose spending rules every Kaspa node checks. kUSDT uses the
+  standard KCC-20 token code unchanged, so wallets that support KCC-20 can read it.
+- On Ethereum and BNB Chain, one **vault** contract per chain holds the locked USDT.
+- A **bridge** of 5 independent signers connects the two sides. Any 3 of them can approve a mint on Kaspa or a
+  payout from a vault, and both sides limit how much can move per day.
+- **KasPool**, a constant-product pool, lets anyone swap KAS for kUSDT and back. It also runs as covenants on
+  Kaspa L1.
+- A **wallet browser extension** with KCC-20 support is built and tested locally, not yet released.
+
+## Why Kaspa L1
+
+Everything that happens to kUSDT on the Kaspa side is a Kaspa L1 transaction. kUSDT does not use the Igra or
+Kasplex layer-2 networks, their contracts or their bridges. Its rules run in Kaspa's own script engine, and its
+transactions are ordered and confirmed like any KAS payment. [Kaspa L1, not a layer 2](/overview/why-kaspa-l1/)
+explains the difference.
+
+## How it works, in three steps
+
+<div class="steps3">
+  <div>
+    <div class="n">Step 1</div>
+    <div class="h">Deposit</div>
+    <p>You lock USDT in the vault on Ethereum or BNB Chain and name a Kaspa address. The vault numbers the deposit and keeps a 0.20 % fee (at least 0.50 USDT).</p>
+  </div>
+  <div>
+    <div class="n">Step 2</div>
+    <div class="h">Mint</div>
+    <p>Once the deposit is final, at least 3 of the 5 signers sign it. The BridgeMint covenant on Kaspa checks the signatures and the limits, and creates your kUSDT.</p>
+  </div>
+  <div>
+    <div class="n">Step 3</div>
+    <div class="h">Use or redeem</div>
+    <p>Send kUSDT, or swap it for KAS in KasPool. To redeem, you send it to a burn owner that names your EVM address. The signers approve, and the vault pays you USDT.</p>
+  </div>
+</div>
+
+The full flows are in [Bridge USDT in](/getting-started/bridge-in/) and [Redeem kUSDT](/getting-started/redeem/).
+
+## Key numbers
+
+These are the mainnet defaults from the specification. Testnet uses the same rules.
+
+| Item | Value |
+|---|---|
+| Signers | 5; any 3 approve a mint or a payout; 4 unpause, change limits or replace signers on Kaspa |
+| Bridge fee | 0.20 % each way |
+| Minimum fee | 0.50 USDT per deposit; 5 USDT per release on Ethereum, 0.50 USDT on BNB Chain |
+| Deposit size | 10 to 100 000 USDT |
+| Kaspa mint allowance | 500 000 USDT, refills fully in 24 hours |
+| Vault release allowance | 250 000 USDT per vault, refills fully in 24 hours |
+| Kaspa hard cap | 1 000 000 000 kUSDT; it can only go down |
+| Pool fee | 0.30 % per swap (0.25 % to liquidity providers, 0.05 % to the protocol) |
+
+## Status
+
+| Part | Status |
+|---|---|
+| Protocol specification | v1, written for testnet |
+| BridgeMint and the kUSDT token family (Kaspa) | Written; 21 script-engine tests; full Kaspa flow run on a local kaspad v2.1.0 simnet |
+| KasPool (Kaspa) | Written; 12 script-engine tests; full pool flow run on the same simnet |
+| KusdtVault (Ethereum, BNB Chain) | Written; 83 Hardhat tests; reviewed line by line against the specification |
+| Transaction builders | Written: `kusdt-tx` CLI and a WebAssembly build of the same code |
+| Signer and coordinator services | Written; the whole bridge (two local EVM chains, simnet, 5 signers, coordinator) ran end to end on one machine |
+| Monitor and guardian | Written; in the local run it caught a forged 400 000 kUSDT mint and paused both vaults and the minter within seconds |
+| Web app | Built and tested against the local stack, with the real wallet extension |
+| Refunds | Working in the local load run |
+| Wallet extension | Built and tested against the local stack; not released to any store |
+| Public testnet deployment | Not yet |
+| External audit | Not audited |
+
+Details are on the [status page](/overview/status/) and the [roadmap](/reference/roadmap/).
+
+## Where to go next
+
+- New to Kaspa covenants? Start with [Covenants in plain words](/concepts/covenants/).
+- Evaluating the bridge? Read the [trust model](/security/trust-model/) and the [threat model](/security/threat-model/).
+- Building on kUSDT? See [Developers](/developers/repository/) and the [message formats](/protocol/messages/).

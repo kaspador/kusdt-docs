@@ -1,0 +1,101 @@
+---
+title: Bridge USDT in
+description: Deposit USDT on Ethereum or BNB Chain and receive kUSDT on Kaspa L1.
+---
+
+import BridgeIn from '../../../components/diagrams/BridgeIn.astro';
+
+Bridging in turns USDT on Ethereum, or BSC-USD on BNB Chain, into kUSDT on Kaspa L1. You lock the USDT in the
+vault on that chain. After the deposit is final, the bridge signers approve it and kUSDT is created at your
+Kaspa address.
+
+:::note[Testnet only]
+kUSDT runs on testnet: TN10, Sepolia and BSC testnet (addresses on [Status](/overview/status/#addresses)). Its
+services run on the operator's machine for now, and the web app is not public yet. Nothing is on mainnet.
+Do not send real USDT to any address.
+:::
+
+## What you need
+
+| Item | Why |
+|---|---|
+| USDT on Ethereum, or BSC-USD on BNB Chain | The amount you bridge, between 10 and 100 000 USDT per deposit |
+| An EVM wallet with some ETH or BNB | To pay gas for two transactions: approve and deposit |
+| A Kaspa address | Where your kUSDT will arrive. A Schnorr address (`kaspa:q…`) is the usual choice |
+
+On testnet the vaults hold `MockUSDT`, a test token that anyone can mint for free. Its address is **to be
+published**.
+
+## Steps
+
+<BridgeIn />
+
+1. **Deposit.** In the [web app](/getting-started/web-app/), choose the chain, enter the amount and your Kaspa
+   address. The app converts the address into a KCC-2 owner (see
+   [Kaspa recipients](/protocol/identifiers-and-units/#kaspa-recipients)). Your EVM wallet then asks you to
+   approve the vault to take exactly that amount, and then to call `deposit(units, ownerScheme, owner)`. On
+   Ethereum there can be a third prompt first: Ethereum's USDT refuses to change a non-zero allowance, so the app
+   resets an old allowance to 0 before it approves. The app then follows the deposit until it is minted.
+2. **The vault records it.** The vault takes the USDT, keeps the fee, and emits a `Deposit` event with the next
+   deposit number (the *nonce*) and the amount to mint.
+3. **Finality.** The bridge waits until the deposit's block is at or below the chain's *finalized* block, the
+   point after which the chain does not reverse it. See [Finality](/protocol/finality/).
+4. **Each signer reads the deposit** from its own Ethereum or BNB Chain node. It never relies on what another
+   party reports.
+5. **Each signer checks and signs.** A signer checks the event and signs the *mint digest*, a hash that names
+   the kUSDT deployment, the chain, the nonce, your owner and the amount.
+6. **The coordinator collects signatures.** The coordinator is a relay that gathers at least 3 signatures.
+7. **Mint.** A mint transaction is submitted to BridgeMint on Kaspa. One transaction can mint 1 to 3
+   consecutive deposits of the same chain.
+8. **BridgeMint checks everything on-chain:** the 3 signatures, that the nonce is the next one for that chain,
+   the rate limit, the hard cap, and the exact shape of the new kUSDT state.
+9. **Your kUSDT arrives** as a KCC-20 state owned by your Kaspa address, holding exactly the minted amount.
+
+## What you receive
+
+You receive `minted = units − fee`. The fee is 0.20 % of the deposit, at least 0.50 USDT. The proportional part
+rounds up to the next base unit (10⁻⁶ USDT).
+
+| Deposit | Fee | kUSDT minted |
+|---|---|---|
+| 10 USDT | 0.50 | 9.50 |
+| 100 USDT | 0.50 | 99.50 |
+| 250 USDT | 0.50 | 249.50 |
+| 1 000 USDT | 2.00 | 998.00 |
+| 10 000 USDT | 20.00 | 9 980.00 |
+| 100 000 USDT | 200.00 | 99 800.00 |
+
+Below 250 USDT the 0.50 USDT minimum applies. Above it, the 0.20 % rate applies.
+
+Your new kUSDT state also carries 1.5 KAS (the deployment's token value). Kaspa requires every output
+to carry KAS in proportion to the storage it uses, and covenant outputs count double (see
+[Storage mass](/kaspa/storage-mass/)). The coordinator's Kaspa funding pays it, out of the deposit fee. From then on the KAS is yours: it stays in
+your token UTXO and travels with the token when you spend it.
+
+## How long it takes
+
+The wait is mostly the source chain's finality. After that, the signers, the coordinator and a Kaspa
+confirmation add a short delay. A busy day can add more: minting draws on an allowance of 500 000 USDT that
+refills over 24 hours, and a deposit waits if the allowance is used up. See [Limits](/protocol/limits/).
+
+## If something goes wrong
+
+- **The deposit reverts.** Nothing is taken. Common causes: an amount outside 10 to 100 000 USDT, a missing
+  approval, or the vault being paused.
+- **The deposit is never minted.** Deposits are minted strictly in nonce order. If a deposit can never be
+  minted, 4 of the 5 signers can skip its nonce on Kaspa, and the vault then refunds exactly the amount it would
+  have minted to the address that made the deposit. See [Refunds](/protocol/refunds/).
+
+## Doing it without the web app
+
+Developers can call the vault directly. `units` is the amount in base units of 10⁻⁶ USDT, whatever the token's
+decimals:
+
+```solidity
+// Approve units × scale of the token first. scale = 1 on Ethereum, 10^12 on BNB Chain.
+uint64 nonce = vault.deposit(units, ownerScheme, owner);
+```
+
+`ownerScheme` and `owner` come from your Kaspa address as described in
+[Kaspa recipients](/protocol/identifiers-and-units/#kaspa-recipients). A wrong owner cannot be corrected after
+the mint, so check the conversion with a small deposit first.

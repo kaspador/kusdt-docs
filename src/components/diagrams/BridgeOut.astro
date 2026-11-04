@@ -1,0 +1,27 @@
+---
+import Sequence from './Sequence.astro';
+---
+<Sequence
+  id="bridge-out"
+  title="Bridge out: from a kUSDT burn on Kaspa to a USDT release"
+  desc="The user sends kUSDT with a standard KCC-20 transfer to a burn owner that names the payout chain and address. Once the burn is final on Kaspa, each signer reads it from its own node, checks the burn owner and amount, and signs an EIP-712 Release. The coordinator collects at least three signatures, sorted by signer address, and calls release on the vault, which checks them and pays units minus the fee to the named address."
+  lanes={[
+    { label: 'User', sub: 'Kaspa wallet' },
+    { label: 'kUSDT family', sub: 'Kaspa L1' },
+    { label: 'Signers (5)', sub: 'each on its own nodes' },
+    { label: 'Coordinator', sub: 'untrusted relay' },
+    { label: 'KusdtVault', sub: 'Ethereum or BNB Chain' },
+  ]}
+  items={[
+    { kind: 'msg', from: 0, to: 1, label: 'KCC-20 transfer to the burn owner', sub: 'payload "KUSDT" 01 … names the payout' },
+    { kind: 'note', at: 1, lines: ['burn state: owner = BLAKE2b(R);', 'it can never move again'] },
+    { kind: 'band', text: 'Finality: the accepting block is at least 1 000 DAA below the virtual DAA score (about 100 s)' },
+    { kind: 'msg', from: 1, to: 2, label: 'reads the burn', sub: "from the signer's own node", dashed: true },
+    { kind: 'note', at: 2, lines: ['checks burn owner and amount;', 'ECDSA-signs an EIP-712 Release'] },
+    { kind: 'msg', from: 2, to: 3, label: '3 or more signatures', sub: 'sorted by signer address' },
+    { kind: 'msg', from: 3, to: 4, label: 'release(r, signatures)', sub: 'anyone may submit', mono: true },
+    { kind: 'note', at: 4, lines: ['checks quorum, redeemId,', 'backing and release allowance'] },
+    { kind: 'msg', from: 4, to: 0, label: 'pays units − fee in USDT to the address named in R', sub: 'event Released(redeemId, …)', dashed: true },
+  ]}
+  caption="Bridge out. Numbers match the steps on this page. The payout address is fixed by the burn owner, so no party can redirect it."
+/>

@@ -1,0 +1,86 @@
+---
+title: Redemptions and releases
+description: How a kUSDT burn on Kaspa becomes a USDT payout from a vault, at most once.
+---
+
+import BridgeOut from '../../../components/diagrams/BridgeOut.astro';
+
+## The redemption
+
+A redemption is a **standard KCC-20 transfer** that sends kUSDT to a [burn owner](/protocol/burn-owner-and-payload/).
+The burn owner commits to the payout chain and EVM address. Nobody can redirect the payout, and the tokens can
+never move again.
+
+Rules for the burn output:
+
+| Field | Required value |
+|---|---|
+| `owner_scheme` | `0x03` (p2sh) |
+| `owner` | `BLAKE2b-256(R(chain, address))` |
+| `borrow_scheme` | `0x00`, so the burn state cannot be borrowed into |
+| `borrow_guard` | 32 zero bytes |
+| `extension_commitment` | 32 zero bytes |
+| `amount` | Above the release fee for that chain, or it is never paid |
+
+Signers refuse a burn state whose borrow scheme, borrow guard or extension commitment is not zero: a borrowable
+state could move to a new outpoint and be claimed twice. Such kUSDT is lost, so wallets never build one.
+
+The transaction payload should name the burn outputs and their payout, so the bridge can find them.
+
+## The flow
+
+<BridgeOut />
+
+## What signers check before signing
+
+Each signer reads the burn from its own Kaspa node. It signs a `Release` for a burn output once the burn is final
+(see [Finality](/protocol/finality/)) and its amount is above the release fee. Before signing it checks a rule
+the vault cannot see: the release names the chain and the address that the burn owner commits to.
+
+A signer also refuses a release to an address the token blocks. The deployment names the token's blocklist view
+for each chain (`blocklist`: `isBlackListed` for Ethereum USDT, none for BSC-USD). The signer asks every one of
+its RPCs; if they disagree, it signs nothing. USDT's blacklist stops only senders (`transfer` checks
+`msg.sender`, `transferFrom` checks `from`), so the vault would pay a blacklisted address, and the USDT would be
+frozen there for good. The signers stop that payout instead.
+
+## The release
+
+```solidity
+function release(Release calldata r, bytes[] calldata signatures)
+struct Release { bytes32 redeemId; address recipient; uint256 units; }
+```
+
+The vault:
+
+1. requires `redeemId` unused, and a recipient that is neither the zero address nor the vault itself;
+2. computes `fee = max(minReleaseFee, ceil(units × feeBps / 10⁴))` and requires `units > fee`;
+3. verifies at least 3 EIP-712 signatures by distinct **current** signers, given in strictly increasing order of
+   signer address (the ordering proves they are distinct);
+4. requires `units ≤ backing()`;
+5. draws the payout, `units − fee`, from the release allowance;
+6. marks `redeemId` used, adds the fee to `feesAccrued`, and transfers `(units − fee) × scale` to the recipient;
+7. emits `Released(redeemId, recipient, units, fee, payout)`.
+
+Anyone may call `release` with valid signatures. The coordinator normally does.
+
+## The redeem ID
+
+Each burn output has one redeem ID:
+
+```text
+redeemId = keccak256(abi.encodePacked("kusdt/redeem/v1", bytes32 kaspaTxId, uint32 outputIndex))
+```
+
+The vault exposes it as `redeemIdOf(kaspaTxId, outputIndex)`. Because the vault stores used IDs, each burn
+output is paid at most once (INV-3).
+
+## Limits that apply to one release
+
+| Condition | Consequence |
+|---|---|
+| `units ≤ fee`, or a zero or vault recipient | Never paid: marked `unpayable`, and its kUSDT is lost. Wallets never build one |
+| Payout above what the allowance holds now, or a paused vault | Reverts; the relayer retries it with its own backoff, without holding up other burns |
+| Payout above `releaseCapacity` (250 000 USDT by default) | Cannot be paid until the owner raises the capacity (within its hard bound). Wallets refuse to build such a burn |
+| `units` above that vault's backing | Reverts; waits until deposits on that chain bring the backing. Wallets refuse to build such a burn |
+| Recipient blocked by the token | Never signed. The burn is held as `blocked`, checked again every hour, and paid if the token unblocks the address. Its USDT stays in the vault as backing, and it holds up no other burn. Wallets refuse to build such a burn (see [Blocked recipients](/security/known-limits/#blocked-recipients)) |
+| The token blocks the vault itself | The vault can pay nothing out, while deposits still go in. The monitor raises `vault-blocked` and the guardian pauses everything (see [The monitor](/security/monitor/)) |

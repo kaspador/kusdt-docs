@@ -1,0 +1,86 @@
+---
+title: Deposits and mints
+description: How a USDT deposit is recorded by the vault and minted as kUSDT by BridgeMint, exactly once.
+---
+
+import BridgeIn from '../../../components/diagrams/BridgeIn.astro';
+
+## The deposit
+
+```solidity
+function deposit(uint256 units, uint8 ownerScheme, bytes32 owner) returns (uint64 nonce)
+```
+
+The vault:
+
+1. requires `ownerScheme ≤ 4` and `owner ≠ 0`, and `minDeposit ≤ units ≤ maxDeposit`;
+2. computes `fee = max(minDepositFee, ceil(units × feeBps / 10⁴))` and requires `minted = units − fee > 0`;
+3. pulls `units × scale` of the token and requires that its balance grew by exactly that amount (this refuses
+   tokens that charge a transfer fee);
+4. assigns the next nonce: deposits are numbered 0, 1, 2, … per vault;
+5. adds the fee to `feesAccrued` and records `depositMinted[nonce] = minted` for a possible refund;
+6. emits the event:
+
+```solidity
+event Deposit(uint64 indexed nonce, address indexed sender, uint8 ownerScheme,
+              bytes32 owner, uint256 units, uint256 fee, uint256 minted);
+```
+
+**Every nonce is minted on Kaspa exactly once, or refunded.** The minted amount is the event's `minted` field,
+never more.
+
+## The flow
+
+<BridgeIn />
+
+## The mint
+
+`BridgeMint.mint` mints 1 to 3 consecutive deposits of one chain, starting exactly at that chain's next nonce.
+The covenant checks, on-chain, whoever builds the transaction:
+
+1. Minting is not paused. Every recipient has `amount > 0`, a valid owner scheme, borrow scheme `0x00`, borrow
+   guard of 32 zero bytes, and extension commitment of 32 zero bytes.
+2. `first_nonce` equals the chain's next nonce. The nonce advances by the number of recipients.
+3. `tx.daa ≥ now_daa ≥ last_daa`. The transaction's lock time is at least `now_daa`, and consensus accepts it
+   only once the DAG has reached that DAA score. This proves `now_daa` without trusting the submitter.
+4. The total is at most the refilled allowance and at most `remaining` (the hard cap).
+5. Three signatures by distinct signers, in increasing signer order, over the **mint digest**.
+6. The successor BridgeMint carries exactly the updated state and the same KAS value, and each minted output is
+   a standard `KCC20` state equal to its recipient.
+
+```text
+mint digest = BLAKE3( "kUSDT/mint/v1" ‖ covenant_id[32] ‖ chain[1] ‖ first_nonce[8]
+                      ‖ for each recipient: owner_scheme[1] ‖ owner[32] ‖ amount[8] )
+```
+
+All integers are 8-byte little-endian. The digest binds the deployment, the chain, the nonces, every recipient
+and every amount, so a signature cannot be reused for anything else.
+
+## What signers check before signing
+
+The specification requires every signer to check every request against its own nodes, and to take nothing the
+coordinator says as fact. For a mint, that means a signer signs only if:
+
+- the deposit's block is final (see [Finality](/protocol/finality/));
+- the recipients and amounts in the digest equal the events' `ownerScheme`, `owner` and `minted`, nonce by nonce;
+- the nonces are the next ones BridgeMint expects for that chain, as read from its own Kaspa node.
+
+## Ordering and batching
+
+| Rule | Effect |
+|---|---|
+| One chain per mint | A mint carries `chain = 0x01` or `0x02`, never both |
+| Consecutive nonces | A batch of up to 3 deposits must be `n, n+1, n+2` |
+| Separate counters | `nonce_ethereum` and `nonce_bsc` advance independently |
+| No skipping | A deposit cannot be passed over except by `skip_nonce` (4 of 5), followed by a refund |
+
+Because mints follow the nonces strictly, a deposit that can never be minted would block every later deposit
+of its chain. `skip_nonce` exists for that case; see [Refunds](/protocol/refunds/).
+
+## Who pays for the minted outputs
+
+The minter keeps its own KAS deposit (`minter.value == self.value`). The covenant leaves the KAS of the new
+token outputs to whoever submits the mint. In kUSDT, the coordinator's Kaspa funding pays it, together with the
+network fee, out of the deposit fee. Each minted state carries 1.5 KAS, which belongs to the holder from then on
+and travels with the token. See
+[Storage mass](/kaspa/storage-mass/).

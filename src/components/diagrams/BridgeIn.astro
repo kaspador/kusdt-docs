@@ -1,0 +1,27 @@
+---
+import Sequence from './Sequence.astro';
+---
+<Sequence
+  id="bridge-in"
+  title="Bridge in: from a USDT deposit to kUSDT on Kaspa"
+  desc="The user deposits USDT into the vault, which emits a Deposit event with a nonce. After the deposit's block is finalized, each of the five signers reads the event from its own RPC, checks it, and signs the mint digest. The coordinator collects at least three signatures and submits a mint transaction to BridgeMint on Kaspa. BridgeMint checks the quorum, the nonce and the limits, and creates the recipient's KCC20 state."
+  lanes={[
+    { label: 'User', sub: 'EVM wallet' },
+    { label: 'KusdtVault', sub: 'Ethereum or BNB Chain' },
+    { label: 'Signers (5)', sub: 'each on its own nodes' },
+    { label: 'Coordinator', sub: 'untrusted relay' },
+    { label: 'BridgeMint', sub: 'Kaspa L1' },
+  ]}
+  items={[
+    { kind: 'msg', from: 0, to: 1, label: 'deposit(units, scheme, owner)', sub: 'after approving units × scale', mono: true },
+    { kind: 'note', at: 1, lines: ['emits Deposit(nonce, …,', 'units, fee, minted)'] },
+    { kind: 'band', text: "Finality: wait until the deposit's block is at or below the chain's finalized block" },
+    { kind: 'msg', from: 1, to: 2, label: 'reads the event', sub: "from the signer's own RPC", dashed: true },
+    { kind: 'note', at: 2, lines: ['checks nonce, recipient, limits;', 'Schnorr-signs the mint digest'] },
+    { kind: 'msg', from: 2, to: 3, label: '3 or more signatures', sub: 'Schnorr, 64 bytes each' },
+    { kind: 'msg', from: 3, to: 4, label: 'mint(chain, first_nonce, …)', sub: '1 to 3 consecutive deposits', mono: true },
+    { kind: 'note', at: 4, lines: ['checks quorum, nonce, limits;', 'creates KCC20 state(s)'] },
+    { kind: 'msg', from: 4, to: 0, label: "kUSDT arrives in the recipient's KCC20 state", sub: 'amount = minted', dashed: true },
+  ]}
+  caption="Bridge in. Numbers match the steps on this page. Anyone may submit the mint transaction; the coordinator is only a convenience."
+/>

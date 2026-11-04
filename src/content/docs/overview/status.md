@@ -1,0 +1,90 @@
+---
+title: Status
+description: What exists today, what is tested, and what is not built yet.
+---
+
+As of 4 November 2026. The specification is **v1, for testnet**. kUSDT is deployed on testnet (TN10, Sepolia and
+BSC testnet); its services run on the operator's machine for now. Nothing is on mainnet.
+
+:::danger[Not audited]
+No external audit has taken place. Mainnet requires audits and the other steps in the
+[mainnet checklist](/security/mainnet-checklist/).
+:::
+
+## Components
+
+| Component | Runs on | Status | Evidence |
+|---|---|---|---|
+| Protocol specification | (document) | v1 | `SPEC.md`, the source of truth for these docs |
+| BridgeMint covenant | Kaspa L1 | Written | 21 script-engine tests, attacks included; simnet run |
+| kUSDT token family (KCC20, TokenSeed, BridgeMint) | Kaspa L1 | Written | KCC20 template matches the standard byte for byte (test) |
+| KasPool covenants (Pool, Position) | Kaspa L1 | Written, with the circuit breaker and the pause | 20 script-engine tests; simnet run; the forged-kUSDT dump capped in `local:e2e` |
+| KusdtVault | Ethereum, BNB Chain | Written | 85 Hardhat tests; reviewed line by line against the specification |
+| Transaction builders | Rust CLI (`kusdt-tx`) and WebAssembly | Written | The simnet run uses them |
+| Signer and coordinator services | Off-chain | Written | The local end-to-end run (below) |
+| Monitor and guardian service | Off-chain | Written | Caught and paused a forged mint in the local end-to-end run (below) |
+| Web app | Browser | Built (`bridge/web`) | 72 unit tests, 73 end-to-end tests on the live stack, 14 driving the real wallet extension |
+| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack; not released to any store | 78 unit tests, simnet, smoke and live-stack suites | Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
+| Refunds | Services and vault | Working | `local:load`: a deposit skipped and refunded 14.5 USDT |
+| Mainnet fork rehearsal | Forks of Ethereum and BNB Chain | Passed | The vault against the real USDT and BSC-USD |
+| Internal security review | Money paths | Done, fixes applied | See [Audit status](/security/audit-status/) |
+| Deployment tooling | Docker image, compose file, runbook | Written | See [Operations](/developers/operations/) |
+| Testnet deployment | TN10, Sepolia, BSC testnet | Deployed 4 November 2026 | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. Services on the operator's machine |
+| Mainnet deployment | Kaspa, Ethereum, BNB Chain | Not yet | Gated on the [mainnet checklist](/security/mainnet-checklist/) |
+
+## What the simnet run shows
+
+A local Kaspa node (kaspad v2.1.0, simnet) accepted every step of the Kaspa-side flow, bridge and pool:
+
+1. a KCC-23 preparation transaction carrying the token metadata;
+2. the genesis transaction that creates BridgeMint and a TokenSeed;
+3. a mint of two Ethereum deposits (nonces 0 and 1), signed by signers 0, 2 and 4;
+4. a KCC-20 transfer between two users;
+5. a redemption burn to a burn owner naming an Ethereum address, with the redemption payload;
+6. a mint of two BNB Chain deposits (nonces 0 and 1), signed by signers 1, 3 and 4;
+7. the pool's genesis, then its first deposit (200 KAS and 20 kUSDT);
+8. a buy, a sell, a liquidity deposit, a liquidity withdrawal, and the admin collecting the protocol fees.
+
+## The whole bridge on one machine
+
+On 3 November 2026 the local end-to-end run passed. It runs two Hardhat chains (chain IDs 31337 and 31338,
+standing in for Ethereum and BNB Chain, with MockUSDT at 6 and 18 decimals and a vault each), the kaspad simnet,
+the 5 signers, the coordinator and the monitor, all on one machine. It showed:
+
+1. a deposit on each chain, minted on Kaspa with 3 of 5 signatures;
+2. a burn naming chain 2, released by its vault: 49.5 USDT paid for 50 kUSDT burned;
+3. healthy reserves (INV-1) afterwards;
+4. the coordinator's pool and position APIs following a buy and a liquidity add and remove;
+5. the monitor agreeing with the coordinator before the attack: minted 299, released 50, owed 249 ≤ backing 249
+   (USDT), no alarms.
+
+Then the attack. Three stolen signer keys try to mint 1 000 000 kUSDT; the mint allowance refuses it. They mint
+400 000 kUSDT with no deposit; the covenant accepts it, because the signatures are valid and it is within the
+allowance. Selling all of it into the pool at once is refused by the pool's circuit breaker, which lets out under
+10 % of the pool's KAS. Within seconds the monitor raises `inv1` and pauses both vaults, the minter and the pool. The coordinator follows
+the forged mint and the pause, and a paused vault refuses a new deposit. This is the strongest evidence so far
+that the defences work together. See [The monitor](/security/monitor/#proof-the-attack-in-the-local-end-to-end-run).
+
+The wallet extension was also tested live against the same stack (`npm run local:stack`): deposits on both
+chains, a send, a redemption through to its release, swaps, and adding and removing liquidity.
+
+## Addresses
+
+| Item | Testnet | Mainnet |
+|---|---|---|
+| kUSDT covenant ID | `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314` | to be published |
+| KasPool covenant ID | being re-created with the circuit breaker; to be published | to be published |
+| KusdtVault on Ethereum (Sepolia on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
+| KusdtVault on BNB Chain (BSC testnet on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
+| MockUSDT (testnet only) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` on both | not used |
+| Coordinator API | not public yet (runs on the operator's machine) | to be published |
+| Web app URL | not public yet | to be published |
+
+The testnet values come from `deployments/testnet.json`.
+
+The USDT contracts that the mainnet vaults will hold are fixed by the specification:
+
+| Chain | Token | Address | Decimals |
+|---|---|---|---|
+| Ethereum | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
+| BNB Smart Chain | BSC-USD | `0x55d398326f99059fF775485246999027B3197955` | 18 |

@@ -1,0 +1,93 @@
+---
+title: Swap KAS and kUSDT
+description: Swap KAS for kUSDT and back in KasPool, a constant-product pool that runs as covenants on Kaspa L1.
+---
+
+import PoolSwap from '../../../components/diagrams/PoolSwap.astro';
+
+KasPool is a KAS⇄kUSDT pool on Kaspa L1. It holds a reserve of KAS and a reserve of kUSDT and prices every swap
+by the *constant-product* rule: after a swap, the product of the two reserves may not shrink. Each swap is a
+single Kaspa transaction.
+
+:::note[Testnet only]
+The KasPool covenants are tested in Kaspa's script engine and run on testnet (TN10). The testnet pool is being
+re-created with the circuit breaker; its covenant ID is **to be published**. The web app is not public yet, and
+nothing is on mainnet.
+:::
+
+:::tip[In the web app]
+The [web app](/getting-started/web-app/)'s Swap page quotes with the same core the covenant checks against, and
+shows the 0.30 % fee, the price impact and your slippage setting. The wallet then builds and signs the swap.
+:::
+
+## How a swap works
+
+1. **Get a quote.** Your app reads the pool's current state: the KAS reserve *X* and the kUSDT reserve *Y*.
+2. **Build the transaction.** The app builds a transaction that spends the pool UTXO, the pool's kUSDT reserve
+   and your own coins, and names the **exact** amount you receive.
+3. **Sign and submit.** Your wallet signs your inputs. The pool covenant accepts the transaction only if the
+   reserves after the swap satisfy the constant-product rule with the fee applied.
+
+<PoolSwap kind="buy" />
+
+## Price and fee
+
+Every swap pays **0.30 %** of its input: 0.25 % stays in the pool for liquidity providers, 0.05 % accrues to
+the protocol. The best amount a swap can return is:
+
+```text
+effective = floor(input × 9 970 / 10 000)
+output    = floor(reserve_out × effective / (reserve_in + effective))
+```
+
+For a buy, the input is KAS, `reserve_in` is *X* and `reserve_out` is *Y*. For a sell, the input is kUSDT,
+`reserve_in` is *Y* and `reserve_out` is *X*. Asking for one base unit more than this quote is rejected.
+
+| Pool | You send | You receive (quote) |
+|---|---|---|
+| 10 000 KAS and 1 000 kUSDT | 100 KAS | about 9.87 kUSDT |
+
+A round trip (KAS to kUSDT and back) returns a little less than you started with, about the 0.6 % paid in
+fees. You also pay the normal Kaspa network fee in KAS.
+
+## No sandwiching, no slippage after signing
+
+A swap transaction spends the exact pool UTXO it was built on and names the exact amount you receive. Two
+things follow:
+
+- **Nobody can worsen your price after you sign.** If another swap lands first, it spends that pool UTXO.
+  Your transaction then becomes invalid, rather than executing at a worse price.
+- **You may need to retry.** In a busy moment your app may have to re-quote and re-sign against the new pool
+  state.
+- **The wallet asks before a worse price.** It goes ahead on its own only if the new quote is at least as good as
+  the one you confirmed. Your slippage minimum stays the hard floor. (This is being built in the wallet now.)
+
+## Selling kUSDT
+
+A sell is the mirror image. Your kUSDT state is an input, any remaining kUSDT returns to you as change, and the
+KAS goes to an output you choose.
+
+<PoolSwap kind="sell" />
+
+### The sell limit
+
+To bound a dump of forged kUSDT, sells may take at most 10 % of the pool's KAS reserve per hour (the
+[circuit breaker](/contracts/kaspool/#the-circuit-breaker)). Buys are not limited. If your sell is over what is
+left, the app tells you that the pool lets at most so much KAS out until about a given time. Sell less, or wait
+for the next window.
+
+## When the pool is paused
+
+The bridge's guardian pauses the pool on any alarm, with the vaults and the minter. While it is paused:
+
+| Stops | Keeps working |
+|---|---|
+| Buys, sells and adding liquidity | Removing liquidity: you can always withdraw your Position |
+
+Only the pool admin resumes it.
+
+## Providing liquidity
+
+Anyone can add KAS and kUSDT in the current ratio and receive a **Position**: a covenant UTXO that records
+liquidity shares and the key that owns them. Burning the Position returns at most its share of each reserve.
+The owner can transfer a Position to another key. See [KasPool](/contracts/kaspool/) for the exact rules.

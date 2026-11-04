@@ -1,0 +1,133 @@
+---
+// The kUSDT architecture: the EVM vaults, the off-chain operators, the Kaspa
+// covenant families and the user's apps. Numbers refer to the list on the page.
+const steps: [number, number, number][] = [
+  [1, 146, 397],
+  [2, 317, 190],
+  [2, 626, 190],
+  [3, 496, 260],
+  [4, 660, 250],
+  [5, 312, 262],
+  [6, 810, 397],
+  [7, 322, 112],
+  [7, 640, 112],
+  [8, 170, 246],
+  [9, 476, 395],
+];
+---
+<figure class="diagram">
+  <div class="scroll">
+    <svg viewBox="0 0 960 600" role="img" aria-labelledby="arch-title arch-desc">
+      <title id="arch-title">kUSDT architecture</title>
+      <desc id="arch-desc">
+        Three columns. Left, the EVM chains: a KusdtVault on Ethereum, a KusdtVault on BNB Chain, and the vault owner.
+        Middle, the off-chain operators: the monitor with the guardian key, five independent signers, and the coordinator.
+        Right, Kaspa L1: the kUSDT covenant family (BridgeMint, KCC20 states, TokenSeed) and the KasPool covenant family
+        (Pool and Position), where the pool observes the kUSDT family. Bottom, the user's device with the web app and the
+        planned wallet extension. Numbered arrows show deposits, reads, signatures, mints, releases, user transactions,
+        pauses, owner changes and status.
+      </desc>
+      <defs>
+        <marker id="arch-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="arrowhead" />
+        </marker>
+      </defs>
+
+      <!-- EVM chains -->
+      <rect class="panel" x="16" y="40" width="260" height="330" rx="10" />
+      <text class="t-h" x="32" y="62">EVM chains</text>
+      <rect class="box-evm" x="32" y="84" width="228" height="62" rx="6" />
+      <text class="t-b" x="46" y="108">KusdtVault · Ethereum</text>
+      <text class="t-s" x="46" y="128">holds USDT; 3 of 5 to pay out</text>
+      <rect class="box-evm" x="32" y="162" width="228" height="62" rx="6" />
+      <text class="t-b" x="46" y="186">KusdtVault · BNB Chain</text>
+      <text class="t-s" x="46" y="206">holds BSC-USD; 3 of 5 to pay out</text>
+      <rect class="box dashed" x="32" y="262" width="228" height="62" rx="6" />
+      <text class="t-b" x="46" y="284">Vault owner</text>
+      <text class="t-s" x="46" y="302">a Safe behind a 48 h timelock</text>
+      <text class="t-s" x="46" y="317">bounded parameters, signer set</text>
+
+      <!-- Operators -->
+      <rect class="panel" x="346" y="40" width="260" height="330" rx="10" />
+      <text class="t-h" x="362" y="62">Bridge operators (off-chain)</text>
+      <rect class="box" x="362" y="84" width="228" height="62" rx="6" />
+      <text class="t-b" x="376" y="106">Monitor and guardian</text>
+      <text class="t-s" x="376" y="124">checks INV-1 continuously</text>
+      <text class="t-s" x="376" y="139">guardian key: pause only</text>
+      <rect class="box" x="368" y="164" width="228" height="76" rx="6" />
+      <rect class="box-strong" x="362" y="170" width="228" height="76" rx="6" />
+      <text class="t-b" x="376" y="192">5 independent signers</text>
+      <text class="t-s" x="376" y="212">each with its own Kaspa node and</text>
+      <text class="t-s" x="376" y="227">EVM RPCs; one Schnorr and one</text>
+      <text class="t-s" x="376" y="242">ECDSA key each</text>
+      <rect class="box" x="362" y="280" width="228" height="62" rx="6" />
+      <text class="t-b" x="376" y="302">Coordinator</text>
+      <text class="t-s" x="376" y="320">collects signatures, submits txs</text>
+      <text class="t-s" x="376" y="335">serves status; moves no funds</text>
+
+      <!-- Kaspa L1 -->
+      <rect class="panel" x="676" y="40" width="268" height="330" rx="10" />
+      <text class="t-h" x="692" y="62">Kaspa L1</text>
+      <rect class="box-token" x="690" y="70" width="240" height="142" rx="8" />
+      <text class="t-h" x="702" y="90">kUSDT covenant family</text>
+      <rect class="box" x="702" y="100" width="216" height="36" rx="5" />
+      <text class="t-b" x="714" y="123">BridgeMint</text>
+      <text class="t-s" x="906" y="123" text-anchor="end">the only issuer</text>
+      <rect class="box" x="702" y="148" width="124" height="52" rx="5" />
+      <text class="t-b" x="712" y="170">KCC20 states</text>
+      <text class="t-s" x="712" y="188">balances, burns</text>
+      <rect class="box" x="834" y="148" width="84" height="52" rx="5" />
+      <text class="t-b" x="842" y="170">TokenSeed</text>
+      <text class="t-s" x="842" y="188">empty states</text>
+
+      <rect class="box-pool" x="690" y="228" width="240" height="126" rx="8" />
+      <text class="t-h" x="702" y="248">KasPool covenant family</text>
+      <rect class="box" x="702" y="258" width="104" height="48" rx="5" />
+      <text class="t-b" x="712" y="278">Pool</text>
+      <text class="t-s" x="712" y="296">KAS reserve</text>
+      <rect class="box" x="814" y="258" width="104" height="48" rx="5" />
+      <text class="t-b" x="824" y="278">Position</text>
+      <text class="t-s" x="824" y="296">LP shares</text>
+      <text class="t-s" x="702" y="326">kUSDT reserve: one KCC20 state</text>
+      <text class="t-s" x="702" y="341">owned by the pool's covenant ID</text>
+      <line class="line-dash" x1="754" y1="258" x2="754" y2="200" />
+      <text class="t-s" x="762" y="223">observes</text>
+
+      <!-- User device -->
+      <rect class="panel" x="16" y="420" width="928" height="164" rx="10" />
+      <text class="t-h" x="32" y="444">User device</text>
+      <rect class="box" x="210" y="462" width="240" height="64" rx="6" />
+      <text class="t-b" x="224" y="486">Web app</text>
+      <text class="t-s" x="224" y="506">bridge, swap, pool, reserves</text>
+      <rect class="box dashed" x="510" y="462" width="240" height="64" rx="6" />
+      <text class="t-b" x="524" y="486">Wallet extension (planned)</text>
+      <text class="t-s" x="524" y="506">KCC-20 tokens; keys stay local</text>
+      <text class="t-s" x="480" y="560" text-anchor="middle">Both pin the deployment: the kUSDT covenant ID and the vault addresses.</text>
+
+      <!-- Arrows -->
+      <path class="line" d="M146,420 V376" marker-end="url(#arch-ah)" />
+      <path class="line" d="M590,300 H660 V126 H698" marker-end="url(#arch-ah)" />
+      <path d="M688,190 H598" stroke="var(--sl-color-black)" stroke-width="7" fill="none" />
+      <path class="line-dash" d="M688,190 H598" marker-end="url(#arch-ah)" />
+      <path class="line-dash" d="M278,190 H358" marker-end="url(#arch-ah)" />
+      <path class="line" d="M476,246 V276" marker-end="url(#arch-ah)" />
+      <path class="line" d="M362,310 H312 V215 H280" marker-end="url(#arch-ah)" />
+      <path class="line" d="M810,420 V376" marker-end="url(#arch-ah)" />
+      <path class="line-dash" d="M362,112 H280" marker-end="url(#arch-ah)" />
+      <path class="line-dash" d="M590,112 H698" marker-end="url(#arch-ah)" />
+      <path class="line" d="M146,262 V228" marker-end="url(#arch-ah)" />
+      <path class="line" d="M476,342 V416" marker-end="url(#arch-ah)" />
+
+      {steps.map(([n, x, y]) => (
+        <g>
+          <circle class="step" cx={x} cy={y} r="9" />
+          <text class="step-t" x={x} y={y + 4} text-anchor="middle">{n}</text>
+        </g>
+      ))}
+    </svg>
+  </div>
+  <figcaption>
+    Solid arrows send transactions or messages; dashed arrows read state or pause. Numbers refer to the list below the
+    figure.
+  </figcaption>
+</figure>
