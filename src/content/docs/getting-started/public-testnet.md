@@ -49,6 +49,7 @@ own EVM side.
 | tBNB | Gas on BSC testnet | [BNB Chain faucet](https://www.bnbchain.org/en/testnet-faucet) |
 | TN10 KAS | Kaspa network fees, the KAS each kUSDT state carries, buying kUSDT | [faucet-tn10.kaspanet.io](https://faucet-tn10.kaspanet.io) (listed on [wiki.kaspa.org](https://wiki.kaspa.org/en/testnets)), or ask in the Kaspa Discord `#testnet` channel |
 | Test USDT | Bridging in | "Get 1,000 test USDT" on the web app's Bridge page or the wallet's Bridge tab |
+| Test kUSDT, without bridging | Swapping, liquidity and redeeming right away | "Get 25 test kUSDT" on the web app's Bridge page: once a day per address, no EVM wallet or gas needed |
 
 Faucets set their own limits.
 
