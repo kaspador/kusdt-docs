@@ -1,0 +1,496 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>KasPool | kUSDT</title><link rel="canonical" href="https://kaspador.github.io/kusdt-docs/contracts/kaspool/"/><link rel="sitemap" href="/kusdt-docs/sitemap-index.xml"/><link rel="shortcut icon" href="/kusdt-docs/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.8"/><meta name="generator" content="Starlight v0.42.8"/><meta property="og:title" content="KasPool"/><meta property="og:type" content="article"/><meta property="og:url" content="https://kaspador.github.io/kusdt-docs/contracts/kaspool/"/><meta property="og:locale" content="en"/><meta property="og:description" content="The KAS⇄kUSDT constant-product pool on Kaspa L1, its exact math, its LP shares, and why every pool entry guards the reserve."/><meta property="og:site_name" content="kUSDT"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="The KAS⇄kUSDT constant-product pool on Kaspa L1, its exact math, its LP shares, and why every pool entry guards the reserve."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/kusdt-docs/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/kusdt-docs/_astro/common.B4mYsXWi.css"><script type="module" src="/kusdt-docs/_astro/page.cNngjUgL.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Skip to content</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/kusdt-docs/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">kUSDT</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancel</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/kusdt-docs/_astro/Search.astro_astro_type_script_index_0_lang.IBiJ229G.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Main"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menu</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="08onqmw" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Overview</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">What is kUSDT</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/overview/why-kaspa-l1/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Kaspa L1, not a layer 2</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/overview/status/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Status</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Getting started</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/getting-started/web-app/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The web app</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/getting-started/bridge-in/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Bridge USDT in</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/getting-started/swap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Swap KAS and kUSDT</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/getting-started/redeem/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Redeem kUSDT</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/getting-started/wallet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The wallet</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Concepts</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/concepts/covenants/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Covenants in plain words</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/concepts/covenant-ids/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Covenant IDs and lineage</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/concepts/states-and-templates/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">States and templates (KCC-1)</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/concepts/owner-schemes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Owner schemes (KCC-2)</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/concepts/kcc20-tokens/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">KCC-20 tokens</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/concepts/borrowed-receive/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Borrowed receive</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/concepts/metadata/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Token metadata (KCC-23)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Architecture</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/architecture/overview/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Architecture overview</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/architecture/components/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Components</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/architecture/communication/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Communication</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/architecture/following-states/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Following covenant states</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Protocol</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/identifiers-and-units/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Networks, units and recipients</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/deposits-and-mints/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Deposits and mints</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/redemptions-and-releases/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Redemptions and releases</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/burn-owner-and-payload/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Burn owner and payload</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/refunds/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Refunds</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/fees/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Fees</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/limits/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Limits</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/finality/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Finality</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/messages/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Messages and digests</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/coordinator-api/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Coordinator API</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/protocol/wallet-provider/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Wallet provider</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Contracts</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/contracts/bridge-mint/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BridgeMint</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/contracts/kusdt-token/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The kUSDT token family</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/contracts/kaspool/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">KasPool</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/contracts/kusdt-vault/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">KusdtVault</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Security</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/trust-model/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Trust model</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/threat-model/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Threat model</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/invariants/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Invariants</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/governance/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Governance</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/guardian/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Guardian and pause</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/monitor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The monitor</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/known-limits/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Known limits</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/audit-status/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Audit status</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/security/mainnet-checklist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Mainnet checklist</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Kaspa specifics</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/kaspa/signature-operations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Signature operations</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/kaspa/storage-mass/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Storage mass</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/kaspa/relay-fees/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Relay fees and mass</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/kaspa/kcc20-template/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The KCC20 template</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Developers</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/developers/repository/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Repository layout</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/developers/build-and-test/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Build and test</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/developers/kusdt-tx/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The kusdt-tx CLI</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/developers/verify-template/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Verify the KCC20 template</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/developers/simnet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Run the simnet flow</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/developers/operations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Operations</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Reference</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/kusdt-docs/reference/faq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">FAQ</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glossary</span></a></li><li class="astro-rmhv4bp6"><a href="/kusdt-docs/reference/roadmap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Roadmap</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#entries-at-a-glance" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Entries at a glance</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#state" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">State</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#constants" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Constants</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-swap-math" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The swap math</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-circuit-breaker" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The circuit breaker</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#pause" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Pause</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#liquidity-shares" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Liquidity shares</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#why-min_liquidity" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Why MIN_LIQUIDITY</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#exact-128-bit-products" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Exact 128-bit products</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#why-it-cannot-be-sandwiched" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Why it cannot be sandwiched</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#why-every-entry-guards-the-reserve" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Why every entry guards the reserve</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#protocol-fees-and-the-admin" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Protocol fees and the admin</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#tests" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Tests</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/kusdt-docs/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C3fM4Kra.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#entries-at-a-glance" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Entries at a glance</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#state" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">State</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#constants" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Constants</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-swap-math" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The swap math</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-circuit-breaker" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The circuit breaker</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#pause" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Pause</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#liquidity-shares" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Liquidity shares</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#why-min_liquidity" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Why MIN_LIQUIDITY</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#exact-128-bit-products" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Exact 128-bit products</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#why-it-cannot-be-sandwiched" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Why it cannot be sandwiched</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#why-every-entry-guards-the-reserve" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Why every entry guards the reserve</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#protocol-fees-and-the-admin" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Protocol fees and the admin</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#tests" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Tests</span></a></li></ul></nav></starlight-toc><script type="module" src="/kusdt-docs/_astro/TableOfContents.astro_astro_type_script_index_0_lang.BpJaGz7G.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">KasPool</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content">
+<p>KasPool (<code dir="auto">bridge/kaspa/contracts/pool.ag</code>) is a constant-product pool for KAS and kUSDT that runs as covenants
+on Kaspa L1. It is its own app, in its own covenant family, and it observes the kUSDT family. Its covenant ID is
+the deployment’s <code dir="auto">poolId</code>; wallets pin it like kUSDT’s. Specification: SPEC §15.</p>
+<table>
+<thead>
+<tr>
+<th>Actor</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">Pool</code></td>
+<td>A singleton. Its UTXO holds the KAS reserve, a fixed base deposit and the protocol’s accrued KAS. Its state also holds the circuit breaker and the pause</td>
+</tr>
+<tr>
+<td><code dir="auto">Position</code></td>
+<td>One per liquidity deposit: a number of shares and an owner key. Each carries 2 KAS</td>
+</tr>
+</tbody>
+</table>
+<p>The pool’s <strong>kUSDT reserve</strong> is one <code dir="auto">KCC20</code> state in the kUSDT family, owned by the pool’s covenant ID
+(owner scheme <code dir="auto">0x04</code>), with borrowing disabled, holding <code dir="auto">Y + protocol_tokens</code>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="entries-at-a-glance">Entries at a glance</h2><a class="sl-anchor-link" href="#entries-at-a-glance"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Entries at a glance”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Entry</th>
+<th>Does</th>
+<th>Checks (exact, with 128-bit products)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">init</code></td>
+<td>First deposit</td>
+<td><code dir="auto">X = Y = S = 0</code> before; <code dir="auto">S = kas_in</code>; the Position gets <code dir="auto">kas_in − 1000</code> shares, and the 1000 unowned shares stay forever</td>
+</tr>
+<tr>
+<td><code dir="auto">buy</code></td>
+<td>KAS in, kUSDT out</td>
+<td>Not paused; fee 0.30 %, of which 0.05 % of the input goes to <code dir="auto">protocol_kas</code>; <code dir="auto">(X + 0.997·in) · Y′ ≥ X · Y</code></td>
+</tr>
+<tr>
+<td><code dir="auto">sell</code>, <code dir="auto">sell_all</code></td>
+<td>kUSDT in, KAS out</td>
+<td>Not paused; the same, with the protocol cut in kUSDT; and the <a href="#the-circuit-breaker">circuit breaker</a>, with <code dir="auto">now_daa</code> covered by the transaction’s lock time</td>
+</tr>
+<tr>
+<td><code dir="auto">add</code></td>
+<td>KAS and kUSDT in, a new Position</td>
+<td>Not paused; <code dir="auto">shares · X ≤ kas_in · S</code> and <code dir="auto">shares · Y ≤ tokens_in · S</code></td>
+</tr>
+<tr>
+<td><code dir="auto">remove</code></td>
+<td>Burns a Position (its owner signs)</td>
+<td>Open while paused; <code dir="auto">kas_out · S ≤ shares · X</code>, <code dir="auto">tokens_out · S ≤ shares · Y</code>; <code dir="auto">S</code> stays ≥ 1000</td>
+</tr>
+<tr>
+<td><code dir="auto">collect</code></td>
+<td>The admin takes <code dir="auto">protocol_kas</code> and <code dir="auto">protocol_tokens</code></td>
+<td>Admin signature; X and Y unchanged</td>
+</tr>
+<tr>
+<td><code dir="auto">pause</code></td>
+<td>Stops swaps and new liquidity</td>
+<td>The guardian’s signature; no kUSDT input in the transaction</td>
+</tr>
+<tr>
+<td><code dir="auto">unpause</code></td>
+<td>Resumes them</td>
+<td>The admin’s signature; no kUSDT input</td>
+</tr>
+<tr>
+<td><code dir="auto">set_keys</code></td>
+<td>Hands the admin key, the guardian key or both over</td>
+<td>Admin signature; no kUSDT input</td>
+</tr>
+<tr>
+<td><code dir="auto">Position.transfer</code></td>
+<td>Gives a Position to a new owner</td>
+<td>Owner signature; no kUSDT input in the transaction</td>
+</tr>
+</tbody>
+</table>
+<p>The details of each follow.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="state">State</h2><a class="sl-anchor-link" href="#state"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “State”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">token_covid</code></td>
+<td>The kUSDT covenant ID</td>
+</tr>
+<tr>
+<td><code dir="auto">kas_reserve</code> (<em>X</em>)</td>
+<td>KAS in the reserve, in sompi</td>
+</tr>
+<tr>
+<td><code dir="auto">token_reserve</code> (<em>Y</em>)</td>
+<td>kUSDT in the reserve, in base units</td>
+</tr>
+<tr>
+<td><code dir="auto">total_shares</code> (<em>S</em>)</td>
+<td>All liquidity shares, including the unowned minimum</td>
+</tr>
+<tr>
+<td><code dir="auto">protocol_kas</code>, <code dir="auto">protocol_tokens</code></td>
+<td>The protocol’s accrued fees, kept apart from the reserves</td>
+</tr>
+<tr>
+<td><code dir="auto">base_value</code></td>
+<td>KAS the pool UTXO always keeps beyond the reserve (its storage deposit)</td>
+</tr>
+<tr>
+<td><code dir="auto">admin</code></td>
+<td>The key that collects protocol fees, resumes a paused pool and hands the keys over</td>
+</tr>
+<tr>
+<td><code dir="auto">max_out_bps</code>, <code dir="auto">window_len</code></td>
+<td>The circuit breaker: the share of the KAS reserve sells may take per window, and the window’s length in DAA. Fixed at genesis</td>
+</tr>
+<tr>
+<td><code dir="auto">window_start</code>, <code dir="auto">window_ref</code>, <code dir="auto">window_out</code></td>
+<td>The open window: its start (DAA), the KAS reserve it opened with, and the KAS sells took in it so far</td>
+</tr>
+<tr>
+<td><code dir="auto">paused</code></td>
+<td>Whether the guardian paused swaps and new liquidity</td>
+</tr>
+<tr>
+<td><code dir="auto">guardian</code></td>
+<td>The key that may pause the pool, and nothing else: the bridge’s guardian</td>
+</tr>
+</tbody>
+</table>
+<p>Two equalities always hold:</p>
+<div class="expressive-code"><link rel="stylesheet" href="/kusdt-docs/_astro/ec.lrdnj.css"><script type="module" src="/kusdt-docs/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">pool UTXO value      = base_value + X + protocol_kas</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">reserve state amount = Y + protocol_tokens</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pool UTXO value      = base_value + X + protocol_kasreserve state amount = Y + protocol_tokens"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="constants">Constants</h2><a class="sl-anchor-link" href="#constants"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Constants”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Value</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">FEE_BPS</code></td>
+<td>30</td>
+<td>0.30 % per swap</td>
+</tr>
+<tr>
+<td><code dir="auto">PROTOCOL_BPS</code></td>
+<td>5</td>
+<td>0.05 % of the input accrues to the protocol; the other 0.25 % stays with liquidity</td>
+</tr>
+<tr>
+<td><code dir="auto">MIN_LIQUIDITY</code></td>
+<td>1 000 shares</td>
+<td>Minted at the first deposit to nobody</td>
+</tr>
+<tr>
+<td><code dir="auto">LIMB</code></td>
+<td>2³¹</td>
+<td>Limb size for the 128-bit products</td>
+</tr>
+<tr>
+<td><code dir="auto">MAX_OPERAND</code></td>
+<td>2⁶¹ − 1 = 2 305 843 009 213 693 951</td>
+<td>Largest reserve, share count or amount the products accept</td>
+</tr>
+<tr>
+<td><code dir="auto">MAX_SWAP_INPUT</code></td>
+<td>230 584 300 921 369</td>
+<td>Largest single swap input; keeps <code dir="auto">input × 10 000</code> inside 64 bits</td>
+</tr>
+</tbody>
+</table>
+<p><code dir="auto">MAX_OPERAND</code> is about 23 billion KAS on the KAS side. <code dir="auto">MAX_SWAP_INPUT</code> is about 2.3 million KAS for a buy, or
+about 230 million kUSDT for a sell.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="the-swap-math">The swap math</h2><a class="sl-anchor-link" href="#the-swap-math"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The swap math”</span></a></div>
+<p>A <strong>buy</strong> (KAS in, kUSDT out) with input <code dir="auto">kas_in</code> and output <code dir="auto">out</code>:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">cut       = floor(kas_in × 5 / 10 000)                // protocol share</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">effective = floor(kas_in × 9 970 / 10 000)            // input after the 0.30 % fee</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">X'        = X + kas_in − cut</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">Y'        = Y − out                                    // must stay &gt; 0</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">require   (X + effective) × Y' ≥ X × Y                 // exact, 128-bit</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">protocol_kas' = protocol_kas + cut</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cut       = floor(kas_in × 5 / 10 000)                // protocol shareeffective = floor(kas_in × 9 970 / 10 000)            // input after the 0.30 % feeX&#x27;        = X + kas_in − cutY&#x27;        = Y − out                                    // must stay > 0require   (X + effective) × Y&#x27; ≥ X × Y                 // exact, 128-bitprotocol_kas&#x27; = protocol_kas + cut"><div></div></button></div></figure></div>
+<p>A <strong>sell</strong> (kUSDT in, KAS out) is the mirror image, with <code dir="auto">tokens_in</code> and <code dir="auto">kas_out</code>:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">cut       = floor(tokens_in × 5 / 10 000)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">effective = floor(tokens_in × 9 970 / 10 000)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">Y'        = Y + tokens_in − cut</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">X'        = X − kas_out                                // must stay &gt; 0</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">require   (Y + effective) × X' ≥ Y × X</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">protocol_tokens' = protocol_tokens + cut</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cut       = floor(tokens_in × 5 / 10 000)effective = floor(tokens_in × 9 970 / 10 000)Y&#x27;        = Y + tokens_in − cutX&#x27;        = X − kas_out                                // must stay > 0require   (Y + effective) × X&#x27; ≥ Y × Xprotocol_tokens&#x27; = protocol_tokens + cut"><div></div></button></div></figure></div>
+<p>The check uses only the <code dir="auto">effective</code> input, but the reserve keeps <code dir="auto">input − cut</code>. The 0.25 % difference stays in the
+pool, so the product of the reserves grows with every swap. That growth is what liquidity providers earn.</p>
+<p>The best output a client can ask for is the quote:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e8e5de;--1:#1a1816">out = floor(reserve_out × effective / (reserve_in + effective))</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="out = floor(reserve_out × effective / (reserve_in + effective))"><div></div></button></div></figure></div>
+<p>One base unit more is rejected (tested).</p>
+<figure class="diagram swap"><div class="scroll"><svg viewBox="0 0 960 400" role="img" aria-labelledby="swap-buy-title swap-buy-desc"><title id="swap-buy-title">A KasPool buy transaction (KAS in, kUSDT out)</title><desc id="swap-buy-desc">Inputs: #0 Pool (entry buy; KasPool leader); #1 kUSDT reserve (KCC20) (transfer leader; owner = pool ID); #2 Buyer&#39;s KAS coins (pay kas_in and the network fee). Outputs: #0 Pool (successor) (X + kas_in − cut; protocol KAS + cut); #1 kUSDT reserve (successor) (amount Y′ + protocol tokens); #2 Buyer&#39;s kUSDT state (amount = buyer_state.amount); #3 KAS change (plain output). The pool checks (X + 0.997·kas_in) · Y′ ≥ X · Y.</desc><defs><marker id="swap-buy-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"></path></marker></defs><text class="t-h" x="20" y="36">Inputs</text><text class="t-h" x="940" y="36" text-anchor="end">Outputs</text><rect class="box-strong" x="380" y="56" width="200" height="266" rx="8"></rect><text class="t-h" x="480" y="82" text-anchor="middle">One transaction</text><text class="t-m" x="480" y="112" text-anchor="middle">Pool.buy</text><text class="t-ms" x="480" y="130" text-anchor="middle">(kas_in, buyer_state)</text><text class="t-s" x="480" y="168" text-anchor="middle">spends the exact pool UTXO</text><text class="t-s" x="480" y="184" text-anchor="middle">it was built on</text><text class="t-s" x="480" y="222" text-anchor="middle">checks, in 128-bit integers:</text><text class="t-m" x="480" y="242" text-anchor="middle">(X + 0.997·kas_in) · Y′</text><text class="t-m" x="480" y="260" text-anchor="middle">≥ X · Y</text><g><rect class="box-pool" x="20" y="64" width="300" height="52" rx="6"></rect><text class="t-b" x="34" y="85">#0  Pool</text><text class="t-s" x="34" y="104">entry buy; KasPool leader</text><line class="line" x1="320" y1="90" x2="376" y2="90" marker-end="url(#swap-buy-ah)"></line></g><g><rect class="box-token" x="20" y="130" width="300" height="52" rx="6"></rect><text class="t-b" x="34" y="151">#1  kUSDT reserve (KCC20)</text><text class="t-s" x="34" y="170">transfer leader; owner = pool ID</text><line class="line" x1="320" y1="156" x2="376" y2="156" marker-end="url(#swap-buy-ah)"></line></g><g><rect class="box-kas" x="20" y="196" width="300" height="52" rx="6"></rect><text class="t-b" x="34" y="217">#2  Buyer&#39;s KAS coins</text><text class="t-s" x="34" y="236">pay kas_in and the network fee</text><line class="line" x1="320" y1="222" x2="376" y2="222" marker-end="url(#swap-buy-ah)"></line></g><g><rect class="box-pool" x="640" y="64" width="300" height="52" rx="6"></rect><text class="t-b" x="654" y="85">#0  Pool (successor)</text><text class="t-s" x="654" y="104">X + kas_in − cut; protocol KAS + cut</text><line class="line" x1="580" y1="90" x2="636" y2="90" marker-end="url(#swap-buy-ah)"></line></g><g><rect class="box-token" x="640" y="130" width="300" height="52" rx="6"></rect><text class="t-b" x="654" y="151">#1  kUSDT reserve (successor)</text><text class="t-s" x="654" y="170">amount Y′ + protocol tokens</text><line class="line" x1="580" y1="156" x2="636" y2="156" marker-end="url(#swap-buy-ah)"></line></g><g><rect class="box-token" x="640" y="196" width="300" height="52" rx="6"></rect><text class="t-b" x="654" y="217">#2  Buyer&#39;s kUSDT state</text><text class="t-s" x="654" y="236">amount = buyer_state.amount</text><line class="line" x1="580" y1="222" x2="636" y2="222" marker-end="url(#swap-buy-ah)"></line></g><g><rect class="box-kas" x="640" y="262" width="300" height="52" rx="6"></rect><text class="t-b" x="654" y="283">#3  KAS change</text><text class="t-s" x="654" y="302">plain output</text><line class="line" x1="580" y1="288" x2="636" y2="288" marker-end="url(#swap-buy-ah)"></line></g><g transform="translate(20, 374)"><rect class="box-pool" x="0" y="-11" width="22" height="14" rx="3"></rect><text class="t-s" x="30" y="0">KasPool family</text><rect class="box-token" x="150" y="-11" width="22" height="14" rx="3"></rect><text class="t-s" x="180" y="0">kUSDT family</text><rect class="box-kas" x="290" y="-11" width="22" height="14" rx="3"></rect><text class="t-s" x="320" y="0">plain KAS (no covenant)</text><text class="t-s" x="920" y="0" text-anchor="end">X = KAS reserve, Y = kUSDT reserve, cut = 0.05 % protocol share</text></g></svg></div><figcaption>A buy: KAS in, kUSDT out. Two covenant families move in one transaction; the pool forces the reserve’s successor.</figcaption></figure>
+<figure class="diagram swap"><div class="scroll"><svg viewBox="0 0 960 400" role="img" aria-labelledby="swap-sell-title swap-sell-desc"><title id="swap-sell-title">A KasPool sell transaction (kUSDT in, KAS out)</title><desc id="swap-sell-desc">Inputs: #0 Pool (entry sell; KasPool leader); #1 kUSDT reserve (KCC20) (transfer leader; owner = pool ID); #2 Seller&#39;s kUSDT state (transfer_delegator; owner signs). Outputs: #0 Pool (successor) (X − kas_out); #1 kUSDT reserve (successor) (amount Y′ + protocol tokens + cut); #2 Seller&#39;s kUSDT change (amount = change_state.amount); #3 KAS to the seller (plain output, less the network fee). The pool checks (Y + 0.997·in) · X′ ≥ Y · X.</desc><defs><marker id="swap-sell-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"></path></marker></defs><text class="t-h" x="20" y="36">Inputs</text><text class="t-h" x="940" y="36" text-anchor="end">Outputs</text><rect class="box-strong" x="380" y="56" width="200" height="266" rx="8"></rect><text class="t-h" x="480" y="82" text-anchor="middle">One transaction</text><text class="t-m" x="480" y="112" text-anchor="middle">Pool.sell</text><text class="t-ms" x="480" y="130" text-anchor="middle">(kas_out, change_state)</text><text class="t-s" x="480" y="168" text-anchor="middle">spends the exact pool UTXO</text><text class="t-s" x="480" y="184" text-anchor="middle">it was built on</text><text class="t-s" x="480" y="222" text-anchor="middle">checks, in 128-bit integers:</text><text class="t-m" x="480" y="242" text-anchor="middle">(Y + 0.997·in) · X′</text><text class="t-m" x="480" y="260" text-anchor="middle">≥ Y · X</text><g><rect class="box-pool" x="20" y="64" width="300" height="52" rx="6"></rect><text class="t-b" x="34" y="85">#0  Pool</text><text class="t-s" x="34" y="104">entry sell; KasPool leader</text><line class="line" x1="320" y1="90" x2="376" y2="90" marker-end="url(#swap-sell-ah)"></line></g><g><rect class="box-token" x="20" y="130" width="300" height="52" rx="6"></rect><text class="t-b" x="34" y="151">#1  kUSDT reserve (KCC20)</text><text class="t-s" x="34" y="170">transfer leader; owner = pool ID</text><line class="line" x1="320" y1="156" x2="376" y2="156" marker-end="url(#swap-sell-ah)"></line></g><g><rect class="box-token" x="20" y="196" width="300" height="52" rx="6"></rect><text class="t-b" x="34" y="217">#2  Seller&#39;s kUSDT state</text><text class="t-s" x="34" y="236">transfer_delegator; owner signs</text><line class="line" x1="320" y1="222" x2="376" y2="222" marker-end="url(#swap-sell-ah)"></line></g><g><rect class="box-pool" x="640" y="64" width="300" height="52" rx="6"></rect><text class="t-b" x="654" y="85">#0  Pool (successor)</text><text class="t-s" x="654" y="104">X − kas_out</text><line class="line" x1="580" y1="90" x2="636" y2="90" marker-end="url(#swap-sell-ah)"></line></g><g><rect class="box-token" x="640" y="130" width="300" height="52" rx="6"></rect><text class="t-b" x="654" y="151">#1  kUSDT reserve (successor)</text><text class="t-s" x="654" y="170">amount Y′ + protocol tokens + cut</text><line class="line" x1="580" y1="156" x2="636" y2="156" marker-end="url(#swap-sell-ah)"></line></g><g><rect class="box-token" x="640" y="196" width="300" height="52" rx="6"></rect><text class="t-b" x="654" y="217">#2  Seller&#39;s kUSDT change</text><text class="t-s" x="654" y="236">amount = change_state.amount</text><line class="line" x1="580" y1="222" x2="636" y2="222" marker-end="url(#swap-sell-ah)"></line></g><g><rect class="box-kas" x="640" y="262" width="300" height="52" rx="6"></rect><text class="t-b" x="654" y="283">#3  KAS to the seller</text><text class="t-s" x="654" y="302">plain output, less the network fee</text><line class="line" x1="580" y1="288" x2="636" y2="288" marker-end="url(#swap-sell-ah)"></line></g><g transform="translate(20, 374)"><rect class="box-pool" x="0" y="-11" width="22" height="14" rx="3"></rect><text class="t-s" x="30" y="0">KasPool family</text><rect class="box-token" x="150" y="-11" width="22" height="14" rx="3"></rect><text class="t-s" x="180" y="0">kUSDT family</text><rect class="box-kas" x="290" y="-11" width="22" height="14" rx="3"></rect><text class="t-s" x="320" y="0">plain KAS (no covenant)</text><text class="t-s" x="920" y="0" text-anchor="end">X = KAS reserve, Y = kUSDT reserve, cut = 0.05 % protocol share</text></g></svg></div><figcaption>A sell: kUSDT in, KAS out. The seller’s state is a delegator input; the reserve state leads the kUSDT transfer.</figcaption></figure>
+<p><code dir="auto">sell_all</code> is a sell that spends the whole kUSDT state, with no change output.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="the-circuit-breaker">The circuit breaker</h2><a class="sl-anchor-link" href="#the-circuit-breaker"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The circuit breaker”</span></a></div>
+<p>kUSDT minted with stolen bridge keys (3 of 5) is real kUSDT to the pool: the same token, with the same covenant
+ID. A forged mint and a sell into the pool can land in the same block, before any monitor sees them. So nothing
+off-chain can stop such a dump. The pool limits it on-chain instead.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Window</td>
+<td><code dir="auto">window_len</code> DAA: 36 000, an hour at 10 BPS</td>
+</tr>
+<tr>
+<td>Cap</td>
+<td>Within a window, sells take at most <code dir="auto">max_out_bps</code> (1 000, 10 %) of the KAS reserve the window opened with, or of the reserve now if that is smaller. So withdrawals shrink the cap too</td>
+</tr>
+<tr>
+<td>New window</td>
+<td>A sell after the window ran its course (or the first sell ever) opens a new one, with the reserve of that moment</td>
+</tr>
+<tr>
+<td>Clock</td>
+<td>The sell names <code dir="auto">now_daa</code>. Its lock time must cover it, and consensus holds the transaction back until the DAG reaches it, so the clock cannot run ahead. It may not go back before the open window’s start</td>
+</tr>
+<tr>
+<td>Who can change it</td>
+<td>Nobody: both values are fixed at genesis</td>
+</tr>
+</tbody>
+</table>
+<p>Buys are not capped: they bring KAS in. Then the monitor pauses the pool with everything else. A dump costs the
+liquidity providers at most about 10 % of the KAS side, and they can still withdraw.</p>
+<p>The local end-to-end run (<code dir="auto">npm run local:e2e</code>) shows it: three stolen signer keys mint 400 000 kUSDT and sell them
+into the pool at once. The breaker refuses the whole sell, and the most it lets out is under 10 % of the pool’s
+KAS. Within seconds the monitor pauses the pool.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="pause">Pause</h2><a class="sl-anchor-link" href="#pause"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Pause”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Who</th>
+<th>Entry</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The guardian (the bridge’s, held by the <a href="/kusdt-docs/security/monitor/">monitor</a>)</td>
+<td><code dir="auto">pause</code></td>
+<td>Swaps (<code dir="auto">buy</code>, <code dir="auto">sell</code>, <code dir="auto">sell_all</code>) and new liquidity (<code dir="auto">init</code>, <code dir="auto">add</code>) stop</td>
+</tr>
+<tr>
+<td>The admin</td>
+<td><code dir="auto">unpause</code></td>
+<td>They resume</td>
+</tr>
+</tbody>
+</table>
+<p><code dir="auto">remove</code> stays open while paused, so liquidity providers can always withdraw. The monitor pauses the pool on any
+alarm, with the vaults and the minter.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="liquidity-shares">Liquidity shares</h2><a class="sl-anchor-link" href="#liquidity-shares"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Liquidity shares”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Entry</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">init</code> (first deposit)</td>
+<td>Requires an empty pool. Sets the price as <code dir="auto">kas_in : tokens_in</code>. <code dir="auto">total_shares = kas_in</code>, of which the depositor’s Position gets <code dir="auto">kas_in − 1 000</code> and 1 000 belong to nobody. Requires <code dir="auto">kas_in &gt; 1 000</code></td>
+</tr>
+<tr>
+<td><code dir="auto">add</code></td>
+<td>Adds <code dir="auto">kas_in</code> and <code dir="auto">tokens_in</code> for <code dir="auto">shares</code> new shares, with <code dir="auto">shares × X ≤ kas_in × S</code> and <code dir="auto">shares × Y ≤ tokens_in × S</code>. The depositor gets a new Position</td>
+</tr>
+<tr>
+<td><code dir="auto">remove</code></td>
+<td>Burns a Position (its owner signs) for at most its share: <code dir="auto">kas_out × S ≤ shares × X</code> and <code dir="auto">tokens_out × S ≤ shares × Y</code>. At least 1 000 shares must remain, and both reserves stay above zero</td>
+</tr>
+</tbody>
+</table>
+<p><code dir="auto">init</code> checks no key: whoever makes the first deposit into a new pool sets its starting price. Adding liquidity
+pays no fee. A Position can change hands with its owner’s signature (<code dir="auto">Position.transfer</code>).</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="why-min_liquidity">Why <code dir="auto">MIN_LIQUIDITY</code></h3><a class="sl-anchor-link" href="#why-min_liquidity"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Why MIN_LIQUIDITY”</span></a></div>
+<p>The first deposit mints 1 000 shares that nobody owns and nobody can withdraw, because <code dir="auto">remove</code> always leaves at
+least 1 000 shares. In the contract’s words, they keep the share price from being manipulated while the pool is
+tiny. Separately, <code dir="auto">remove</code> requires both reserves to stay above zero.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="exact-128-bit-products">Exact 128-bit products</h2><a class="sl-anchor-link" href="#exact-128-bit-products"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Exact 128-bit products”</span></a></div>
+<p>Kaspa script numbers are 64-bit, but reserve products are not: 1 billion KAS against 100 million kUSDT is
+10¹⁷ × 10¹⁴ = 10³¹. KasPool therefore compares <code dir="auto">a × b ≥ c × d</code> exactly, without overflow:</p>
+<ol>
+<li>Each operand must be between 0 and 2⁶¹ − 1.</li>
+<li>Each is split into 31-bit limbs: <code dir="auto">a = a1 × 2³¹ + a0</code>.</li>
+<li>The partial products (<code dir="auto">a0 × b0</code>, <code dir="auto">a1 × b0 + a0 × b1</code>, <code dir="auto">a1 × b1</code>) each fit in 64 bits.</li>
+<li>Carries are normalised so both sides have limbs below 2³¹, and the limbs are compared from the top.</li>
+</ol>
+<p>A test runs a buy against 1 billion KAS and 100 million kUSDT and confirms that the quote passes and one unit more
+fails.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="why-it-cannot-be-sandwiched">Why it cannot be sandwiched</h2><a class="sl-anchor-link" href="#why-it-cannot-be-sandwiched"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Why it cannot be sandwiched”</span></a></div>
+<p>A swap transaction spends the <strong>exact</strong> pool UTXO it was built on, and it names the exact amount the user
+receives. A competing swap that lands first spends that UTXO, so the user’s transaction becomes invalid instead
+of executing at a worse price. Nobody can insert a trade before and after a signed swap.</p>
+<p>The cost is contention: only one swap can spend a given pool state. When several users swap at once, all but one
+must re-quote and re-sign. Wallets build on the newest pool state, mempool
+included (the coordinator API serves it), and rebuild when it moves.</p>
+<p>A front-runner can still make a wallet rebuild on a worse price. So wallets never take a worse price without
+asking: they go ahead on their own only if the new quote is at least the one you confirmed. A worse one needs your
+approval again. Your slippage minimum stays the hard floor. (The wallet used to re-quote by itself within your
+slippage; the fix is being built.)</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="why-every-entry-guards-the-reserve">Why every entry guards the reserve</h2><a class="sl-anchor-link" href="#why-every-entry-guards-the-reserve"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Why every entry guards the reserve”</span></a></div>
+<p>The reserve is owned by the pool’s covenant ID. Under KCC-2’s <code dir="auto">covenant-id/v1</code> scheme, <strong>any</strong> input of the pool’s
+family in a transaction counts as the pool approving, and that includes a Position. So two rules close every path:</p>
+<table>
+<thead>
+<tr>
+<th>Entry</th>
+<th>Guard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Every <code dir="auto">Pool</code> entry that moves kUSDT (<code dir="auto">init</code>, <code dir="auto">buy</code>, <code dir="auto">sell</code>, <code dir="auto">sell_all</code>, <code dir="auto">add</code>, <code dir="auto">remove</code>, <code dir="auto">collect</code>)</td>
+<td>Observes the kUSDT family exhaustively: only the reserve and the one user state the entry’s shape allows may move, and the reserve’s successor is forced</td>
+</tr>
+<tr>
+<td><code dir="auto">Pool.pause</code>, <code dir="auto">Pool.unpause</code>, <code dir="auto">Pool.set_keys</code></td>
+<td>Require <code dir="auto">OpCovInputCount(token_covid) == 0</code>: no kUSDT may move in the transaction</td>
+</tr>
+<tr>
+<td><code dir="auto">Position.transfer</code></td>
+<td>Requires <code dir="auto">OpCovInputCount(token_covid) == 0</code></td>
+</tr>
+</tbody>
+</table>
+<p>Tests prove that a thief who owns a Position, or who holds the admin key, cannot move the reserve: the guard
+itself rejects the transaction.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="protocol-fees-and-the-admin">Protocol fees and the admin</h2><a class="sl-anchor-link" href="#protocol-fees-and-the-admin"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Protocol fees and the admin”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Entry</th>
+<th>Who</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">collect</code></td>
+<td>The admin key</td>
+<td>Takes all accrued protocol fees: the KAS leaves the pool UTXO to outputs the admin signs for, and the kUSDT goes to a <code dir="auto">fees</code> state. Reserves are unchanged</td>
+</tr>
+<tr>
+<td><code dir="auto">unpause</code></td>
+<td>The admin key</td>
+<td>Resumes a pool the guardian paused</td>
+</tr>
+<tr>
+<td><code dir="auto">set_keys</code></td>
+<td>The admin key</td>
+<td>Hands the admin key, the guardian key or both to other keys (it replaced <code dir="auto">set_admin</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>The admin can take only the accrued protocol fees, resume a paused pool and hand the keys over; it cannot touch
+X, Y, any position or the circuit breaker.
+Before mainnet, the operator holds the admin key offline (<a href="/kusdt-docs/security/mainnet-checklist/">mainnet checklist</a>, item 7).</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="tests">Tests</h2><a class="sl-anchor-link" href="#tests"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Tests”</span></a></div>
+<p>20 tests run the pool in Kaspa’s script engine (<code dir="auto">bridge/kaspa/tests/pool.rs</code>). Each transaction spends the pool
+and its kUSDT reserve together, two covenant families, and runs input by input:</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>What is shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First deposit</td>
+<td>Sets the price and locks the minimum liquidity; only once</td>
+</tr>
+<tr>
+<td>Swaps</td>
+<td>Buys and sells pay at most the quote; one unit more is rejected; a round trip loses only the fees</td>
+</tr>
+<tr>
+<td>Forced successors</td>
+<td>A pool claiming more tokens than the reserve keeps, a reserve keeping fewer than the pool records, or a pool forgetting the protocol’s cut is rejected</td>
+</tr>
+<tr>
+<td>Fees</td>
+<td>Only the admin collects protocol fees</td>
+</tr>
+<tr>
+<td>Reserve guards</td>
+<td>The reserve cannot ride along a Position transfer or an admin key change</td>
+</tr>
+<tr>
+<td>Large numbers</td>
+<td>Exact 128-bit products with reserves whose product is far above 2⁶³</td>
+</tr>
+<tr>
+<td>Liquidity</td>
+<td>Liquidity comes in proportion and leaves with its share; only the Position’s owner can burn it; Positions change hands with the owner’s signature</td>
+</tr>
+<tr>
+<td>Circuit breaker</td>
+<td>Sells are capped within a window; a window reopens with the reserve of that moment; the clock cannot run ahead of the lock time or back; withdrawals shrink the cap</td>
+</tr>
+<tr>
+<td>Pause and keys</td>
+<td>Only the guardian pauses and only the admin resumes; withdrawals stay open while paused; the reserve cannot ride along a pause or a key change; the admin rotates the guardian</td>
+</tr>
+</tbody>
+</table>
+<p><code dir="auto">tests/standard.rs</code> builds the pool’s transactions with the real builders: a sell is about 108 000 transient mass,
+an add about 114 000. See <a href="/kusdt-docs/kaspa/storage-mass/#after-toccata">Storage mass</a>.</p>
+<p>The full pool flow (genesis, first deposit, buy, sell, add, remove, collect) also ran on a kaspad v2.1.0 simnet.</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/kusdt-docs/contracts/kusdt-token/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Previous<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">The kUSDT token family</span></span></a><a href="/kusdt-docs/contracts/kusdt-vault/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Next<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">KusdtVault</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>
