@@ -28,6 +28,7 @@ part after every step.
 | BridgeMint | Mints start exactly at each chain's next nonce and move it forward; a nonce cannot be minted twice (tested) |
 | Vault | `depositMinted[nonce]` is cleared on refund; a second refund is rejected (tested) |
 | Signers | "Never both": a refund is signed only for a nonce Kaspa skipped. The vault cannot see Kaspa |
+| Signers | A mint is signed only while the vault's live `depositMinted(nonce)`, read on every RPC, is non-zero: a refunded nonce is never minted, even after a Kaspa reorg deeper than `finalityDaa` (tested) |
 
 ## INV-3: each burn is released at most once
 

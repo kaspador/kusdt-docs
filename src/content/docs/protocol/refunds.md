@@ -48,7 +48,9 @@ The vault cannot see Kaspa, so two rules rest on the signers:
 
 - **Refund only what Kaspa skipped.** A nonce must never be both minted and refunded (INV-2). Each signer follows
   the minter itself, from its own Kaspa node (configured with `initialMinter` and `scanFrom`), and signs a
-  refund only when it sees the `skip_nonce` as final and the nonce never minted.
+  refund only when it sees the `skip_nonce` as final and the nonce never minted. The other way round, it signs a
+  mint only while the vault's `depositMinted(nonce)` is non-zero, so a refunded nonce is never minted, even
+  after a deep Kaspa reorg. If such a reorg re-decides a nonce, the signer keeps only the current outcome.
 - **Refund the depositor, exactly.** The recipient must be the `sender` of the original `Deposit` event, and the
   amount exactly its `minted`.
 - **Never refund a blocked address.** A signer refuses a refund to an address the token blocks, on every one of
