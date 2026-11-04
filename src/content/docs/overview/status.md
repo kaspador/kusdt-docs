@@ -4,7 +4,8 @@ description: What exists today, what is tested, and what is not built yet.
 ---
 
 As of 4 November 2026. The specification is **v1, for testnet**. kUSDT is deployed on testnet (TN10, Sepolia and
-BSC testnet); its services run on the operator's machine for now. Nothing is on mainnet.
+BSC testnet), and the public testnet is open at [kusdt.pearlchain.live](https://kusdt.pearlchain.live), with test
+coins only. Nothing is on mainnet. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
 
 :::danger[Not audited]
 No external audit has taken place. Mainnet requires audits and the other steps in the
@@ -24,12 +25,12 @@ No external audit has taken place. Mainnet requires audits and the other steps i
 | Signer and coordinator services | Off-chain | Written | The local end-to-end run (below) |
 | Monitor and guardian service | Off-chain | Written | Caught and paused a forged mint in the local end-to-end run (below) |
 | Web app | Browser | Built (`bridge/web`) | 72 unit tests, 73 end-to-end tests on the live stack, 14 driving the real wallet extension |
-| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack; not released to any store | 78 unit tests, simnet, smoke and live-stack suites | Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
+| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack; a testnet build is downloadable, not released to any store | 78 unit tests, simnet, smoke and live-stack suites | Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
 | Refunds | Services and vault | Working | `local:load`: a deposit skipped and refunded 14.5 USDT |
 | Mainnet fork rehearsal | Forks of Ethereum and BNB Chain | Passed | The vault against the real USDT and BSC-USD |
 | Internal security review | Money paths | Done, fixes applied | See [Audit status](/security/audit-status/) |
 | Deployment tooling | Docker image, compose file, runbook | Written | See [Operations](/developers/operations/) |
-| Testnet deployment | TN10, Sepolia, BSC testnet | Deployed 4 November 2026 | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. Services on the operator's machine |
+| Testnet deployment | TN10, Sepolia, BSC testnet | Deployed 4 November 2026 | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. Public from 4 November 2026, on one test host in isolated containers (see [Operations](/developers/operations/#the-testnet-deployment)) |
 | Mainnet deployment | Kaspa, Ethereum, BNB Chain | Not yet | Gated on the [mainnet checklist](/security/mainnet-checklist/) |
 
 ## What the simnet run shows
@@ -73,12 +74,14 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 | Item | Testnet | Mainnet |
 |---|---|---|
 | kUSDT covenant ID | `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314` | to be published |
-| KasPool covenant ID | being re-created with the circuit breaker; to be published | to be published |
+| KasPool covenant ID | `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9` (it replaced `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b`, retired, which had no circuit breaker) | to be published |
 | KusdtVault on Ethereum (Sepolia on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
 | KusdtVault on BNB Chain (BSC testnet on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
 | MockUSDT (testnet only) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` on both | not used |
-| Coordinator API | not public yet (runs on the operator's machine) | to be published |
-| Web app URL | not public yet | to be published |
+| Coordinator API | `https://kusdt.pearlchain.live/api/v1` | to be published |
+| Web app URL | `https://kusdt.pearlchain.live` | to be published |
+| Monitor status (read-only) | `https://kusdt.pearlchain.live/monitor/health`, `https://kusdt.pearlchain.live/monitor/api/v1/monitor` | to be published |
+| Wallet download (testnet build) | `https://kusdt.pearlchain.live/downloads/kusdt-wallet-testnet.zip` | to be published |
 
 The testnet values come from `deployments/testnet.json`.
 

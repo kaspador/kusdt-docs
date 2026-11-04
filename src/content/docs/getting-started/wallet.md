@@ -4,14 +4,28 @@ description: The kUSDT wallet extension, what it does, how it verifies what it s
 ---
 
 The kUSDT wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the
-local stack, but **not released to any store yet**. Its download link is **to be published**.
+local stack. A testnet build can be downloaded; it is **not in any store yet**.
+
+## Install
+
+For Chromium browsers: Chrome, Brave and Edge.
+
+1. Download [kusdt-wallet-testnet.zip](https://kusdt.pearlchain.live/downloads/kusdt-wallet-testnet.zip) from
+   `https://kusdt.pearlchain.live/downloads/kusdt-wallet-testnet.zip`.
+2. Unzip it.
+3. Open `chrome://extensions`.
+4. Turn on **Developer mode**.
+5. Click **Load unpacked** and pick the unzipped folder.
+6. Pin the extension.
+
+It starts on Testnet. To try it end to end, see [Test on the public testnet](/getting-started/public-testnet/).
 
 ## What it does
 
 | Feature | Detail |
 |---|---|
 | KAS and kUSDT | Holds and sends KAS and kUSDT as standard KCC-20 states |
-| Deposits | Bridges USDT in from Ethereum and BNB Chain through its own EVM side |
+| Deposits | Bridges USDT in from Ethereum and BNB Chain through its own EVM side. On testnet its Bridge tab has "Get 1,000 test USDT" |
 | Redemptions | Builds the burn with the right [burn owner](/protocol/burn-owner-and-payload/) and payload |
 | Pool | Swaps KAS and kUSDT, adds and removes liquidity |
 | Pages | Injects `window.kusdt`, so a page can ask the wallet to send, redeem, swap or provide liquidity. See [Wallet provider](/protocol/wallet-provider/) |
@@ -68,5 +82,12 @@ reviewed as "unvalidated", so kUSDT may show that label until the review is done
 
 ## Fees in KAS
 
-Every Kaspa transaction pays a network fee in KAS. Each kUSDT state also carries a KAS deposit for the storage it
-uses (1.5 KAS; see [Storage mass](/kaspa/storage-mass/)). Keep some KAS next to your kUSDT.
+Every Kaspa transaction pays a network fee in KAS. Each kUSDT state also carries KAS for the storage it uses (see
+[Storage mass](/kaspa/storage-mass/)):
+
+| Output | KAS it carries | Comes back? |
+|---|---|---|
+| An ordinary kUSDT state | 1.5 KAS | Yes, when the state is spent |
+| A redemption's burn output | 0.3 KAS | No: nothing can spend a burn, so it is gone for good |
+
+Keep some KAS next to your kUSDT.

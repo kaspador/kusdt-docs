@@ -3,8 +3,8 @@ title: Operations
 description: How the bridge is deployed and run. What runs where, the testnet steps, publishing, watching, alarms and keys.
 ---
 
-This page follows the runbook in `deploy/README.md`. The testnet is deployed (4 November 2026); its services run on
-the operator's machine for now. Nothing is on mainnet.
+This page follows the runbook in `deploy/README.md`. The testnet is deployed and public (4 November 2026) at
+`https://kusdt.pearlchain.live`, on one test host. Nothing is on mainnet.
 
 ## What runs where
 
@@ -29,9 +29,9 @@ All commands run from `bridge/devnet` unless noted. Keys live in `~/.kusdt/testn
 3. Run the services in one place only:
    - on this machine: `npm run testnet:services` (coordinator 9300, monitor 9310, signers 9301 to 9305);
    - or on a host, from the repository root: build the image
-     (`docker build -f deploy/services.Dockerfile -t kusdt-services:latest .`), copy the server bundle to
-     `/opt/kusdt/testnet/config` (files with mode 600 stay 600), then
-     `docker compose -f deploy/compose.testnet.yml up -d`.
+     (`docker build -f deploy/services.Dockerfile -t kusdt-services:<tag> .`, with `KUSDT_TAG=<tag>` in `.env`),
+     put each service's config and keys from the server bundle in `/opt/kusdt/secrets/<service>` (files mode
+     600), the built web app in `/opt/kusdt/web`, then `docker compose -f deploy/compose.testnet.yml up -d`.
 4. `npm run testnet:e2e`: deposits on both chains, mints, a redemption paid on BSC testnet, a pool swap, and
    reserves and the monitor healthy. Sepolia finality takes about 13 minutes.
 
@@ -100,32 +100,48 @@ Two more changes in the coordinator:
 | KusdtVault, Sepolia and BSC testnet (the same address on both) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` |
 | MockUSDT, Sepolia and BSC testnet (the same address on both) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` |
 | kUSDT covenant ID (TN10) | `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314` |
-| KasPool covenant ID (TN10) | Being re-created with the circuit breaker; **to be published** |
-| Coordinator API | `http://127.0.0.1:9300/api/v1`, on the operator's machine |
-| Monitor | `http://127.0.0.1:9310`, on the operator's machine |
+| KasPool covenant ID (TN10) | `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9` |
+| KasPool covenant ID, retired (no circuit breaker) | `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b` |
+| Web app | `https://kusdt.pearlchain.live` |
+| Coordinator API | `https://kusdt.pearlchain.live/api/v1` |
+| Monitor (read-only) | `https://kusdt.pearlchain.live/monitor/health` and `https://kusdt.pearlchain.live/monitor/api/v1/monitor` |
+| Wallet (testnet build) | `https://kusdt.pearlchain.live/downloads/kusdt-wallet-testnet.zip` |
 
-The web app's config for these services is `bridge/web/config/testnet.local.json`.
+The pool was opened on 4 November 2026 with 500 KAS and 15.7 kUSDT.
+
+The services run on one public test host, in isolated containers (`deploy/compose.testnet.yml`): a Kaspa TN10
+node, five signer containers each mounting only its own keys, the coordinator, the monitor and a static web
+container. All run as unprivileged users, with a read-only root filesystem and no capabilities (the web container
+keeps only `NET_BIND_SERVICE`, which its Caddy binary needs to start). No container publishes a port. Only the
+coordinator, the monitor and the web app are reachable through the host's reverse proxy; the node and the signers
+are not on its network.
+
+This is a testnet convenience. On mainnet each signer is a different operator on its own machine with its own
+nodes (SPEC §12).
+
+The public web app is built with `bridge/web/config/testnet.public.json`; `bridge/web/config/testnet.local.json`
+points a local build at services on `127.0.0.1`.
 
 ## Publishing
 
-The coordinator API and the monitor's status are public, read-only JSON. Put a TLS reverse proxy in front, for
-example Caddy:
+The coordinator API and the monitor's status are public, read-only JSON. On the public testnet the host's Caddy
+serves one name, `kusdt.pearlchain.live` (`deploy/kusdt.caddy`), with TLS, and routes by path:
 
-```text
-api.<domain> {
-    reverse_proxy /api/v1/* 127.0.0.1:9300
-}
-status.<domain> {
-    reverse_proxy /health 127.0.0.1:9310
-    reverse_proxy /api/v1/monitor 127.0.0.1:9310
-}
-```
+| Path | Goes to |
+|---|---|
+| `/api/v1/*` | The coordinator (`kusdt-coordinator:9300`) |
+| `GET` or `HEAD` `/monitor/health` and `/monitor/api/v1/monitor` | The monitor (`kusdt-monitor:9310`), with `/monitor` stripped |
+| Any other `/monitor/*` | 404, so the acknowledge route stays private |
+| Everything else | The web container (`kusdt-web:8080`) |
+
+The web container is Caddy serving static files only (`deploy/web.Caddyfile`): the built web app, and the wallet
+download under `/downloads/`.
 
 :::danger
 Never publish the signers' ports or the monitor's acknowledge route.
 :::
 
-The web app (`bridge/web`) and these docs (`docs/`) are static sites: `npm run build` in each, and set `SITE_URL`
+The web app (`bridge/web`, with `testnet.public.json` for the public testnet) and these docs (`docs/`) are static sites: `npm run build` in each, and set `SITE_URL`
 for the docs.
 
 ## Watching it

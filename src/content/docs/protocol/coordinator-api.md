@@ -3,10 +3,10 @@ title: Coordinator API
 description: The coordinator's public, read-mostly JSON API. Nothing in it moves funds.
 ---
 
-:::note[Running locally, not public yet]
-The coordinator (`bridge/services/src/coordinator/`) serves this API in the local stack at
-`http://127.0.0.1:9100/api/v1` (see [Run the simnet flow](/developers/simnet/#a-stack-that-keeps-running)), and for
-the testnet on the operator's machine at `http://127.0.0.1:9300/api/v1`. The public base URL is **to be published**.
+:::note[Where it runs]
+The coordinator (`bridge/services/src/coordinator/`) serves this API for the public testnet at
+`https://kusdt.pearlchain.live/api/v1`, and in the local stack at `http://127.0.0.1:9100/api/v1` (see
+[Run the simnet flow](/developers/simnet/#a-stack-that-keeps-running)). The mainnet base URL is **to be published**.
 :::
 
 The API is public and read-mostly: JSON over HTTPS under `/api/v1`. Nothing in it moves funds. Every answer that

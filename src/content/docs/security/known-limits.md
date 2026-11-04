@@ -81,8 +81,9 @@ borrowable state could move to a new outpoint and be claimed twice. Such kUSDT i
 
 ## Burns lock KAS too
 
-Every kUSDT state carries the deployment's token value, 1.5 KAS, for its storage mass. A burn state can never be
-spent, so its KAS is locked with the tokens forever. Wallets show it as part of a redemption's cost.
+An ordinary kUSDT state carries the deployment's token value, 1.5 KAS, for its storage mass, and that KAS comes
+back when the state is spent. A burn state can never be spent, so it carries the smaller burn value, 0.3 KAS, which
+is gone for good. Wallets show it as part of a redemption's cost.
 
 ## Rules the vault cannot check
 
@@ -116,10 +117,11 @@ admin resumes it. Removing liquidity always works.
 
 Whoever makes the first deposit into a new pool sets its starting price. Arbitrage then moves it toward the market.
 
-## Not yet public
+## The testnet runs on one host
 
-The contracts are deployed on testnet (TN10, Sepolia and BSC testnet). The signer, coordinator and monitor services
-run for it on the operator's machine, so it is not yet the federation of five independent operators that mainnet
-needs. The wallet extension and the web app are built and tested locally and on testnet, but not public.
-Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in those
+The contracts are deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at
+[kusdt.pearlchain.live](https://kusdt.pearlchain.live). Its five signers, the coordinator and the monitor run on one
+test host, in isolated containers, so it is not the federation of five independent operators that mainnet needs
+(see [Operations](/developers/operations/#the-testnet-deployment)). The wallet extension has a testnet build to
+download and is not in any store. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in those
 services, so they are only as good as their deployment.

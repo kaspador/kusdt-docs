@@ -5,7 +5,8 @@ description: The monitor and guardian service. What it checks, which alarms it r
 
 The **monitor** watches every chain kUSDT touches and holds the **guardian** keys. When something is wrong, it
 pauses both vaults, the minter and the pool. It is written (`bridge/services/src/monitor/`), has run in the local
-end-to-end test, and runs for the testnet on the operator's machine (port 9310). It is not hosted publicly yet.
+end-to-end test, and runs for the public testnet. Its read-only status is public at `https://kusdt.pearlchain.live/monitor/health`
+and `https://kusdt.pearlchain.live/monitor/api/v1/monitor`; the acknowledge route is not public.
 
 ## Principles
 

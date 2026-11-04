@@ -17,8 +17,16 @@ the issuers of those tokens. kUSDT's own rules are the covenants and contracts d
 
 ### Is it live?
 
-On testnet only: TN10, Sepolia and BSC testnet, since 4 November 2026. The services run on the operator's machine
-for now, and the web app and the wallet are not public yet. Nothing is on mainnet. See [Status](/overview/status/).
+On testnet only: TN10, Sepolia and BSC testnet, since 4 November 2026. The public testnet is at
+[kusdt.pearlchain.live](https://kusdt.pearlchain.live), with test coins only, and the testnet wallet can be
+downloaded. Nothing is on mainnet. See [Test on the public testnet](/getting-started/public-testnet/) and
+[Status](/overview/status/).
+
+### Who runs the testnet?
+
+One public test host runs every service, each in its own isolated container: a TN10 node, the five signers, the
+coordinator, the monitor and the web app. That is a testnet convenience. On mainnet each signer is a different
+operator on its own machine. See [Operations](/developers/operations/#the-testnet-deployment).
 
 ### Has it been audited?
 
@@ -38,12 +46,14 @@ with KAS in KasPool ([Swap](/getting-started/swap/)).
 ### What does bridging cost?
 
 0.20 % each way. The minimum is 0.50 USDT per deposit, and 5 USDT (Ethereum) or 0.50 USDT (BNB Chain) per
-release. You also pay gas on the EVM chain and a network fee in KAS on Kaspa. See [Fees](/protocol/fees/).
+release on mainnet; on the testnet both chains' minimum release fee is 0.50 USDT. You also pay gas on the EVM
+chain and a network fee in KAS on Kaspa. See [Fees](/protocol/fees/).
 
 ### Why does my kUSDT UTXO hold KAS?
 
 Kaspa requires each UTXO to carry KAS for the storage it uses, and covenant UTXOs count double. Each kUSDT state
-carries about 1.5 KAS. It remains yours and moves with the token. See [Storage mass](/kaspa/storage-mass/).
+carries about 1.5 KAS. It remains yours and moves with the token. The exception is a redemption's burn output: it
+carries 0.3 KAS, which is gone for good, since nothing can spend a burn. See [Storage mass](/kaspa/storage-mass/).
 
 ### Can I redeem on a different chain from the one I deposited on?
 
@@ -74,7 +84,8 @@ If such a burn lands anyway, it is held and paid if Tether unblocks the address.
 ### Which wallets support kUSDT?
 
 Any wallet with KCC-20 support can read kUSDT states, because kUSDT uses the standard template. The kUSDT wallet
-extension is built but not yet released. Always check the covenant ID.
+extension has a testnet build to download ([Install](/getting-started/wallet/#install)) and is not in any store
+yet. Always check the covenant ID.
 
 ## Security
 

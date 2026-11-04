@@ -10,9 +10,10 @@ Redeeming turns kUSDT on Kaspa back into USDT on Ethereum, or BSC-USD on BNB Cha
 release and the vault pays you.
 
 :::note[Testnet only]
-kUSDT runs on testnet: TN10, Sepolia and BSC testnet (addresses on [Status](/overview/status/#addresses)). Its
-services run on the operator's machine for now, and the web app and the wallet extension are not public yet. Nothing is on mainnet.
-Do not send real USDT to any address.
+kUSDT runs on testnet: TN10, Sepolia and BSC testnet (addresses on [Status](/overview/status/#addresses)). The
+public testnet web app is [kusdt.pearlchain.live](https://kusdt.pearlchain.live), and the testnet wallet can be
+downloaded; see [Test on the public testnet](/getting-started/public-testnet/). Nothing is on mainnet. Do not send
+real USDT to any address.
 :::
 
 ## Before you start
@@ -22,8 +23,9 @@ The burn owner commits to the payout chain and address. Tokens sent to it can ne
 change where they are paid, including you. Check the chain and the address before you sign.
 :::
 
-- Burns of an amount at or below the release fee are **never paid**. On Ethereum that is 5 USDT, on BNB Chain
-  0.50 USDT (or 0.20 % of the amount if that is higher).
+- Burns of an amount at or below the release fee are **never paid**. On mainnet that is 5 USDT on Ethereum and
+  0.50 USDT on BNB Chain (or 0.20 % of the amount if that is higher); on the testnet both vaults charge at least
+  0.50 USDT.
 - One burn output is paid in one release, and a vault pays only from its own backing. The wallet and the web app
   refuse a burn the named vault cannot pay now: a payout above its release capacity (250 000 USDT by default) or
   its current `releaseAvailable`, an amount above its backing, or a vault that is paused. They offer the other
@@ -37,8 +39,9 @@ change where they are paid, including you. Check the chain and the address befor
 - You need KAS as well as kUSDT: the burn output carries KAS (below), and the transaction pays a network fee.
 - Only a **plain** burn is paid: borrow scheme, borrow guard and extension commitment must all be zero. Signers
   refuse any other burn state, and its kUSDT is lost. Wallets never build one.
-- The burn output carries the deployment's token value in KAS, 1.5 KAS, like every kUSDT state. That KAS is
-  locked with the tokens forever, so it is part of a redemption's cost.
+- The burn output carries the deployment's burn value, 0.3 KAS. Nothing can spend a burn, so that KAS is gone for
+  good, and it is part of a redemption's cost. An ordinary kUSDT state carries 1.5 KAS instead, which comes back
+  when it is spent.
 
 ## Steps
 
@@ -62,7 +65,8 @@ change where they are paid, including you. Check the chain and the address befor
 
 ## What you receive
 
-The release fee is 0.20 % of the amount, with a minimum of 5 USDT on Ethereum and 0.50 USDT on BNB Chain.
+The release fee is 0.20 % of the amount, with a minimum of 5 USDT on Ethereum and 0.50 USDT on BNB Chain
+(mainnet; on the testnet the minimum is 0.50 USDT on both chains).
 
 | kUSDT burned | Ethereum: fee | Ethereum: you receive | BNB Chain: fee | BNB Chain: you receive |
 |---|---|---|---|---|

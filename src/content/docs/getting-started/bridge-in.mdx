@@ -10,9 +10,10 @@ vault on that chain. After the deposit is final, the bridge signers approve it a
 Kaspa address.
 
 :::note[Testnet only]
-kUSDT runs on testnet: TN10, Sepolia and BSC testnet (addresses on [Status](/overview/status/#addresses)). Its
-services run on the operator's machine for now, and the web app is not public yet. Nothing is on mainnet.
-Do not send real USDT to any address.
+kUSDT runs on testnet: TN10, Sepolia and BSC testnet (addresses on [Status](/overview/status/#addresses)). The
+public testnet web app is [kusdt.pearlchain.live](https://kusdt.pearlchain.live); see
+[Test on the public testnet](/getting-started/public-testnet/). Nothing is on mainnet. Do not send real USDT to any
+address.
 :::
 
 ## What you need
@@ -23,8 +24,9 @@ Do not send real USDT to any address.
 | An EVM wallet with some ETH or BNB | To pay gas for two transactions: approve and deposit |
 | A Kaspa address | Where your kUSDT will arrive. A Schnorr address (`kaspa:q…`) is the usual choice |
 
-On testnet the vaults hold `MockUSDT`, a test token that anyone can mint for free. Its address is **to be
-published**.
+On testnet the vaults hold `MockUSDT`, a test token that anyone can mint, paying only gas. Its address is
+`0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` on both Sepolia and BSC testnet. The web app's Bridge page and the
+wallet's Bridge tab have "Get 1,000 test USDT", which calls that open mint from your EVM account.
 
 ## Steps
 

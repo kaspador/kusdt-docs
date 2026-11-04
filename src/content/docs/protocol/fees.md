@@ -73,5 +73,5 @@ and moves with it.
 | The Pool | its base deposit (1 KAS in the simnet run) plus the KAS reserve and the protocol's KAS |
 
 The KAS in a newly minted state is paid by the coordinator's Kaspa funding, out of the deposit fee; from then on
-it belongs to the holder. A burn state's KAS (1.5 KAS) is locked forever, with the burned tokens, so it is part
-of a redemption's cost. See [Storage mass](/kaspa/storage-mass/).
+it belongs to the holder. A burn state carries the deployment's burn value instead, 0.3 KAS. Nothing can spend a
+burn, so that KAS is gone for good, and it is part of a redemption's cost. See [Storage mass](/kaspa/storage-mass/).

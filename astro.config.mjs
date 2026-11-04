@@ -53,6 +53,7 @@ export default defineConfig({
         {
           label: 'Getting started',
           items: [
+            'getting-started/public-testnet',
             'getting-started/web-app',
             'getting-started/bridge-in',
             'getting-started/swap',

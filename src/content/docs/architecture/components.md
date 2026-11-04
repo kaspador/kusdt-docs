@@ -52,8 +52,9 @@ backing and cannot renounce ownership. See [Governance](/security/governance/).
 ## Off-chain
 
 The signer and the coordinator are written (`bridge/services`) and have run together with the monitor on one machine
-(see [Run the simnet flow](/developers/simnet/#the-whole-bridge-on-one-machine)). For the testnet they run on the
-operator's machine; none is hosted publicly yet.
+(see [Run the simnet flow](/developers/simnet/#the-whole-bridge-on-one-machine)). For the public testnet they run on
+one test host, in isolated containers; only the coordinator's API and the monitor's read-only status are reachable
+from outside (see [Operations](/developers/operations/#the-testnet-deployment)).
 
 ### Signers
 

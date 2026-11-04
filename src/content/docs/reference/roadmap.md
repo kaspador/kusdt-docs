@@ -22,14 +22,15 @@ As of 3 November 2026. Order follows the project's working plan; there are no da
 - The web app, tested on the live stack and with the real wallet extension.
 - Refunds, a load run, a rehearsal of the vault on mainnet forks, and an internal security review with its fixes.
 - Deployment tooling: a services image, a testnet compose file and a runbook.
+- The testnets: vaults on Sepolia and BSC testnet, genesis and pool on testnet-10, and the services, public since
+  4 November 2026 at [kusdt.pearlchain.live](https://kusdt.pearlchain.live) with a downloadable testnet wallet.
 - This documentation site.
 
 ## Next
 
 | # | Work |
 |---|---|
-| 1 | Testnets, once funded: vaults on Sepolia and BSC testnet, genesis and pool on testnet-10, the services |
-| 2 | The mainnet package: deploy scripts dry-run, the checklists, and an operations runbook (keys, Safe and timelock, guardian, monitor alerts) |
+| 1 | The mainnet package: deploy scripts dry-run, the checklists, and an operations runbook (keys, Safe and timelock, guardian, monitor alerts) |
 
 ## Before mainnet
 

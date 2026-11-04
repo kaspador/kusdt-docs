@@ -53,9 +53,21 @@ at their largest shapes, with 1.5 KAS per token state and a 5 KAS minter:
 |---|---|
 | Mint to 3 recipients (the maximum) | 87 993 |
 | KCC-20 transfer, 3 inputs to 3 outputs (the maximum) | 79 957 |
-| Redemption with 2 burn outputs | 79 957 |
+| Redemption: one 0.3 KAS burn and a 1.5 KAS change token | 159 994 |
 
-All stay under the 100 000 standard limit. Run it with
+A burn is never spent, so its KAS is gone for good. It carries 0.3 KAS, not 1.5: the KAS saved outweighs the
+extra storage mass it pays for. Measured with the same builder:
+
+| KAS in the burn | Storage mass | Fee | The redemption costs |
+|---|---|---|---|
+| 1.5 | 53 327 | 0.053 KAS | 1.553 KAS |
+| 0.5 | 106 661 | 0.107 KAS | 0.607 KAS |
+| 0.3 | 159 994 | 0.160 KAS | 0.460 KAS |
+| 0.2 | 226 661 | 0.227 KAS | 0.427 KAS |
+| 0.15 | 293 327 | 0.293 KAS | 0.443 KAS |
+
+Below 0.3 KAS a burn saves almost nothing more and soon costs more in fee. Mints and transfers stay under the
+old 100 000 limit; a redemption with a 0.3 KAS burn is over it, which is fine after Toccata (below). Run
 `bash tools/rust.sh bridge/kaspa cargo test --test standard -- --nocapture` to print the masses.
 
 ### After Toccata
@@ -64,9 +76,10 @@ The 100 000 per-transaction standard cap applies only before Toccata. It is lift
 Toccata activates. After that only the block limits apply: 500 000 compute and storage mass, and 1 000 000
 transient mass. Covenant transactions only exist after Toccata, so the old cap never meets them.
 
-The kUSDT builders still keep compute and storage mass at or below 100 000. Pool transactions carry more
-transient mass: a sell is about 108 000, an add about 114 000. `tests/standard.rs` allows up to 250 000 transient
-mass, a quarter of the block limit.
+The kUSDT builders cap a transaction's compute and storage mass at 300 000 (`MAX_STANDARD_MASS`, under the
+500 000 block limit). Redemptions use that room: two 0.3 KAS burns in one transaction come to about 293 000.
+Pool transactions carry more transient mass: a sell is about 108 000, an add about 114 000.
+`tests/standard.rs` allows up to 250 000 transient mass, a quarter of the block limit.
 
 So **each kUSDT state carries 1.5 KAS by default.** This is not a fee:
 
@@ -75,7 +88,10 @@ So **each kUSDT state carries 1.5 KAS by default.** This is not a fee:
 - whoever creates a token output supplies its KAS. For a mint, that is the coordinator's Kaspa funding, paid
   out of the deposit fee.
 
-The one exception is a burn: a burn state can never be spent, so its KAS is locked with the tokens.
+The one exception is a burn: a burn state can never be spent, so its KAS is gone for good. Burn outputs therefore
+carry the deployment's smaller burn value, 0.3 KAS, not the 1.5 KAS token value. A smaller output costs more
+storage mass, so the redemption pays a higher network fee: about 0.3 KAS in the burn plus about 0.16 KAS of fee,
+some 0.46 KAS per redemption, against about 1.55 KAS with a 1.5 KAS burn (SPEC §9).
 
 ## Other covenant UTXOs
 

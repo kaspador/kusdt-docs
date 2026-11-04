@@ -4,8 +4,9 @@ description: The kUSDT web app, what each section does, the two wallets it needs
 ---
 
 The web app is the public front end of the bridge and the pool: a static single-page app in `bridge/web`. It is
-built and tested against the local stack and the testnet. Its public URL is **to be published**; for the testnet
-services on the operator's machine it uses `bridge/web/config/testnet.local.json`.
+built and tested against the local stack and the testnet. On testnet it is public at
+[kusdt.pearlchain.live](https://kusdt.pearlchain.live), built with `bridge/web/config/testnet.public.json`. Its mainnet
+URL is **to be published**. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
 
 ## Two wallets
 
@@ -22,7 +23,7 @@ Without the extension, every Kaspa-side action explains how to get it.
 
 | Section | What it does |
 |---|---|
-| **Bridge → Kaspa** | Deposits USDT into the vault: approves exactly the amount, calls `deposit`, then follows the deposit until it is minted. See [Bridge USDT in](/getting-started/bridge-in/) |
+| **Bridge → Kaspa** | Deposits USDT into the vault: approves exactly the amount, calls `deposit`, then follows the deposit until it is minted. On testnet it also has "Get 1,000 test USDT" (MockUSDT's open mint, paid with gas from your EVM account). See [Bridge USDT in](/getting-started/bridge-in/) |
 | **Bridge → EVM** | Redeems kUSDT through the wallet, after checking that the named vault can pay it now and would pay the address, and follows it until paid. See [Redeem kUSDT](/getting-started/redeem/) |
 | **Swap** | Quotes exactly with the same core the covenant checks against, shows the 0.30 % fee, the price impact and your slippage setting. See [Swap](/getting-started/swap/) |
 | **Pool** | Reserves, price and TVL; add liquidity, list your positions, remove one |
@@ -59,7 +60,7 @@ Amounts are exact integers end to end, including values above 2⁵³.
 | You may notice | Why |
 |---|---|
 | You need two wallets | Deposits are EVM transactions; everything on Kaspa is signed by kUSDT Wallet |
-| You need KAS to redeem | Every kUSDT state carries 1.5 KAS, and a burn locks it forever (see [Storage mass](/kaspa/storage-mass/)) |
+| You need KAS to redeem | A redemption's burn output carries 0.3 KAS, gone for good since nothing can spend a burn, plus the network fee. An ordinary kUSDT state carries 1.5 KAS, which comes back when it is spent (see [Storage mass](/kaspa/storage-mass/)) |
 | An Ethereum deposit can take three prompts | Ethereum's USDT refuses to change a non-zero allowance, so the app first resets it to 0, then approves the exact amount, then deposits |
 | Minimum release fees differ per chain | 5 USDT on Ethereum, 0.50 USDT on BNB Chain (see [Fees](/protocol/fees/)) |
 | Position IDs look like `txid:index` | A position is a Kaspa UTXO, named by its transaction ID and output index |
