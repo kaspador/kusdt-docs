@@ -77,7 +77,7 @@ it in the quote before you sign. Net of buys, sells may take at most 10 % of the
 breaker (SPEC §15), and a larger sell is refused until the window opens again.
 
 The pool was replaced on 5 November 2026 by one whose breaker counts the net flow (sells less buys), so round trips
-cannot use up the hour's room. Use wallet 0.9.3 or later: older builds know only the retired pool.
+cannot use up the hour's room. Use wallet 0.9.4 or later: 0.9.2 and older know only the retired pool, and 0.9.4 gets past a stalled public node by itself.
 
 Details: [Swap KAS and kUSDT](/getting-started/swap/), [The sell limit](/getting-started/swap/#the-sell-limit),
 [KasPool: the circuit breaker](/contracts/kaspool/#the-circuit-breaker).
