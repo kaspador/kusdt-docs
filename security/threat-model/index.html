@@ -182,8 +182,18 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 </tr>
 <tr>
 <td>Fake deposits or burns fed to a signer through its RPC or node</td>
-<td>It takes 3 operators’ nodes. Today all 5 testnet signers run on one machine</td>
-<td>Open until there are 5 independent operators</td>
+<td>It takes 3 operators’ nodes. Every RPC a signer uses must agree on every field of a deposit (its sender, which a refund pays, included) and of every release and refund. Today all 5 testnet signers run on one machine</td>
+<td>Open until there are 5 independent operators; the full agreement fixed 5 November 2026</td>
+</tr>
+<tr>
+<td>A wrong redemption report sent first, to strand someone’s burn</td>
+<td>Claims are checked against the coordinator’s node, which decides; a client’s transaction cannot edit the token index</td>
+<td>Fixed 5 November 2026</td>
+</tr>
+<tr>
+<td>An RPC outage switching the monitor off</td>
+<td>Each chain is checked on its own, INV-1 is never judged on partial backing, and a chain unreadable for 10 minutes pauses everything</td>
+<td>Fixed 5 November 2026</td>
 </tr>
 <tr>
 <td>Reorgs</td>
