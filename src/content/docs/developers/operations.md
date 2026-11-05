@@ -133,7 +133,7 @@ Two more changes in the coordinator:
 | KusdtVault, Sepolia and BSC testnet (the same address on both) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` |
 | MockUSDT, Sepolia and BSC testnet (the same address on both) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` |
 | kUSDT covenant ID (TN10) | `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314` |
-| KasPool covenant ID (TN10) | `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9` |
+| KasPool covenant ID (TN10) | `102a59644f81734faa6e7870a694ee8da047b02b8bc21945576f535f94f5efb4` |
 | KasPool covenant ID, retired (no circuit breaker) | `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b` |
 | Web app | `https://kastools.com` |
 | Coordinator API | `https://kastools.com/api/v1` |

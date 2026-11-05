@@ -72,13 +72,12 @@ Details: [Bridge USDT in](/getting-started/bridge-in/), [Finality](/protocol/fin
 
 Swap KAS for kUSDT and back in the web app's **Swap** page or the wallet. Every swap pays 0.30 % of its input.
 
-The pool was opened on 4 November 2026 with 500 KAS and 15.7 kUSDT, so it is thin: expect price impact, and check
-it in the quote before you sign. Sells may take at most 10 % of the pool's KAS per hour: that is the circuit
+Testnet liquidity is thin: expect price impact, and check
+it in the quote before you sign. Net of buys, sells may take at most 10 % of the pool's KAS per hour: that is the circuit
 breaker (SPEC §15), and a larger sell is refused until the window opens again.
 
-This pool still runs the breaker of 4 November, which counts every sell and ignores buys. It will be replaced by a
-pool with the net-flow breaker (release candidate `mainnet-v0.9.8-rc.1`); liquidity providers are asked to
-withdraw first.
+The pool was replaced on 5 November 2026 by one whose breaker counts the net flow (sells less buys), so round trips
+cannot use up the hour's room. Use wallet 0.9.3 or later: older builds know only the retired pool.
 
 Details: [Swap KAS and kUSDT](/getting-started/swap/), [The sell limit](/getting-started/swap/#the-sell-limit),
 [KasPool: the circuit breaker](/contracts/kaspool/#the-circuit-breaker).
