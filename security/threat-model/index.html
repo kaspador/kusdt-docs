@@ -117,7 +117,7 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 <tr>
 <td>Vault owner</td>
 <td>Nothing</td>
-<td>After the 48-hour timelock: replace the signers and raise limits within the hard bounds</td>
+<td>After its 48-hour delay, unless a canceller cancels it: replace the signers and raise limits within the hard bounds</td>
 </tr>
 <tr>
 <td>Pool admin</td>
@@ -152,12 +152,22 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 </tr>
 <tr>
 <td>3 of 5 signer keys pay out without burns</td>
-<td>Each vault’s release allowance: 250 000 at once. Up to about 250 000 per vault can leave before the pause</td>
+<td>Each vault’s release allowance: 250 000 at once. The monitor raises <code dir="auto">release-without-burn</code> as soon as its Kaspa view has caught up and pauses, so about 250 000 per vault can leave</td>
 <td>Bounded</td>
 </tr>
 <tr>
+<td>A burn reorganized away after its payout</td>
+<td>Finality on Kaspa, deeper for larger burns: 1 000 DAA, 6 000 above 10 000 kUSDT, 36 000 above 100 000</td>
+<td>Fixed 5 November 2026 (the tiers)</td>
+</tr>
+<tr>
+<td>A compromised vault owner queues new signers or limits</td>
+<td>Every owner change waits 48 hours in the AccessManager; the monitor alarms when it is queued, and a canceller (or the monitor itself) cancels it</td>
+<td>Bounded (5 November 2026)</td>
+</tr>
+<tr>
 <td>4 of 5 signer keys</td>
-<td>They can raise the Kaspa limits and unpause the minter. The vaults’ limits and signers belong to the owner (a Safe behind a 48-hour timelock on mainnet)</td>
+<td>They can raise the Kaspa limits and unpause the minter. The vaults’ limits and signers belong to the owner (an AccessManager under a Safe on mainnet, 48-hour delays)</td>
 <td>Bounded on the vaults; the monitor is the defence on Kaspa</td>
 </tr>
 <tr>
@@ -236,6 +246,11 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 <td>Swap spam</td>
 <td>Griefing only: each swap pays the network fee and 0.30 %</td>
 <td>Bounded</td>
+</tr>
+<tr>
+<td>Round trips that use up the hour’s sell room</td>
+<td>The breaker counts the net flow, so a buy gives the room back</td>
+<td>Fixed 5 November 2026</td>
 </tr>
 <tr>
 <td>Price manipulation</td>
@@ -356,8 +371,8 @@ stop the bridge and the pool:</p>
 </tr>
 <tr>
 <td>Vault</td>
-<td>The owner (<code dir="auto">unpause</code>)</td>
-<td>The owner (<code dir="auto">setGuardian</code>); on mainnet through the 48-hour timelock</td>
+<td>The owner (<code dir="auto">unpause</code>); on mainnet through the AccessManager’s emergency delay, about 6 hours</td>
+<td>The owner (<code dir="auto">setGuardian</code>), with the same delay</td>
 </tr>
 <tr>
 <td>Pool</td>
@@ -423,7 +438,8 @@ when something breaks. Without a pause, the allowances still cap what 3 bad sign
 <p>The forged kUSDT stays on Kaspa, where transfers are not paused. The pause keeps it from being released for USDT
 or sold into the pool.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="vault-owner">Vault owner</h2><a class="sl-anchor-link" href="#vault-owner"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Vault owner”</span></a></div>
-<p>The owner is a Safe behind a 48-hour timelock on mainnet. A compromised owner can, after the timelock:</p>
+<p>On mainnet the owner is an OpenZeppelin AccessManager whose admin is a Safe (see <a href="/kusdt-docs/security/governance/">Governance</a>).
+A compromised Safe can, after the delay and unless a canceller cancels it:</p>
 <ul>
 <li>replace a vault’s signers with its own keys (<code dir="auto">setSigners</code>);</li>
 <li>raise the release allowance to the hard bounds: a capacity of up to 1 billion USDT, refilling fully in no less
@@ -431,9 +447,12 @@ than a day;</li>
 <li>set fees up to 1 % and minimum fees up to 50 USDT;</li>
 <li>withdraw accrued fees.</li>
 </ul>
-<p>It cannot withdraw backing directly, and every change becomes public 48 hours before it takes effect. The owner
-is the one party whose compromise is not capped by the release allowance, which is why it sits behind a
-multisig and a timelock.</p>
+<p>It cannot withdraw backing directly, and every change becomes public 48 hours before it takes effect (<code dir="auto">setGuardian</code>
+and <code dir="auto">unpause</code>: about 6 hours). The monitor alarms the moment a change it was not told about is queued, pauses the
+vaults, and can cancel it with a canceller key; the cancellers are parties other than the Safe’s holders. A rogue
+canceller can only cancel, and the Safe can revoke it (that too waits 48 hours, and cancellers cannot cancel it).
+The owner is the one party whose compromise is not capped by the release allowance, which is why it sits behind a
+multisig, a delay and independent cancellers.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="chains-and-nodes">Chains and nodes</h2><a class="sl-anchor-link" href="#chains-and-nodes"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Chains and nodes”</span></a></div>
 <table>
 <thead>

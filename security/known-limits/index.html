@@ -77,7 +77,12 @@ could do; rate limits on both sides cap it.</p>
 <p><strong>Upgrade path: zero-knowledge light-client verification.</strong> Kaspa’s Toccata upgrade includes an opcode that
 verifies zero-knowledge proofs (<code dir="auto">OpZkPrecompile</code>, KIP-16), and KIP-17 lists trustless bridges built on it as a use
 case. A future version could mint on Kaspa against a proof of the deposit, checked on-chain, instead of signer
-signatures. This is the planned direction, not part of v1.</p>
+signatures. This is the planned direction, not part of v1, and it has no date.</p>
+<p><strong>It would cover one direction only.</strong> A proof checked on Kaspa replaces the signers’ word about deposits, so it
+removes the risk of unbacked mints. Releases are the other direction: the vaults on Ethereum and BNB Chain would have
+to verify Kaspa burns themselves, which needs a Kaspa light client on the EVM side, a separate and harder project.
+Until then, a release rests on 3 of 5 signers, capped by each vault’s release allowance (250 000 USDT at once, at
+most 500 000 in any 24 hours), and the monitor pauses the vaults the moment it sees a release with no burn behind it.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="blocked-recipients">Blocked recipients</h2><a class="sl-anchor-link" href="#blocked-recipients"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Blocked recipients”</span></a></div>
 <p><strong>A blocked recipient is never paid.</strong> This was decided on 4 November 2026.</p>
 <p>Ethereum USDT keeps a blacklist (<code dir="auto">isBlackListed(address)</code>), edited by Tether. BSC-USD
@@ -139,10 +144,17 @@ Chain only if the BNB Chain vault holds enough.</li>
 backing, or while it is paused) and offer the other chain. If one lands anyway, it waits: the relayer retries it
 with its own backoff until the allowance refills, deposits on that chain bring the backing, or the owner raises
 the capacity within its hard bound. It never holds up other burns.</p>
+<p><strong>Rebalancing uses the bridge’s own paths.</strong> No key can move backing from one vault to the other. When one chain runs
+short, an operator holding kUSDT redeems it from the vault that has plenty, moves the USDT across (an exchange or
+another bridge), and deposits it into the short vault, which mints the same kUSDT back. Backing moves for 0.2 % each
+way plus the cost of the crossing, and no new trust is added. See <a href="/kusdt-docs/developers/operations/#rebalancing-the-vaults">Operations</a>.
+In a run on one chain, holders are still paid in full, on the other chain.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="small-burns-are-lost">Small burns are lost</h2><a class="sl-anchor-link" href="#small-burns-are-lost"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Small burns are lost”</span></a></div>
 <p>A burn whose amount is at or below the release fee (5 USDT on Ethereum, 0.50 USDT on BNB Chain, or 0.20 % if
 higher) is never paid. It is marked <code dir="auto">unpayable</code>, and the tokens are still burned. The same holds for a burn naming the
 zero address or the vault itself.</p>
+<p>The wallet and the web app refuse such a burn, and warn when the fee would take more than 20 % of a redemption. Only a
+transaction built by hand can still lose a burn this way. Each burn output also locks 0.3 KAS for good (below).</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="only-plain-burns-are-paid">Only plain burns are paid</h2><a class="sl-anchor-link" href="#only-plain-burns-are-paid"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Only plain burns are paid”</span></a></div>
 <p>Signers refuse a burn state whose borrow scheme, borrow guard or extension commitment is not zero, because a
 borrowable state could move to a new outpoint and be claimed twice. Such kUSDT is lost. Wallets never build one.</p>
@@ -164,9 +176,10 @@ is gone for good. Wallets show it as part of a redemption’s cost.</p>
 This is the price of being immune to sandwich attacks. The wallet goes ahead on its own only when the new quote
 is at least as good as the one you confirmed; a worse one asks you again (being built).</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-pool-caps-sells">The pool caps sells</h2><a class="sl-anchor-link" href="#the-pool-caps-sells"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The pool caps sells”</span></a></div>
-<p>Sells may take at most 10 % of the pool’s KAS reserve per hour (the
-<a href="/kusdt-docs/contracts/kaspool/#the-circuit-breaker">circuit breaker</a>). It bounds a dump of forged kUSDT, but it also
-slows a large honest sell, which must wait for the next window. Buys are not limited.</p>
+<p>The net KAS sells take out of the pool, less what buys bring in, may be at most 10 % of its KAS reserve per hour
+(the <a href="/kusdt-docs/contracts/kaspool/#the-circuit-breaker">circuit breaker</a>). It bounds a dump of forged kUSDT, but it also slows
+a large honest sell, which must wait for buys or the next window. Buys are not limited. Because it counts the net
+flow, round trips (a buy, then a sell back) cannot use up the room; until 5 November 2026 they could.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-pool-can-be-paused">The pool can be paused</h2><a class="sl-anchor-link" href="#the-pool-can-be-paused"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The pool can be paused”</span></a></div>
 <p>On any alarm the guardian pauses the pool with the rest of the bridge. Swaps and new liquidity stop until the pool
 admin resumes it. Removing liquidity always works.</p>
@@ -174,7 +187,7 @@ admin resumes it. Removing liquidity always works.</p>
 <p>Whoever makes the first deposit into a new pool sets its starting price. Arbitrage then moves it toward the market.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-testnet-runs-on-one-host">The testnet runs on one host</h2><a class="sl-anchor-link" href="#the-testnet-runs-on-one-host"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The testnet runs on one host”</span></a></div>
 <p>The contracts are deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at
-<a href="https://kusdt.pearlchain.live">kusdt.pearlchain.live</a>. Its five signers, the coordinator and the monitor run on one
+<a href="https://kastools.com">kastools.com</a>. Its five signers, the coordinator and the monitor run on one
 test host, in isolated containers, so it is not the federation of five independent operators that mainnet needs
 (see <a href="/kusdt-docs/developers/operations/#the-testnet-deployment">Operations</a>). The wallet extension has a testnet build to
 download and is not in any store. Several protections on this site (finality checks, signer-side rules, the monitor’s alarms) live in those

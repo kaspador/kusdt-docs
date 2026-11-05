@@ -197,9 +197,9 @@ nodes.</p>
 </tr>
 <tr>
 <td>Vault owner</td>
-<td>Safe and timelock</td>
-<td>Admin calls</td>
-<td><code dir="auto">KusdtVault</code> (owner only)</td>
+<td>A Safe, through the AccessManager</td>
+<td>Scheduled admin calls, executed after their delay</td>
+<td>The AccessManager, then <code dir="auto">KusdtVault</code> (owner only)</td>
 </tr>
 <tr>
 <td>User keys</td>
