@@ -45,7 +45,7 @@ Details: [KusdtVault](/contracts/kusdt-vault/).
 
 ### Vault owner
 
-On mainnet, a Safe multisig behind a 48-hour timelock. It sets fees and limits within hard bounds, replaces the
+On mainnet, an AccessManager whose admin is a Safe multisig (48-hour delays, independent cancellers). It sets fees and limits within hard bounds, replaces the
 signer set and the guardian, unpauses, and withdraws accrued fees (never more than `feesAccrued`). It cannot move
 backing and cannot renounce ownership. See [Governance](/security/governance/).
 

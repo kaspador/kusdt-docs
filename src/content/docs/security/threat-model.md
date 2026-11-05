@@ -18,7 +18,7 @@ then refills, up to twice its ceiling can move in any 24-hour window.
 | Guardian key | Pause the minter and the pool | Pause the vault |
 | Coordinator | Stall | Stall |
 | Monitor | Pause, or fail to pause | Pause, or fail to pause |
-| Vault owner | Nothing | After the 48-hour timelock: replace the signers and raise limits within the hard bounds |
+| Vault owner | Nothing | After its 48-hour delay, unless a canceller cancels it: replace the signers and raise limits within the hard bounds |
 | Pool admin | Take the accrued protocol fees, unpause the pool, hand the keys over | Nothing |
 
 ## Attack vectors
@@ -36,8 +36,10 @@ A review of every attack we know of, as of 4 November 2026. Status means:
 | Attack | What stops it | Status |
 |---|---|---|
 | 3 of 5 signer keys mint unbacked kUSDT | The mint allowance: 500 000 at once, at most 1 000 000 in any 24 hours. The monitor pauses within seconds | Tested: the 400 000 forged mint in `local:e2e` |
-| 3 of 5 signer keys pay out without burns | Each vault's release allowance: 250 000 at once. Up to about 250 000 per vault can leave before the pause | Bounded |
-| 4 of 5 signer keys | They can raise the Kaspa limits and unpause the minter. The vaults' limits and signers belong to the owner (a Safe behind a 48-hour timelock on mainnet) | Bounded on the vaults; the monitor is the defence on Kaspa |
+| 3 of 5 signer keys pay out without burns | Each vault's release allowance: 250 000 at once. The monitor raises `release-without-burn` as soon as its Kaspa view has caught up and pauses, so about 250 000 per vault can leave | Bounded |
+| A burn reorganized away after its payout | Finality on Kaspa, deeper for larger burns: 1 000 DAA, 6 000 above 10 000 kUSDT, 36 000 above 100 000 | Fixed 5 November 2026 (the tiers) |
+| A compromised vault owner queues new signers or limits | Every owner change waits 48 hours in the AccessManager; the monitor alarms when it is queued, and a canceller (or the monitor itself) cancels it | Bounded (5 November 2026) |
+| 4 of 5 signer keys | They can raise the Kaspa limits and unpause the minter. The vaults' limits and signers belong to the owner (an AccessManager under a Safe on mainnet, 48-hour delays) | Bounded on the vaults; the monitor is the defence on Kaspa |
 | A stolen guardian key | It can only pause: griefing | By design |
 | A lying coordinator or API | It can stall or censor, nothing more. Wallets check token states against their own node and pin the deployment; signers re-check everything | By design |
 | Fake deposits or burns fed to a signer through its RPC or node | It takes 3 operators' nodes. Today all 5 testnet signers run on one machine | Open until there are 5 independent operators |
@@ -56,6 +58,7 @@ A review of every attack we know of, as of 4 November 2026. Status means:
 | Inflating the first depositor's shares | 1 000 shares are locked at `init` and can never be withdrawn | By design |
 | Rounding and overflow | Exact 128-bit products and bounds on every input | Tested; needs the audit |
 | Swap spam | Griefing only: each swap pays the network fee and 0.30 % | Bounded |
+| Round trips that use up the hour's sell room | The breaker counts the net flow, so a buy gives the room back | Fixed 5 November 2026 |
 | Price manipulation | Nothing reads the pool price as an oracle | By design |
 | A stolen pool admin key | It can take the accrued fees, unpause and hand the keys over. It cannot touch the reserves or a position | Bounded |
 
@@ -128,7 +131,7 @@ stop the bridge and the pool:
 | Side | Who resumes | Who replaces the guardian |
 |---|---|---|
 | Kaspa | 4 signers (`unpause`) | 4 signers (`set_signers`) |
-| Vault | The owner (`unpause`) | The owner (`setGuardian`); on mainnet through the 48-hour timelock |
+| Vault | The owner (`unpause`); on mainnet through the AccessManager's emergency delay, about 6 hours | The owner (`setGuardian`), with the same delay |
 | Pool | The pool admin (`unpause`) | The pool admin (`set_keys`) |
 
 kUSDT transfers on Kaspa are not affected by any pause. A paused pool still lets liquidity providers withdraw.
@@ -169,7 +172,8 @@ or sold into the pool.
 
 ## Vault owner
 
-The owner is a Safe behind a 48-hour timelock on mainnet. A compromised owner can, after the timelock:
+On mainnet the owner is an OpenZeppelin AccessManager whose admin is a Safe (see [Governance](/security/governance/)).
+A compromised Safe can, after the delay and unless a canceller cancels it:
 
 - replace a vault's signers with its own keys (`setSigners`);
 - raise the release allowance to the hard bounds: a capacity of up to 1 billion USDT, refilling fully in no less
@@ -177,9 +181,12 @@ The owner is a Safe behind a 48-hour timelock on mainnet. A compromised owner ca
 - set fees up to 1 % and minimum fees up to 50 USDT;
 - withdraw accrued fees.
 
-It cannot withdraw backing directly, and every change becomes public 48 hours before it takes effect. The owner
-is the one party whose compromise is not capped by the release allowance, which is why it sits behind a
-multisig and a timelock.
+It cannot withdraw backing directly, and every change becomes public 48 hours before it takes effect (`setGuardian`
+and `unpause`: about 6 hours). The monitor alarms the moment a change it was not told about is queued, pauses the
+vaults, and can cancel it with a canceller key; the cancellers are parties other than the Safe's holders. A rogue
+canceller can only cancel, and the Safe can revoke it (that too waits 48 hours, and cancellers cannot cancel it).
+The owner is the one party whose compromise is not capped by the release allowance, which is why it sits behind a
+multisig, a delay and independent cancellers.
 
 ## Chains and nodes
 

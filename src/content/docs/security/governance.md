@@ -23,8 +23,33 @@ Nothing can raise the hard cap. `pause` needs only the guardian.
 
 ## KusdtVault (EVM): the owner
 
-Each vault has an **owner**. On mainnet it must be a Safe behind a 48-hour timelock; the deploy script refuses a
-mainnet owner that is not a contract.
+Each vault has an **owner**. On mainnet the owner is an OpenZeppelin `AccessManager` (5.1.0, unmodified) whose only
+admin is the project Safe; the vault itself is unchanged. Every owner call goes through the manager: the Safe
+schedules it, waits its delay, then executes it within a week. Calling the vault directly reverts.
+
+| Role | Held by | Delay | What it may call |
+|---|---|---|---|
+| ADMIN | The Safe only | 48 hours | The manager itself: roles, delays, guardians, which role may call what |
+| GOVERNOR | The Safe | 48 hours | `setFees`, `setDepositLimits`, `setReleaseLimits`, `setSigners`, `withdrawFees`, `transferOwnership` |
+| EMERGENCY | The Safe | 6 hours by default (1 to 48) | `setGuardian`, `unpause`: a stolen guardian key costs hours, not days |
+| PAUSER | The Safe | None | `pause`. The guardian still pauses on its own |
+| CANCELLER | Independent cancellers | | Cancel any scheduled GOVERNOR or EMERGENCY call |
+
+**One honest canceller stops a bad proposal.** The cancellers are parties other than the Safe's holders, and the
+monitor can hold a canceller key too, cancelling every queued call nobody announced. A canceller can only cancel:
+a rogue one can hold up vault calls, an emergency unpause included, until the Safe revokes it, which takes 48 hours
+and which no canceller can cancel.
+
+**The Safe's admin calls can be seen, not cancelled.** A compromised Safe could schedule a change to the manager
+itself, for example a new GOVERNOR with no delay, and use it 48 hours later. Every monitor alarms the moment such a
+call is queued (`owner-op-unannounced`) and pauses everything; those 48 hours are for the people behind the Safe to
+act. Lowering a delay costs the difference again on top of the 48-hour admin delay (OpenZeppelin's setback):
+taking GOVERNOR from 48 hours to none takes 96 hours in all.
+
+The deployer builds the manager, gives it its roles and renounces every role of its own in the launch
+(`npm run mainnet:execute`), and `npm run mainnet:verify` checks all of it on-chain against the reviewed plan: the
+manager's code is OpenZeppelin's byte for byte, every role's members and delays, every function's role, and that no
+one else holds a role. Testnet vaults are owned by the deployer's plain key.
 
 | Function | Bounds |
 |---|---|
@@ -36,6 +61,7 @@ mainnet owner that is not a contract.
 | `unpause()` | |
 | `withdrawFees(to, units)` | `units ≤ feesAccrued`; never touches the backing |
 | `transferOwnership`, then `acceptOwnership` | Two steps; a pending transfer can be replaced or cancelled |
+| `pause()` | The guardian or the owner |
 | `renounceOwnership` | Always reverts |
 
 The owner cannot move backing. Only `release` and `refund`, with 3 signer signatures, reduce it.

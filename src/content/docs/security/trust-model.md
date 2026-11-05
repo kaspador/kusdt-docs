@@ -14,7 +14,7 @@ between Kaspa and the EVM chains is a **federation**: it relies on a group of si
 | Ethereum and BNB Chain consensus | The vaults follow their code; deposits stay final | The affected vault is unsafe |
 | No 3 of the 5 signers colluding | Every mint matches a deposit, every release matches a burn | A bad quorum can move up to the daily limits (see [Threat model](/security/threat-model/)) |
 | At least 3 of the 5 signers being online and honest | Mints and releases happen at all | The bridge stalls; no funds move |
-| The vault owner (a Safe behind a 48-hour timelock) | Vault parameters and the vault's signer set | After the timelock, it could replace the signers and raise limits within the hard bounds |
+| The vault owner (an AccessManager whose admin is a Safe: 48-hour delays, independent cancellers) | Vault parameters and the vault's signer set | After its 48-hour delay, and unless a canceller cancels it, it could replace the signers and raise limits within the hard bounds. The monitors alarm when the change is queued |
 | The USDT issuers | The backing stays transferable | Tether can blacklist an address on Ethereum (BSC-USD keeps no blacklist). The bridge pays nothing to a blacklisted recipient: the burn waits until it is unblocked. A blacklisted vault can pay nothing out, and the guardian pauses everything ([Blocked recipients](/security/known-limits/#blocked-recipients)) |
 | The contract code | Every rule on this site is what the code does | Not audited yet; see [Audit status](/security/audit-status/) |
 
@@ -53,5 +53,6 @@ between Kaspa and the EVM chains is a **federation**: it relies on a group of si
 
 Kaspa's script engine cannot read Ethereum or BNB Chain, and those chains cannot read Kaspa. Something must
 attest to what happened on the other side. In v1, that is the signer federation, with rate limits on both sides
-to cap the damage if it fails. The planned upgrade is zero-knowledge light-client verification, which would
-replace the signers' attestation with proofs checked on-chain. See [Known limits](/security/known-limits/).
+to cap the damage if it fails. The planned upgrade is zero-knowledge light-client verification of deposits on
+Kaspa, which would replace the signers' word about deposits with proofs checked on-chain. Releases would still rest
+on the signers until the EVM side can verify Kaspa itself. See [Known limits](/security/known-limits/#the-bridge-is-federated).

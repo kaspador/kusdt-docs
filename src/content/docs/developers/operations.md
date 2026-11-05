@@ -4,13 +4,13 @@ description: How the bridge is deployed and run. What runs where, the testnet st
 ---
 
 This page follows the runbook in `deploy/README.md`. The testnet is deployed and public (4 November 2026) at
-`https://kusdt.pearlchain.live`, on one test host. Nothing is on mainnet.
+`https://kastools.com`, on one test host. Nothing is on mainnet.
 
 ## What runs where
 
 | Part | Testnet | Mainnet |
 |---|---|---|
-| Vaults | Sepolia and BSC testnet, MockUSDT | Ethereum (USDT) and BNB Chain (BSC-USD); owner = a Safe behind a 48-hour timelock |
+| Vaults | Sepolia and BSC testnet, MockUSDT | Ethereum (USDT) and BNB Chain (BSC-USD); owner = an AccessManager whose admin is a Safe (48-hour delays) |
 | kUSDT, KasPool | Kaspa testnet-10 | Kaspa mainnet; genesis reviewed by kascov.io |
 | Signers ×5 | One host, five containers | Five operators, five machines, each with its own Kaspa node and EVM RPCs |
 | Coordinator | Next to the signers | Any host; it holds nothing that moves funds |
@@ -36,6 +36,39 @@ All commands run from `bridge/devnet` unless noted. Keys live in `~/.kusdt/testn
    reserves and the monitor healthy. Sepolia finality takes about 13 minutes.
 
 One image (`deploy/services.Dockerfile`) runs every role: signer, coordinator or monitor.
+
+## The mainnet packages
+
+Each mainnet operator gets a package from the repository, also attached to each mainnet release. Each package
+holds a compose file (its own pruned Kaspa node, the service and Caddy), a config template and a step-by-step guide.
+
+| Package | For | Caddy serves |
+|---|---|---|
+| `deploy/mainnet-signer` | Each of the five signer operators | The signer, to the coordinator's addresses only |
+| `deploy/mainnet-coordinator` | The coordinator's operator | The public API (`/api/v1/`) |
+| `deploy/mainnet-monitor` | The monitor's operator (the guardian), and a second monitor in watch-only mode | `GET /health` and `/api/v1/monitor`; acknowledging alarms from the operator's addresses only |
+| `deploy/mainnet-deployer` | The deployer, once | Nothing: `npm run mainnet:plan`, `mainnet:execute` and `mainnet:verify` from a checkout of the tag |
+
+The image has two tools for every operator:
+
+| Tool | What it does |
+|---|---|
+| `kusdt keygen [--role signer\|coordinator\|guardian\|pool-admin\|deployer]` | Makes the role's keys on the machine that uses them (mode 600, never overwritten) and prints only the public values the deployment needs |
+| `kusdt check <config>` | A preflight for a signer, the coordinator or the monitor that signs and sends nothing. It checks: <ul><li>the files and their modes;</li><li>the mainnet USDT pins;</li><li>the launch checkpoint, whose signer set must hash from the deployment's five keys;</li><li>a synced mainnet node with a UTXO index;</li><li>RPCs that agree.</li></ul> Then, by role: a signer is in both vaults at its index; the coordinator reaches each signer as the deployment names it, and holds KAS and gas; the monitor's keys are the guardian everywhere |
+
+The services take their launch checkpoint (`initialMinter`, `initialPool`, `scanFrom`) from the deployment's
+`launch` record unless their config gives one.
+
+The deployer's commands:
+- **`plan`** reads only and checks every input: keys on the curve, in one role each, owners that are contracts,
+  and the SPEC values.
+- **`execute`** deploys exactly the reviewed plan. It needs the plan's SHA-256 and `KUSDT_CONFIRM_MAINNET`, and
+  resumes without deploying anything twice.
+- **`verify`** lets anyone check the launch on-chain. It recomputes the launch states against their UTXOs'
+  scripts and reads every vault parameter.
+
+`npm run mainnet:rehearse` runs all three against forks of Ethereum and BNB Chain (chain IDs 1 and 56, the real
+USDT) and a simnet node. It also runs the five signers and every role's preflight against the result.
 
 ## What a signer needs
 
@@ -102,10 +135,10 @@ Two more changes in the coordinator:
 | kUSDT covenant ID (TN10) | `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314` |
 | KasPool covenant ID (TN10) | `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9` |
 | KasPool covenant ID, retired (no circuit breaker) | `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b` |
-| Web app | `https://kusdt.pearlchain.live` |
-| Coordinator API | `https://kusdt.pearlchain.live/api/v1` |
-| Monitor (read-only) | `https://kusdt.pearlchain.live/monitor/health` and `https://kusdt.pearlchain.live/monitor/api/v1/monitor` |
-| Wallet (testnet build) | `https://kusdt.pearlchain.live/downloads/kusdt-wallet-testnet.zip` |
+| Web app | `https://kastools.com` |
+| Coordinator API | `https://kastools.com/api/v1` |
+| Monitor (read-only) | `https://kastools.com/monitor/health` and `https://kastools.com/monitor/api/v1/monitor` |
+| Wallet (testnet build) | `https://kastools.com/downloads/kusdt-wallet-testnet.zip` |
 
 The pool was opened on 4 November 2026 with 500 KAS and 15.7 kUSDT.
 
@@ -125,7 +158,7 @@ points a local build at services on `127.0.0.1`.
 ## Publishing
 
 The coordinator API and the monitor's status are public, read-only JSON. On the public testnet the host's Caddy
-serves one name, `kusdt.pearlchain.live` (`deploy/kusdt.caddy`), with TLS, and routes by path:
+serves `kastools.com` (and the same site at `kusdt.pearlchain.live`; `deploy/kusdt.caddy`) with TLS, and routes by path:
 
 | Path | Goes to |
 |---|---|
@@ -150,6 +183,8 @@ for the docs.
   does not lag. Point an uptime alert at it.
 - `GET /api/v1/monitor` gives the numbers behind INV-1 (minted, released, owed, backing per chain), every alarm
   and every pause it made.
+- `GET /api/v1/signal` is the integrators' answer: `ok` false means stop taking new kUSDT. Pools, exchanges and
+  wallets that hold kUSDT should poll it on more than one monitor (see [The monitor](/security/monitor/#the-integrators-signal)).
 - The coordinator logs every mint, release and follower move. `MINTER NOT FOLLOWED` or `POOL NOT FOLLOWED` needs
   a human.
 
@@ -178,5 +213,94 @@ paused. Nothing in the bridge can fix it; only the issuer can unblock the addres
 | Signer (Kaspa Schnorr and EVM ECDSA) ×5 | A fifth of the quorum | Rotate it. 3 stolen keys are contained by the allowances and the monitor; 4 need the monitor and the vault owner |
 | Guardian (Kaspa and EVM) | Pause only: the vaults, the minter and the pool | Rotate it; it can only stop things. The pool's copy is rotated by the pool admin (`set_keys`) |
 | Coordinator (Kaspa funding, EVM relayer) | KAS for mints, gas for releases | Rotate it; no bridge funds are at risk |
-| Vault owner (Safe and timelock on mainnet) | Parameters within hard bounds, the signer set, unpause, fee withdrawal | The timelock gives time to react; the owner can never take backing |
+| Vault owner (a Safe, through an AccessManager on mainnet) | Parameters within hard bounds, the signer set, the guardian, unpause, fee withdrawal | Every change waits its delay (48 hours; 6 for the guardian and unpause), the monitor alarms when it is queued, and the cancellers can cancel it. The owner can never take backing |
 | Pool admin | Protocol fees, unpausing the pool, the pool's keys | Rotate it with `set_keys`. It cannot touch the reserves, a position or the circuit breaker |
+
+## Signer keys in an HSM or KMS
+
+A signer can keep both keys out of its own memory: set `signing: { backend: "command", command: ["/hsm/kusdt-sign"],
+kaspaKey, evmAddress, timeoutMs }` in `signer.json`, in place of `kaspaSecretPath` and `evmSecretPath`. For every
+signature the signer runs that program directly (no shell, stdin closed) with `schnorr <digest>` (a mint or a
+governance action: BIP-340) or `evm <digest>` (a release or a refund: the EIP-712 hash, signed raw with ECDSA
+secp256k1). The program prints one hex signature and exits 0.
+
+The signer trusts nothing it prints. Every signature is verified against the configured `kaspaKey` or `evmAddress`,
+which must be the deployment's signer at its index; a wrong key, malformed output, a non-zero exit, more than 4096
+bytes or a timeout (10 s by default) means no signature. The signer also has the program sign a fixed test digest
+with both keys when it starts, so a broken HSM stops it at once rather than at the first mint.
+
+The program sits inside the container, mounted read-only (`./hsm:/hsm:ro` in the `signer` and `check` services).
+`kusdt keygen --public-only --role signer --kaspa <x-only> --evm <address> <dir>` writes the usual `public.json` from
+the HSM's public values, and `kusdt check` signs and verifies the test digest with both keys. Many cloud KMS offer
+secp256k1 ECDSA but not BIP-340 Schnorr, so check the Kaspa key's support first. See
+`deploy/mainnet-signer/README.md`, "Keys in an HSM or KMS".
+
+## Kaspa governance
+
+BridgeMint's governance (`unpause`, `set_limits`, `set_signers`, `skip_nonce`: 4 of 5; `set_value`: 3 of 5) is
+signed by the signers themselves, each on its own machine with its own key:
+
+```sh
+kusdt govern-sign <signer.json> action.json <adminNonce> > signature-<i>.json        # on each signer's machine
+kusdt govern-submit <coordinator.json> action.json <coordinator API> signature-*.json  # by the coordinator's operator
+```
+
+`action.json` is the action itself, for example `{"kind": "unpause"}`, never a digest. `govern-sign` recomputes the
+digest from the action, the deployment's covenant ID and the admin nonce, prints what it signs in words, and prints
+the `expectedGovernance` line every monitor needs **before** the action lands. A govern digest commits to the admin
+nonce, so a signature is good for one action, once. `govern-submit` checks every signature against the
+deployment's signers, the action and the minter's current admin nonce, and refuses anything short of the quorum.
+
+## Rotating a signer
+
+The five signers sit in three places, and a rotation changes all three: BridgeMint (4 of the current signers sign
+`set_signers`) and each vault (its owner calls `setSigners`). The tools:
+
+```sh
+kusdt keygen --role signer <dir>                       # on the new signer's machine (or --public-only for an HSM)
+kusdt rotate-plan deployment.json <coordinator API> out/ 4=<new signer's public.json>
+```
+
+`rotate-plan` reads only. It writes `action.json` (the Kaspa action), `announce.json` (the monitors' lines),
+`owner-calls.json` (each vault's `setSigners` calldata and the AccessManager `schedule` and `execute` calls) and
+`deployment.next.json` (the new signers, with the genesis five kept in `launch.signers` for the preflight).
+
+1. **Announce.** Every monitor adds `announce.json`'s `expectedGovernance` and `expectedOwnerCalls`, and restarts.
+2. **The vaults.** The Safe queues `setSigners` in each vault's AccessManager (`schedule` from `owner-calls.json`).
+   The monitors note it as announced. After 48 hours, anyone executes it.
+3. **Kaspa.** Four current signers run `govern-sign` on `action.json`; the coordinator's operator runs
+   `govern-submit`. It takes effect at once.
+4. **Switch.** Everyone takes `deployment.next.json` and restarts. The new signer starts; the old one stops for good.
+5. **Check.** `kusdt check` on every role, and `npm run mainnet:verify`.
+
+Between steps 2 and 3 the vaults already want the new key and Kaspa still the old one. The four unchanged signers
+carry both sides, so mints and releases go on. The local rehearsal (`npm run local:rotate` in `bridge/devnet`) runs
+it all: it rotates signer 4, then stops signers 0 and 1 so that only 2, 3 and the new 4 are left, and a mint and a
+release still go through. Last, an owner action nobody announced raises `vault-owner-unannounced` and the guardian
+pauses the vaults.
+
+## A stolen guardian key
+
+The guardian can only pause, so a thief can only stop things, again and again. Recovery, side by side:
+
+| Side | Replace the guardian | Resume | Time |
+|---|---|---|---|
+| BridgeMint | `set_signers` with the same five and a new guardian (4 signers, `govern-sign`) | `unpause` (4 signers) | Minutes |
+| Pool | `set_keys` (the pool admin, offline) | `unpause` (the pool admin) | As fast as the admin key is brought out |
+| Each vault | `setGuardian` (the Safe, through the AccessManager's emergency delay) | `unpause` (the same delay) | About 6 hours |
+
+Queue `setGuardian` and `unpause` together, and announce both. A stolen guardian key never puts funds at risk, and
+kUSDT transfers keep working throughout.
+
+## Rebalancing the vaults
+
+No key can move backing from one vault to the other: only a release (a Kaspa burn) or a refund takes USDT out. When
+one vault runs short, for example in a run on Ethereum, an operator rebalances through the bridge's own paths:
+
+1. Redeem kUSDT from the vault that has plenty (burn on Kaspa, paid on that chain).
+2. Move that USDT to the short chain (an exchange or another bridge).
+3. Deposit it into the short vault; the same kUSDT is minted back.
+
+Backing moves for 0.2 % each way plus the crossing; no new trust is added, and the monitor sees ordinary deposits and
+releases. The operator needs kUSDT to start with, so keep an inventory sized to a day's release allowance. Holders
+are paid in full meanwhile: a wallet offers the other chain when the one they asked for cannot pay now.

@@ -34,7 +34,7 @@ off-chain services run by the bridge operators. The user's apps sit on the user'
 | Signers (5, independent) | Each on its own machine, with its own Kaspa node and EVM RPCs | One Kaspa Schnorr key and one EVM ECDSA key each |
 | Coordinator | Bridge server | Nothing that moves funds. It collects signatures, submits transactions and serves status |
 | Monitor and guardian | Monitoring server | One key that can pause the vaults, the minter and the pool, and nothing else |
-| Vault owner | A Safe behind a 48-hour timelock (mainnet) | Vault parameters within hard bounds, and the vault's signer set |
+| Vault owner | An AccessManager whose admin is a Safe (mainnet; 48-hour delays) | Vault parameters within hard bounds, and the vault's signer set |
 | Web app and wallet | The user's device | The user's keys. They pin each deployment |
 
 [Components](/architecture/components/) describes each part in detail, and

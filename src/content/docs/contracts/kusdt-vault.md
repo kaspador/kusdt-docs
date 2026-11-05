@@ -124,5 +124,5 @@ Measured in Hardhat with mock tokens. Ethereum USDT's own transfer costs a littl
 
 `scripts/deploy.ts` reads a JSON config (`DEPLOY_CONFIG`) with environment overrides, and writes
 `deployments/<network>.json`. On chain IDs 1 and 56 it refuses the mock token, requires the specification's USDT
-address and decimals, requires the owner to be a contract (the timelocked Safe), and asks for
+address and decimals, requires the owner to be a contract (the AccessManager whose admin is the Safe), and asks for
 `KUSDT_CONFIRM_MAINNET=deploy-to-<chainId>`. See `bridge/evm/README.md`.

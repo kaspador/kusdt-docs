@@ -5,7 +5,7 @@ description: The coordinator's public, read-mostly JSON API. Nothing in it moves
 
 :::note[Where it runs]
 The coordinator (`bridge/services/src/coordinator/`) serves this API for the public testnet at
-`https://kusdt.pearlchain.live/api/v1`, and in the local stack at `http://127.0.0.1:9100/api/v1` (see
+`https://kastools.com/api/v1`, and in the local stack at `http://127.0.0.1:9100/api/v1` (see
 [Run the simnet flow](/developers/simnet/#a-stack-that-keeps-running)). The mainnet base URL is **to be published**.
 :::
 
@@ -29,7 +29,7 @@ released = the sum of the vaults' Released events
 
 | Call | Answer |
 |---|---|
-| `GET /status` | `{network, kaspa: {covenantId, poolId, virtualDaa, minter: {utxo, state}, genesisRemaining, tokenValue, finalityDaa}, chains: [{chain, name, chainId, vault, token, decimals, scannedBlock, depositNonce, backing, releaseAvailable, paused, fees: {feeBps, minDepositFee, minReleaseFee, minDeposit, maxDeposit, releaseCapacity, releaseRefillPerSecond}, blocklist}]}`. Each vault's parameters as it reports them. `blocklist` is the token view the bridge honours (`isBlackListed`), or `null` for a token that keeps none (BSC-USD). `scannedBlock` is the last final block the coordinator read (`finalizedBlock` is its old name) |
+| `GET /status` | `{network, kaspa: {covenantId, poolId, virtualDaa, minter: {utxo, state}, genesisRemaining, tokenValue, finalityDaa, finalityTiers}, chains: [{chain, name, chainId, vault, token, decimals, scannedBlock, depositNonce, backing, releaseAvailable, paused, fees: {feeBps, minDepositFee, minReleaseFee, minDeposit, maxDeposit, releaseCapacity, releaseRefillPerSecond}, blocklist}]}`. Each vault's parameters as it reports them. `blocklist` is the token view the bridge honours (`isBlackListed`), or `null` for a token that keeps none (BSC-USD). `scannedBlock` is the last final block the coordinator read (`finalizedBlock` is its old name) |
 | `GET /tokens?owner=<kaspa address or x-only hex>` | `{states: [{utxo, state}]}`: the owner's unspent kUSDT states |
 | `GET /pool` | `{pool, reserve, pending: [txid], confirmed: {pool, reserve}, prices: {kasInKusdt, kusdtInKas}, exact: {unitsPerKas, sompiPerKusdt}, breaker, paused, tvlKas}`. `pool` and `reserve` (each `{utxo, state}`) are the newest, mempool included, carried through the pool moves in `pending`; `confirmed` is the newest accepted. `exact: {unitsPerKas, sompiPerKusdt}` gives the spot prices as integer strings, rounded down (kUSDT units per KAS, sompi per kUSDT); `prices` are floats for display. `breaker: {maxOutBps, windowLen, maxKasOutNow, windowEndsDaa, virtualDaa}` is what sells may still take out of the KAS reserve now (see [the circuit breaker](/contracts/kaspool/#the-circuit-breaker)), and `paused` whether the guardian paused the pool. `priceKas` remains as an alias of `prices.kasInKusdt` |
 | `GET /positions?owner=<kaspa address or x-only hex>` | `{positions: [{utxo, state: {tokenCovid, shares, owner}}]}`: the owner's live liquidity positions, each found in the node's UTXO set |

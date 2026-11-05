@@ -35,7 +35,7 @@ no pause.
 | Side | Resume | Quorum |
 |---|---|---|
 | BridgeMint | `unpause` through `govern` | 4 of 5 signers. A bad minting quorum of 3 cannot undo the pause |
-| Vault | `unpause()` | The owner only; the guardian cannot unpause |
+| Vault | `unpause()` | The owner only; the guardian cannot unpause. On mainnet through the AccessManager's emergency delay, about 6 hours |
 | KasPool | `unpause` | The pool admin only |
 
 ## Replacing the guardian
@@ -43,5 +43,13 @@ no pause.
 | Side | How |
 |---|---|
 | BridgeMint | `set_signers`, which sets the signer set and the guardian together; 4 of 5 signers |
-| Vault | `setGuardian`, by the owner (through the timelock on mainnet) |
+| Vault | `setGuardian`, by the owner; on mainnet through the AccessManager's emergency delay, about 6 hours. Queue it with `unpause`, or a thief with the old key pauses again |
 | KasPool | `set_keys`, by the pool admin |
+
+## Two monitors, one guardian
+
+BridgeMint, the pool and each vault each accept one guardian key, so a second monitor either only alarms
+(`dryRun`, no keys) or holds the same guardian keys. A stolen guardian key can only pause, so sharing it with a second,
+independent monitor costs griefing at worst and means one monitor going down no longer means no pause. The mainnet
+checklist asks for at least two monitors. Recovering from a stolen guardian key is on
+[Operations](/developers/operations/#a-stolen-guardian-key).

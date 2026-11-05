@@ -46,7 +46,7 @@ The details of each follow.
 | `base_value` | KAS the pool UTXO always keeps beyond the reserve (its storage deposit) |
 | `admin` | The key that collects protocol fees, resumes a paused pool and hands the keys over |
 | `max_out_bps`, `window_len` | The circuit breaker: the share of the KAS reserve sells may take per window, and the window's length in DAA. Fixed at genesis |
-| `window_start`, `window_ref`, `window_out` | The open window: its start (DAA), the KAS reserve it opened with, and the KAS sells took in it so far |
+| `window_start`, `window_ref`, `window_out` | The open window: its start (DAA), the KAS reserve it opened with, and the net KAS that left in it so far (sells out, less buys in; negative after net buying) |
 | `paused` | Whether the guardian paused swaps and new liquidity |
 | `guardian` | The key that may pause the pool, and nothing else: the bridge's guardian |
 
@@ -121,13 +121,28 @@ off-chain can stop such a dump. The pool limits it on-chain instead.
 | Rule | Value |
 |---|---|
 | Window | `window_len` DAA: 36 000, an hour at 10 BPS |
-| Cap | Within a window, sells take at most `max_out_bps` (1 000, 10 %) of the KAS reserve the window opened with, or of the reserve now if that is smaller. So withdrawals shrink the cap too |
-| New window | A sell after the window ran its course (or the first sell ever) opens a new one, with the reserve of that moment |
+| What it counts | The **net** KAS that leaves in the window: what sells take out, less what buys bring in. The count goes negative after net buying |
+| Cap | Within a window, the net outflow is at most `max_out_bps` (1 000, 10 %) of the KAS reserve the window opened with, or of the reserve now if that is smaller. So withdrawals shrink the cap too |
+| Buys | Never capped. Each buy gives sells back the KAS it added to the reserve |
+| New window | A sell after the window ran its course (or the first sell ever) opens a new one, with the reserve of that moment and a count of zero |
 | Clock | The sell names `now_daa`. Its lock time must cover it, and consensus holds the transaction back until the DAG reaches it, so the clock cannot run ahead. It may not go back before the open window's start |
 | Who can change it | Nobody: both values are fixed at genesis |
 
-Buys are not capped: they bring KAS in. Then the monitor pauses the pool with everything else. A dump costs the
-liquidity providers at most about 10 % of the KAS side, and they can still withdraw.
+Then the monitor pauses the pool with everything else. A dump costs the liquidity providers at most about 10 % of the
+KAS side, and they can still withdraw.
+
+### Why it counts the net flow
+
+Until 5 November 2026 the breaker counted every sell and ignored buys. An external review pointed out that anyone
+could then use up the hour's sell room with round trips (buy kUSDT, sell it straight back) for about 0.6 % in fees,
+and so hold up honest sellers. Counting the net flow ends that: a round trip brings in about as much KAS as it takes
+out, so it leaves the room where it was and only pays its fees, to the liquidity providers.
+
+It protects the pool just as well. On the constant-product curve the pool's end state follows from its net KAS change
+alone. Whether a dumper sells at once, or buys first and then sells more, the pool ends at the same point, so the
+most it can lose in a window is the same 10 % of its KAS. Tests in `tests/pool.rs` play both: five 900 KAS round
+trips leave an honest seller the whole room, and after a large buy the sells may take more than the cap gross but
+never more than the cap net.
 
 The local end-to-end run (`npm run local:e2e`) shows it: three stolen signer keys mint 400 000 kUSDT and sell them
 into the pool at once. The breaker refuses the whole sell, and the most it lets out is under 10 % of the pool's
@@ -216,7 +231,7 @@ Before mainnet, the operator holds the admin key offline ([mainnet checklist](/s
 
 ## Tests
 
-20 tests run the pool in Kaspa's script engine (`bridge/kaspa/tests/pool.rs`). Each transaction spends the pool
+23 tests run the pool in Kaspa's script engine (`bridge/kaspa/tests/pool.rs`). Each transaction spends the pool
 and its kUSDT reserve together, two covenant families, and runs input by input:
 
 | Area | What is shown |
@@ -228,7 +243,7 @@ and its kUSDT reserve together, two covenant families, and runs input by input:
 | Reserve guards | The reserve cannot ride along a Position transfer or an admin key change |
 | Large numbers | Exact 128-bit products with reserves whose product is far above 2⁶³ |
 | Liquidity | Liquidity comes in proportion and leaves with its share; only the Position's owner can burn it; Positions change hands with the owner's signature |
-| Circuit breaker | Sells are capped within a window; a window reopens with the reserve of that moment; the clock cannot run ahead of the lock time or back; withdrawals shrink the cap |
+| Circuit breaker | The net outflow is capped within a window; round trips leave the room; a buy gives room back and a buy cannot forge the count; a window reopens with the reserve of that moment; the clock cannot run ahead of the lock time or back; withdrawals shrink the cap |
 | Pause and keys | Only the guardian pauses and only the admin resumes; withdrawals stay open while paused; the reserve cannot ride along a pause or a key change; the admin rotates the guardian |
 
 `tests/standard.rs` builds the pool's transactions with the real builders: a sell is about 108 000 transient mass,

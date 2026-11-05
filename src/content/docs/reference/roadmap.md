@@ -23,19 +23,19 @@ As of 3 November 2026. Order follows the project's working plan; there are no da
 - Refunds, a load run, a rehearsal of the vault on mainnet forks, and an internal security review with its fixes.
 - Deployment tooling: a services image, a testnet compose file and a runbook.
 - The testnets: vaults on Sepolia and BSC testnet, genesis and pool on testnet-10, and the services, public since
-  4 November 2026 at [kusdt.pearlchain.live](https://kusdt.pearlchain.live) with a downloadable testnet wallet.
+  4 November 2026 at [kastools.com](https://kastools.com) with a downloadable testnet wallet.
 - This documentation site.
 
 ## Next
 
 | # | Work |
 |---|---|
-| 1 | The mainnet package: deploy scripts dry-run, the checklists, and an operations runbook (keys, Safe and timelock, guardian, monitor alerts) |
+| 1 | The mainnet package: deploy scripts dry-run, the checklists, and an operations runbook (keys, the Safe and its AccessManager, guardian, monitor alerts) |
 
 ## Before mainnet
 
 Every item of the [mainnet checklist](/security/mainnet-checklist/): five independent signer operators, external
-audits, the timelocked Safe as vault owner, legal review, live proof of reserves, and a genesis review by
+audits, the vault owner as an AccessManager under a Safe, legal review, live proof of reserves, and a genesis review by
 kascov.io. Mainnet deployments also need the project owner's explicit approval.
 
 ## Later

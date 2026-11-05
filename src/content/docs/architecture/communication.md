@@ -35,7 +35,7 @@ nodes.
 | EVM ECDSA key (×5) | Signers | EIP-712 `Refund` | `KusdtVault.refund`: same rule |
 | Guardian Kaspa key | Monitor | The pause transaction | `BridgeMint.pause` |
 | Guardian EVM address | Monitor | The `pause()` call | `KusdtVault.pause` |
-| Vault owner | Safe and timelock | Admin calls | `KusdtVault` (owner only) |
+| Vault owner | A Safe, through the AccessManager | Scheduled admin calls, executed after their delay | The AccessManager, then `KusdtVault` (owner only) |
 | User keys | Wallet | Token transfers, swaps, deposits | KCC-20 covenants, KasPool, the vault |
 
 Exact byte layouts are on [Messages and digests](/protocol/messages/).

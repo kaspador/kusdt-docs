@@ -14,7 +14,7 @@ The KasPool covenants are tested in Kaspa's script engine and run on testnet (TN
 is `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9`; it replaced
 `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b`, retired, which had no circuit breaker. It was
 opened on 4 November 2026 with 500 KAS and 15.7 kUSDT, so it is thin: expect price impact. Swap in the public
-testnet web app at [kusdt.pearlchain.live](https://kusdt.pearlchain.live). Nothing is on mainnet.
+testnet web app at [kastools.com](https://kastools.com). Nothing is on mainnet.
 :::
 
 :::tip[In the web app]
@@ -73,8 +73,9 @@ KAS goes to an output you choose.
 
 ### The sell limit
 
-To bound a dump of forged kUSDT, sells may take at most 10 % of the pool's KAS reserve per hour (the
-[circuit breaker](/contracts/kaspool/#the-circuit-breaker)). Buys are not limited. If your sell is over what is
+To bound a dump of forged kUSDT, the KAS sells take out of the pool, less what buys bring in, may be at most 10 %
+of its KAS reserve per hour (the [circuit breaker](/contracts/kaspool/#the-circuit-breaker)). Buys are not limited,
+and each buy gives sells back the KAS it brought. If your sell is over what is
 left, the app tells you that the pool lets at most so much KAS out until about a given time. Sell less, or wait
 for the next window.
 

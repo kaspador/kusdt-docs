@@ -18,7 +18,7 @@ the issuers of those tokens. kUSDT's own rules are the covenants and contracts d
 ### Is it live?
 
 On testnet only: TN10, Sepolia and BSC testnet, since 4 November 2026. The public testnet is at
-[kusdt.pearlchain.live](https://kusdt.pearlchain.live), with test coins only, and the testnet wallet can be
+[kastools.com](https://kastools.com), with test coins only, and the testnet wallet can be
 downloaded. Nothing is on mainnet. See [Test on the public testnet](/getting-started/public-testnet/) and
 [Status](/overview/status/).
 
@@ -107,8 +107,8 @@ No. It holds no key that moves funds. It can only stall the bridge.
 
 ### Can the vault owner take the USDT?
 
-Not directly: no function lets the owner withdraw backing. It could, after the 48-hour timelock, replace the
-vault's signers and raise its limits within the hard bounds. That is why the owner is a timelocked Safe. See
+Not directly: no function lets the owner withdraw backing. It could, after its 48-hour delay and unless a canceller cancels it, replace the
+vault's signers and raise its limits within the hard bounds. That is why the owner is a Safe behind an AccessManager, with delays and independent cancellers. See
 [Governance](/security/governance/).
 
 ### Is the pool safe from sandwich attacks?

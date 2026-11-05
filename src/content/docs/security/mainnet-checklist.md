@@ -10,12 +10,13 @@ the project owner's explicit approval.
 |---|---|---|---|
 | 1 | Five independent signer operators, each with their own nodes | The federation is only as strong as the independence of its members | Open |
 | 2 | External audits of `BridgeMint` and `KasPool` (and the SilverScript they compile to) and of the vault | No part is audited yet | Open |
-| 3 | The vault owner is a Safe behind a 48-hour timelock | The owner is the one role not capped by the release allowance | Open. The deploy script refuses a mainnet owner that is not a contract |
+| 3 | The vault owner is an AccessManager whose admin is a Safe: 48-hour delays, about 6 for the guardian and unpause, and independent cancellers | The owner is the one role not capped by the release allowance | Open: the deployer builds it (`mainnet:plan` refuses anything else on mainnet); the Safe's holders and the cancellers are still to be chosen |
 | 4 | Legal review of holding users' USDT | The vaults custody user funds | Open |
 | 5 | Proof of reserves published live (INV-1) | Anyone should be able to see that backing covers circulation | Open |
 | 6 | kUSDT's genesis reviewed by kascov.io | Wallets mark unreviewed tokens "unvalidated" | Open |
 | 7 | The pool admin key held offline by the operator | It can take only the accrued protocol fees, unpause the pool and hand the keys over ([KasPool](/contracts/kaspool/#protocol-fees-and-the-admin)) | Open |
 | 8 | A decision on redemptions to a blocked recipient | Ethereum USDT can blacklist an address, and a payout there would be frozen | Done (4 November 2026): a blocked recipient is never paid; the burn is held and paid if the address is unblocked. No re-target power exists. See [Blocked recipients](/security/known-limits/#blocked-recipients) |
+| 9 | Burn finality scaled to the payout | A release cannot be undone | Done (5 November 2026): 6 000 DAA above 10 000 kUSDT, 36 000 above 100 000; the preflight refuses shallower tiers |
 
 ## Operations
 
@@ -59,3 +60,29 @@ The vault's deploy script (`bridge/evm/scripts/deploy.ts`) enforces part of this
 - it requires the owner to be a contract;
 - it asks for the confirmation `KUSDT_CONFIRM_MAINNET=deploy-to-<chainId>`;
 - it checks the hard bounds before sending anything.
+
+The mainnet deployer (`bridge/devnet/src/mainnet-deploy.ts`, guide in `deploy/mainnet-deployer`) wraps it:
+
+- `plan` checks every input and only reads: the five signers' keys (on the curve, in signer order), the guardian,
+  the pool admin, the coordinator and the deployer, each key in one role only; the owners are contracts; the SPEC
+  §8 limits, with every override named; the deployer can pay.
+- `execute` runs only the plan whose SHA-256 the reviewers confirmed, behind
+  `KUSDT_CONFIRM_MAINNET=deploy-kusdt-mainnet`, with the plan's deployer keys, and after the live checks pass
+  again. It records each step and never deploys anything twice.
+- `verify` is for every operator: each vault's token, signers in order, guardian, owner and limits, and the launch
+  states against the scripts their UTXOs commit to.
+
+`npm run mainnet:rehearse` (in `bridge/devnet`, with `npm run local:stack` up) runs the three commands against
+forks of Ethereum and BNB Chain that keep their chain IDs, so the vault deploy takes its mainnet path against the
+real USDT, and a simnet Kaspa node. It passed on 5 November 2026. It covered:
+- the refusals: a wrong plan hash, no confirmation, the wrong keys;
+- the deploy;
+- a second execute that sent nothing;
+- verify;
+- the five signers running, and each role's preflight;
+- each vault's AccessManager: the Safe's direct calls revert, it pauses at once, its unpause waits the
+  emergency delay, a canceller cancels a queued `setSigners` but not an admin call;
+- a live monitor with a canceller key: an announced call passes quietly, an unannounced `setSigners` is alarmed
+  and cancelled, the Safe's admin call is alarmed, the guardian pauses, and the integrators' signal says stop.
+
+The rehearsal for release candidate `mainnet-v0.9.8-rc.1` passed all 48 checks.

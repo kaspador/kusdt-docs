@@ -12,7 +12,13 @@ could do; rate limits on both sides cap it.
 **Upgrade path: zero-knowledge light-client verification.** Kaspa's Toccata upgrade includes an opcode that
 verifies zero-knowledge proofs (`OpZkPrecompile`, KIP-16), and KIP-17 lists trustless bridges built on it as a use
 case. A future version could mint on Kaspa against a proof of the deposit, checked on-chain, instead of signer
-signatures. This is the planned direction, not part of v1.
+signatures. This is the planned direction, not part of v1, and it has no date.
+
+**It would cover one direction only.** A proof checked on Kaspa replaces the signers' word about deposits, so it
+removes the risk of unbacked mints. Releases are the other direction: the vaults on Ethereum and BNB Chain would have
+to verify Kaspa burns themselves, which needs a Kaspa light client on the EVM side, a separate and harder project.
+Until then, a release rests on 3 of 5 signers, capped by each vault's release allowance (250 000 USDT at once, at
+most 500 000 in any 24 hours), and the monitor pauses the vaults the moment it sees a release with no burn behind it.
 
 ## Blocked recipients
 
@@ -68,11 +74,20 @@ backing, or while it is paused) and offer the other chain. If one lands anyway, 
 with its own backoff until the allowance refills, deposits on that chain bring the backing, or the owner raises
 the capacity within its hard bound. It never holds up other burns.
 
+**Rebalancing uses the bridge's own paths.** No key can move backing from one vault to the other. When one chain runs
+short, an operator holding kUSDT redeems it from the vault that has plenty, moves the USDT across (an exchange or
+another bridge), and deposits it into the short vault, which mints the same kUSDT back. Backing moves for 0.2 % each
+way plus the cost of the crossing, and no new trust is added. See [Operations](/developers/operations/#rebalancing-the-vaults).
+In a run on one chain, holders are still paid in full, on the other chain.
+
 ## Small burns are lost
 
 A burn whose amount is at or below the release fee (5 USDT on Ethereum, 0.50 USDT on BNB Chain, or 0.20 % if
 higher) is never paid. It is marked `unpayable`, and the tokens are still burned. The same holds for a burn naming the
 zero address or the vault itself.
+
+The wallet and the web app refuse such a burn, and warn when the fee would take more than 20 % of a redemption. Only a
+transaction built by hand can still lose a burn this way. Each burn output also locks 0.3 KAS for good (below).
 
 ## Only plain burns are paid
 
@@ -104,9 +119,10 @@ is at least as good as the one you confirmed; a worse one asks you again (being 
 
 ## The pool caps sells
 
-Sells may take at most 10 % of the pool's KAS reserve per hour (the
-[circuit breaker](/contracts/kaspool/#the-circuit-breaker)). It bounds a dump of forged kUSDT, but it also
-slows a large honest sell, which must wait for the next window. Buys are not limited.
+The net KAS sells take out of the pool, less what buys bring in, may be at most 10 % of its KAS reserve per hour
+(the [circuit breaker](/contracts/kaspool/#the-circuit-breaker)). It bounds a dump of forged kUSDT, but it also slows
+a large honest sell, which must wait for buys or the next window. Buys are not limited. Because it counts the net
+flow, round trips (a buy, then a sell back) cannot use up the room; until 5 November 2026 they could.
 
 ## The pool can be paused
 
@@ -120,7 +136,7 @@ Whoever makes the first deposit into a new pool sets its starting price. Arbitra
 ## The testnet runs on one host
 
 The contracts are deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at
-[kusdt.pearlchain.live](https://kusdt.pearlchain.live). Its five signers, the coordinator and the monitor run on one
+[kastools.com](https://kastools.com). Its five signers, the coordinator and the monitor run on one
 test host, in isolated containers, so it is not the federation of five independent operators that mainnet needs
 (see [Operations](/developers/operations/#the-testnet-deployment)). The wallet extension has a testnet build to
 download and is not in any store. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in those

@@ -4,7 +4,7 @@ description: What exists today, what is tested, and what is not built yet.
 ---
 
 As of 4 November 2026. The specification is **v1, for testnet**. kUSDT is deployed on testnet (TN10, Sepolia and
-BSC testnet), and the public testnet is open at [kusdt.pearlchain.live](https://kusdt.pearlchain.live), with test
+BSC testnet), and the public testnet is open at [kastools.com](https://kastools.com), with test
 coins only. Nothing is on mainnet. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
 
 :::danger[Not audited]
@@ -78,10 +78,10 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 | KusdtVault on Ethereum (Sepolia on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
 | KusdtVault on BNB Chain (BSC testnet on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
 | MockUSDT (testnet only) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` on both | not used |
-| Coordinator API | `https://kusdt.pearlchain.live/api/v1` | to be published |
-| Web app URL | `https://kusdt.pearlchain.live` | to be published |
-| Monitor status (read-only) | `https://kusdt.pearlchain.live/monitor/health`, `https://kusdt.pearlchain.live/monitor/api/v1/monitor` | to be published |
-| Wallet download (testnet build) | `https://kusdt.pearlchain.live/downloads/kusdt-wallet-testnet.zip` | to be published |
+| Coordinator API | `https://kastools.com/api/v1` | to be published |
+| Web app URL | `https://kastools.com` | to be published |
+| Monitor status (read-only) | `https://kastools.com/monitor/health`, `https://kastools.com/monitor/api/v1/monitor` | to be published |
+| Wallet download (testnet build) | `https://kastools.com/downloads/kusdt-wallet-testnet.zip` | to be published |
 
 The testnet values come from `deployments/testnet.json`.
 
