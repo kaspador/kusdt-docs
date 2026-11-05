@@ -56,6 +56,7 @@ from the vaults' `Released` events.
 | `minter-lost` | The minter UTXO it follows is not in the node's UTXO set with kUSDT's covenant ID, on three caught-up checks, and no fetched transaction spends it |
 | `vault-blocked` | The token's blocklist names a vault. That vault can pay nothing out, while deposits still go in |
 | `pool-unverifiable` | The pool was spent in a way the monitor cannot verify |
+| `unverifiable` | A chain, the Kaspa node, or a step of the check could not be read for `failClosedMs` (10 minutes by default). The monitor fails closed: everything stays paused until it can check again |
 
 The `vault-blocked` check reads the view the deployment names for each chain (`blocklist`: `isBlackListed` for
 Ethereum USDT). BSC-USD keeps no blacklist, so it never fires there. The pause stops new deposits into a vault
@@ -67,6 +68,19 @@ honest release's burn is always indexed by then. A mint may wait for its deposit
 grace period (`graceMs`, 5 minutes by default), the time a deposit takes to become final on the monitor's own nodes.
 A monitor that starts late raises no `release-without-burn` or `refund-without-skip` before its Kaspa scan has
 caught up.
+
+## When it cannot read a chain
+
+Each step of a check, and each EVM chain, runs on its own. A chain whose RPCs fail or disagree does not stop the
+others from being checked, and open alarms still pause everything. INV-1 is judged only when every vault's backing
+was read: with a chain missing it would look short, so the check reports the chain as `unreadable` and calls itself
+not healthy (`/health` answers 503, and the integrators' signal says stop). If a chain, or the Kaspa node, stays
+unreadable for `failClosedMs`, that is the `unverifiable` alarm, and the guardian pauses everything: an outage
+never quietly switches the guardian off. A chain is read all or nothing, so a read that fails halfway counts
+nothing twice.
+
+Fixed on 5 November 2026 after an outside review (GitHub issue #2): before, one failing read stopped the whole
+check, the pause included.
 
 ## The vault owner
 
@@ -161,7 +175,8 @@ npm run monitor -- <config.json>        # in bridge/services
 | `scanFrom` | A block hash at or before the genesis transaction |
 | `pollMs` | Optional: time between checks; 2 000 ms by default |
 | `minDepthDaa` | Optional: how far below the virtual a chain block must be before it is read; 10 DAA scores by default |
-| `graceMs` | Optional: how long a mint may wait for its deposit, or a release for its burn; 300 000 ms by default |
+| `graceMs` | Optional: how long a mint may wait for its deposit, or a refund for its skip; 300 000 ms by default |
+| `failClosedMs` | Optional: how long a chain or the Kaspa node may stay unreadable before the `unverifiable` alarm pauses everything; 600 000 ms by default |
 | `expectedGovernance` | Governance the operators announce in advance, as `{adminNonce, action, params}` (params in hex). Anything else alarms. `kusdt govern-sign` prints the line |
 | `expectedOwnerCalls` | Vault owner actions the operators announce in advance (see [The vault owner](#the-vault-owner)). Anything else alarms |
 | `cancellerEvmSecretPath` | Optional: a key with the canceller role in each vault's AccessManager. The monitor cancels every queued operation nobody announced |

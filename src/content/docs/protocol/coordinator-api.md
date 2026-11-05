@@ -63,3 +63,18 @@ A `blocked` record is checked again every hour (`blockedRecheckMs`). It never ho
   owed.
 
 The [monitor](/security/monitor/) computes the same supply figures from its own nodes and does not use this API.
+
+## Reporting a burn
+
+`POST /redeems` tells the coordinator about a burn it has not seen on its own, with its payload's chain and
+address. A report is a claim, not a fact:
+
+- **A transaction a client posts** can only add redemption claims. Nothing proves it is the transaction with that
+  id, so it never changes the coordinator's token index.
+- **A claim the coordinator's node already holds** at that outpoint (the exact state, with kUSDT's covenant ID)
+  replaces whatever came first. One the node doesn't hold yet (a transaction still in the mempool) waits beside it,
+  and the coordinator tries every claim against its node; the one the node holds wins.
+- **A burn the coordinator reads from the chain itself** always replaces a different claim.
+
+So reporting a wrong state first cannot strand someone else's redemption (GitHub issue #2, fixed 5 November 2026).
+Signers re-check every burn on their own nodes before they sign, whatever the coordinator says.

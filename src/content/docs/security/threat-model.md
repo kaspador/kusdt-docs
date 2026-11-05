@@ -42,7 +42,9 @@ A review of every attack we know of, as of 4 November 2026. Status means:
 | 4 of 5 signer keys | They can raise the Kaspa limits and unpause the minter. The vaults' limits and signers belong to the owner (an AccessManager under a Safe on mainnet, 48-hour delays) | Bounded on the vaults; the monitor is the defence on Kaspa |
 | A stolen guardian key | It can only pause: griefing | By design |
 | A lying coordinator or API | It can stall or censor, nothing more. Wallets check token states against their own node and pin the deployment; signers re-check everything | By design |
-| Fake deposits or burns fed to a signer through its RPC or node | It takes 3 operators' nodes. Today all 5 testnet signers run on one machine | Open until there are 5 independent operators |
+| Fake deposits or burns fed to a signer through its RPC or node | It takes 3 operators' nodes. Every RPC a signer uses must agree on every field of a deposit (its sender, which a refund pays, included) and of every release and refund. Today all 5 testnet signers run on one machine | Open until there are 5 independent operators; the full agreement fixed 5 November 2026 |
+| A wrong redemption report sent first, to strand someone's burn | Claims are checked against the coordinator's node, which decides; a client's transaction cannot edit the token index | Fixed 5 November 2026 |
+| An RPC outage switching the monitor off | Each chain is checked on its own, INV-1 is never judged on partial backing, and a chain unreadable for 10 minutes pauses everything | Fixed 5 November 2026 |
 | Reorgs | Finality on both sides; the follower goes back to the fork point if Kaspa's chain moves anyway | Fixed 4 November 2026 (the follower rewind) |
 | Replay across chains, vaults or deployments | The EIP-712 domain, the covenant ID in the digests, each `redeemId` paid once | Tested |
 | Decoy outputs fooling the followers | Successors come only from covenant-bound authorized outputs | Fixed in the security review, with tests |

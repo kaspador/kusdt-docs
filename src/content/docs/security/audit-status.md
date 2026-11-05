@@ -42,7 +42,7 @@ that lands anyway is held until the address is unblocked. See [Blocked recipient
 ## External review (5 November 2026)
 
 An outside reviewer sent twelve questions and findings. Each is answered below; the code changes are in the
-mainnet release candidates from `mainnet-v0.9.8-rc.1` (now `mainnet-v0.9.8-rc.2`). This is still not an audit.
+mainnet release candidates from `mainnet-v0.9.8-rc.1` (now `mainnet-v0.9.8-rc.3`). This is still not an audit.
 
 | # | Finding | Response |
 |---|---|---|
@@ -58,6 +58,18 @@ mainnet release candidates from `mainnet-v0.9.8-rc.1` (now `mainnet-v0.9.8-rc.2`
 | 10 | Small redemptions lose KAS and can be lost entirely | True of hand-built transactions; the wallet and the web app refuse a burn at or below the fee and warn above 20 % |
 | 11 | Round trips can use up the pool's sell room | Fixed: the circuit breaker counts the net flow ([KasPool](/contracts/kaspool/#why-it-counts-the-net-flow)) |
 | 12 | A burn to a blacklisted address is held indefinitely | Intended, decided on 4 November 2026: a redirect power would be a new theft path and would help a blocked party evade the block. The legal review should confirm it |
+
+## Outside source review of the services (5 November 2026)
+
+A second outside review read the off-chain services and filed three findings ([GitHub issue #2](https://github.com/kaspador/kusdt/issues/2)). None touches the covenants or the vault. All three were confirmed in the code and fixed the same day, in `mainnet-v0.9.8-rc.3`:
+
+| # | Finding | Fix |
+|---|---|---|
+| 1 | The RPCs had to agree on only some fields of a deposit, not its `sender`, which a refund pays | Every field of a deposit, and of every release and refund, must agree across a service's RPCs |
+| 2 | Redemption reports were first-writer-wins and unverified: a wrong first report could strand someone's burn | Claims are checked against the coordinator's node, which decides; a client's transaction can no longer edit the token index ([Reporting a burn](/protocol/coordinator-api/#reporting-a-burn)) |
+| 3 | The monitor failed open: one unreadable RPC stopped the whole check, the pause included | Each chain is checked on its own, INV-1 is never judged on partial backing, and a chain unreadable for 10 minutes pauses everything ([The monitor](/security/monitor/#when-it-cannot-read-a-chain)) |
+
+Checking finding 1 turned up the same gap in the releases and refunds the monitor reads (only their amounts were compared); it is fixed with it.
 
 ## Are the Ethereum and BNB Chain vaults safe?
 
