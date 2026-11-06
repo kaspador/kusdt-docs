@@ -37,6 +37,7 @@ export default defineConfig({
             { tag: 'meta', attrs: { property: 'og:image:type', content: 'image/jpeg' } },
             { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
             { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
+            { tag: 'meta', attrs: { name: 'twitter:site', content: '@trestly_io' } },
             { tag: 'meta', attrs: { name: 'twitter:image', content: new URL(`${base}og.jpg`, site).href } },
           ]
         : [],
