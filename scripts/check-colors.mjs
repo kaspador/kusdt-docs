@@ -1,5 +1,6 @@
-// Fails if the built site contains a green, teal or mint colour (the design
-// rule: Pearl's warm neutrals only, no Kaspa green). Run after `npm run build`.
+// Fails if the built site contains a colour outside the Trestly palette
+// (src/styles/trestly.css): mint and teal, cool blue, amber and rose. Anything
+// below 25 % saturation counts as a neutral. Run after `npm run build`.
 //
 //   npm run check:colors
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -26,8 +27,10 @@ function hsl(r, g, b) {
   return { h: h * 60, s, l };
 }
 
-// Green through cyan, with enough saturation to read as a colour.
-const forbidden = ({ h, s }) => h >= 75 && h <= 200 && s >= 0.25;
+// Saturated enough to read as a colour, and not one of the palette's hues:
+// mint and teal (150°–195°), amber (22°–45°), rose (345°–10°), cool blue (195°–235°).
+const allowed = (h) => (h >= 150 && h <= 235) || (h >= 22 && h <= 45) || h >= 345 || h <= 10;
+const forbidden = ({ h, s }) => s >= 0.25 && !allowed(h);
 
 const found = [];
 for (const file of files) {
@@ -51,7 +54,7 @@ for (const file of files) {
 
 const unique = [...new Set(found)];
 if (unique.length) {
-  console.error(`Green, teal or mint colours found (${unique.length}):\n` + unique.slice(0, 50).join('\n'));
+  console.error(`Colours outside the palette (${unique.length}):\n` + unique.slice(0, 50).join('\n'));
   process.exit(1);
 }
-console.log(`No green, teal or mint colours in ${files.length} files.`);
+console.log(`Only palette colours in ${files.length} files.`);

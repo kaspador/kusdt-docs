@@ -1,4 +1,4 @@
-// kUSDT documentation site. Static output only: `npm run build` writes dist/.
+// Trestly documentation site (the bridge's product name; the token is kUSDT). Static output only: `npm run build` writes dist/.
 //
 // SITE_URL (optional) is the public origin the site will be served from, for
 // example https://docs.example.org. It enables the sitemap and canonical URLs.
@@ -10,8 +10,8 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator';
-import pearlDark from './src/themes/pearl-dark.json' with { type: 'json' };
-import pearlLight from './src/themes/pearl-light.json' with { type: 'json' };
+import trestlyDark from './src/themes/trestly-dark.json' with { type: 'json' };
+import trestlyLight from './src/themes/trestly-light.json' with { type: 'json' };
 
 const site = process.env.SITE_URL || undefined;
 const base = (process.env.BASE_PATH || '/').replace(/\/?$/, '/');
@@ -22,22 +22,25 @@ export default defineConfig({
   trailingSlash: 'ignore',
   integrations: [
     starlight({
-      title: 'kUSDT',
+      title: 'Trestly',
+      logo: { src: './src/assets/logo.svg', alt: '' },
       description:
-        'kUSDT: USDT locked on Ethereum and BNB Chain, issued 1:1 on Kaspa Layer 1 as a KCC-20 covenant token.',
+        'Trestly documentation. kUSDT: USDT locked on Ethereum and BNB Chain, issued 1:1 on Kaspa Layer 1 as a KCC-20 covenant token.',
       favicon: '/favicon.svg',
-      customCss: ['./src/styles/pearl.css'],
+      customCss: ['@fontsource-variable/figtree/wght.css', './src/styles/trestly.css'],
+      components: { ThemeProvider: './src/components/ThemeProvider.astro', ThemeSelect: './src/components/ThemeSelect.astro' },
+      social: [{ icon: 'external', label: 'Open the app', href: 'https://trestly.io/' }],
       // Links are validated on the root build (`npm run build`); a build under a base path
       // keeps the pages' root links and prefixes them afterwards (scripts/base-links.mjs).
       plugins: base === '/' ? [starlightLinksValidator()] : [],
       expressiveCode: {
-        themes: [pearlDark, pearlLight],
+        themes: [trestlyDark, trestlyLight],
         useStarlightUiThemeColors: true,
         styleOverrides: {
-          borderRadius: '0.375rem',
+          borderRadius: '0.875rem',
           codeFontFamily: 'var(--__sl-font-mono)',
           uiFontFamily: 'var(--__sl-font)',
-          frames: { tooltipSuccessBackground: '#5a4e42', tooltipSuccessForeground: '#f0efea' },
+          frames: { tooltipSuccessBackground: '#2a3f42', tooltipSuccessForeground: '#f4f8f7' },
         },
       },
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },

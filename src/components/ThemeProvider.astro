@@ -1,0 +1,39 @@
+---
+// Starlight's ThemeProvider with one change: dark is the default, whatever the
+// system prefers, as in the web app. The picker reads the stored choice when it
+// loads, so the default has to be stored too.
+import { Icon } from '@astrojs/starlight/components';
+---
+
+{/* This is intentionally inlined to avoid FOUC. */}
+<script is:inline>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			(typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme')) || 'dark';
+		if (typeof localStorage !== 'undefined') localStorage.setItem('starlight-theme', storedTheme);
+		document.documentElement.dataset.theme = storedTheme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme) {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script>
+
+<template id="theme-icons">
+	<Icon name="sun" class="light" />
+	<Icon name="moon" class="dark" />
+	<Icon name="laptop" class="auto" />
+</template>

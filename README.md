@@ -4,7 +4,7 @@ kUSDT is USDT locked on Ethereum and BNB Chain and issued 1:1 on Kaspa Layer 1 a
 covenant token, with a KAS ⇄ kUSDT pool on Kaspa L1.
 
 **Read the documentation: https://kaspador.github.io/kusdt-docs/** (also at
-https://kusdt.pearlchain.live/docs/, next to the testnet itself)
+https://trestly.io/docs/, next to the testnet itself)
 
 It covers how the bridge and the pool work, the security model (trust, threats and attack
 vectors, the monitor, known limits) and how to operate and build on them.
