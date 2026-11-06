@@ -76,5 +76,5 @@ Amounts are exact integers end to end, including values above 2⁵³.
 ## Hosting
 
 `npm run build` in `bridge/web` writes a static `dist/`. Put a `config.json` next to `index.html` (the API URL, the
-deployment, the EVM RPCs and optionally the monitor). Routes are hash routes, so the app works on any static host
-and under a sub-path. Serve `.wasm` files as `application/wasm`. The details are in `bridge/web/README.md`.
+deployment, the EVM RPCs and optionally the monitor). Pages are plain paths (`/swap`), so the app goes at the root of a site whose host answers
+any path that isn't a file with `index.html`. Serve `.wasm` files as `application/wasm`. The details are in `bridge/web/README.md`.
