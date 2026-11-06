@@ -5,7 +5,7 @@ description: The coordinator's public, read-mostly JSON API. Nothing in it moves
 
 :::note[Where it runs]
 The coordinator (`bridge/services/src/coordinator/`) serves this API for the public testnet at
-`https://kastools.com/api/v1`, and in the local stack at `http://127.0.0.1:9100/api/v1` (see
+`https://trestly.io/api/v1`, and in the local stack at `http://127.0.0.1:9100/api/v1` (see
 [Run the simnet flow](/developers/simnet/#a-stack-that-keeps-running)). The mainnet base URL is **to be published**.
 :::
 

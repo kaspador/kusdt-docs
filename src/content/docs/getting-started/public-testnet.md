@@ -14,10 +14,10 @@ mainnet. Never send real USDT, ETH, BNB or KAS to any testnet address. Nothing h
 
 | Item | Where |
 |---|---|
-| Web app | [kastools.com](https://kastools.com) |
-| Wallet (testnet build) | [kusdt-wallet-testnet.zip](https://kastools.com/downloads/kusdt-wallet-testnet.zip) |
-| Coordinator API | `https://kastools.com/api/v1` ([Coordinator API](/protocol/coordinator-api/)) |
-| Monitor status (read-only) | `https://kastools.com/monitor/health`, `https://kastools.com/monitor/api/v1/monitor` |
+| Web app | [trestly.io](https://trestly.io) |
+| Wallet (testnet build) | [kusdt-wallet-testnet.zip](https://trestly.io/downloads/kusdt-wallet-testnet.zip) |
+| Coordinator API | `https://trestly.io/api/v1` ([Coordinator API](/protocol/coordinator-api/)) |
+| Monitor status (read-only) | `https://trestly.io/monitor/health`, `https://trestly.io/monitor/api/v1/monitor` |
 | Covenant IDs, vaults, MockUSDT | [Status: Addresses](/overview/status/#addresses), from `deployments/testnet.json` |
 
 All the services run on one public test host, each in its own isolated container. That is a testnet
@@ -29,7 +29,7 @@ convenience: on mainnet each signer is a different operator on its own machine
 The kUSDT wallet is a browser extension for Chromium browsers: Chrome, Brave and Edge. It is not in any store
 yet.
 
-1. Download [kusdt-wallet-testnet.zip](https://kastools.com/downloads/kusdt-wallet-testnet.zip).
+1. Download [kusdt-wallet-testnet.zip](https://trestly.io/downloads/kusdt-wallet-testnet.zip).
 2. Unzip it.
 3. Open `chrome://extensions`.
 4. Turn on **Developer mode**.
@@ -114,8 +114,8 @@ Details: [Redeem kUSDT](/getting-started/redeem/),
 |---|---|
 | The web app's **Reserves** page | Proof of reserves (INV-1): the coordinator's figures next to the page's own reads of the vaults and the minter, and the monitor's check |
 | The web app's **Network** page | The pinned deployment, whether the coordinator serves it, the vaults and the minter (paused or not), the signers |
-| `https://kastools.com/monitor/health` | 200 only while the monitor is healthy and its last check is fresh |
-| `https://kastools.com/monitor/api/v1/monitor` | Minted, released, owed and backing per chain, every alarm and every pause |
+| `https://trestly.io/monitor/health` | 200 only while the monitor is healthy and its last check is fresh |
+| `https://trestly.io/monitor/api/v1/monitor` | Minted, released, owed and backing per chain, every alarm and every pause |
 
 Both monitor routes are read-only. See [The monitor](/security/monitor/) and [Invariants](/security/invariants/).
 

@@ -4,7 +4,7 @@ description: How the bridge is deployed and run. What runs where, the testnet st
 ---
 
 This page follows the runbook in `deploy/README.md`. The testnet is deployed and public (4 November 2026) at
-`https://kastools.com`, on one test host. Nothing is on mainnet.
+`https://trestly.io`, on one test host. Nothing is on mainnet.
 
 ## What runs where
 
@@ -135,10 +135,10 @@ Two more changes in the coordinator:
 | kUSDT covenant ID (TN10) | `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314` |
 | KasPool covenant ID (TN10) | `102a59644f81734faa6e7870a694ee8da047b02b8bc21945576f535f94f5efb4` |
 | KasPool covenant ID, retired (no circuit breaker) | `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b` |
-| Web app | `https://kastools.com` |
-| Coordinator API | `https://kastools.com/api/v1` |
-| Monitor (read-only) | `https://kastools.com/monitor/health` and `https://kastools.com/monitor/api/v1/monitor` |
-| Wallet (testnet build) | `https://kastools.com/downloads/kusdt-wallet-testnet.zip` |
+| Web app | `https://trestly.io` |
+| Coordinator API | `https://trestly.io/api/v1` |
+| Monitor (read-only) | `https://trestly.io/monitor/health` and `https://trestly.io/monitor/api/v1/monitor` |
+| Wallet (testnet build) | `https://trestly.io/downloads/kusdt-wallet-testnet.zip` |
 
 The pool was opened on 4 November 2026 with 500 KAS and 15.7 kUSDT.
 
@@ -158,7 +158,8 @@ points a local build at services on `127.0.0.1`.
 ## Publishing
 
 The coordinator API and the monitor's status are public, read-only JSON. On the public testnet the host's Caddy
-serves `kastools.com` (and the same site at `kusdt.pearlchain.live`; `deploy/kusdt.caddy`) with TLS, and routes by path:
+serves `trestly.io` (`deploy/kusdt.caddy`) with TLS, and routes by path. The old names, `kastools.com` and
+`kusdt.pearlchain.live`, redirect to it permanently, so wallets already installed keep working:
 
 | Path | Goes to |
 |---|---|

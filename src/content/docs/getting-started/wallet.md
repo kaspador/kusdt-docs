@@ -10,8 +10,8 @@ local stack. A testnet build can be downloaded; it is **not in any store yet**.
 
 For Chromium browsers: Chrome, Brave and Edge.
 
-1. Download [kusdt-wallet-testnet.zip](https://kastools.com/downloads/kusdt-wallet-testnet.zip) from
-   `https://kastools.com/downloads/kusdt-wallet-testnet.zip`.
+1. Download [kusdt-wallet-testnet.zip](https://trestly.io/downloads/kusdt-wallet-testnet.zip) from
+   `https://trestly.io/downloads/kusdt-wallet-testnet.zip`.
 2. Unzip it.
 3. Open `chrome://extensions`.
 4. Turn on **Developer mode**.

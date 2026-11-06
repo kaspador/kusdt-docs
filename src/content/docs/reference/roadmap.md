@@ -23,7 +23,7 @@ As of 3 November 2026. Order follows the project's working plan; there are no da
 - Refunds, a load run, a rehearsal of the vault on mainnet forks, and an internal security review with its fixes.
 - Deployment tooling: a services image, a testnet compose file and a runbook.
 - The testnets: vaults on Sepolia and BSC testnet, genesis and pool on testnet-10, and the services, public since
-  4 November 2026 at [kastools.com](https://kastools.com) with a downloadable testnet wallet.
+  4 November 2026 at [trestly.io](https://trestly.io) with a downloadable testnet wallet.
 - This documentation site.
 
 ## Next

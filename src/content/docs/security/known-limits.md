@@ -136,7 +136,7 @@ Whoever makes the first deposit into a new pool sets its starting price. Arbitra
 ## The testnet runs on one host
 
 The contracts are deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at
-[kastools.com](https://kastools.com). Its five signers, the coordinator and the monitor run on one
+[trestly.io](https://trestly.io). Its five signers, the coordinator and the monitor run on one
 test host, in isolated containers, so it is not the federation of five independent operators that mainnet needs
 (see [Operations](/developers/operations/#the-testnet-deployment)). The wallet extension has a testnet build to
 download and is not in any store. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in those
