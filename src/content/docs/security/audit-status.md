@@ -42,7 +42,7 @@ that lands anyway is held until the address is unblocked. See [Blocked recipient
 ## External review (5 November 2026)
 
 An outside reviewer sent twelve questions and findings. Each is answered below; the code changes are in the
-mainnet release candidates from `mainnet-v0.9.8-rc.1` (now `mainnet-v0.9.8-rc.4`). This is still not an audit.
+mainnet release candidates from `mainnet-v0.9.8-rc.1` (now `mainnet-v0.9.8-rc.5`). This is still not an audit.
 
 | # | Finding | Response |
 |---|---|---|
