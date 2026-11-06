@@ -14,7 +14,7 @@ then refills, up to twice its ceiling can move in any 24-hour window.
 |---|---|---|
 | 1 or 2 signers | Nothing | Nothing |
 | 3 signers (a bad quorum) | Mint unbacked kUSDT within the allowance, while not paused | Pay out without burns, within the release allowance, while not paused |
-| 4 or 5 signers | Raise the mint allowance, so only the remaining hard cap bounds minting; unpause; replace the signers and the guardian | Same as 3: the vault's allowance and signer set belong to the owner |
+| 4 or 5 signers | Raise the mint allowance, so only the remaining hard cap bounds minting; unpause; replace the signers and the minter's guardian, so that the minter can no longer be paused | Same as 3: the vault's allowance and signer set belong to the owner, and the vaults' and the pool's guardians are not theirs to change |
 | Guardian key | Pause the minter and the pool | Pause the vault |
 | Coordinator | Stall | Stall |
 | Monitor | Pause, or fail to pause | Pause, or fail to pause |
@@ -45,7 +45,7 @@ A review of every attack we know of, as of 4 November 2026. Status means:
 | Fake deposits or burns fed to a signer through its RPC or node | It takes 3 operators' nodes. Every RPC a signer uses must agree on every field of a deposit (its sender, which a refund pays, included) and of every release and refund. Today all 5 testnet signers run on one machine | Open until there are 5 independent operators; the full agreement fixed 5 November 2026 |
 | A wrong redemption report sent first, to strand someone's burn | Claims are checked against the coordinator's node, which decides; a client's transaction cannot edit the token index | Fixed 5 November 2026 |
 | An RPC outage switching the monitor off | Each chain is checked on its own, INV-1 is never judged on partial backing, and a chain unreadable for 10 minutes pauses everything | Fixed 5 November 2026 |
-| Reorgs | Finality on both sides; the follower goes back to the fork point if Kaspa's chain moves anyway | Fixed 4 November 2026 (the follower rewind) |
+| Reorgs | Finality on both sides; the follower goes back to the fork point if Kaspa's chain moves anyway. A signer also undoes the minter moves the dropped blocks accepted, and signs no refund unless the minter it follows is on its node, so a skip the new chain replaced with a mint can't be paid as a refund | Fixed 4 November 2026 (the follower rewind) and 6 November 2026 (undoing the moves, from an outside review) |
 | Replay across chains, vaults or deployments | The EIP-712 domain, the covenant ID in the digests, each `redeemId` paid once | Tested |
 | Decoy outputs fooling the followers | Successors come only from covenant-bound authorized outputs | Fixed in the security review, with tests |
 | Tether blacklists a recipient or a vault | Nothing is paid to a blocked address; a blocked vault pauses everything | Fixed 4 November 2026 ([Blocked recipients](/security/known-limits/#blocked-recipients)) |
@@ -115,6 +115,8 @@ providers. The pool's circuit breaker lets sells take at most 10 % of the KAS re
 then pauses the pool (see [KasPool](/contracts/kaspool/#the-circuit-breaker)).
 
 ### Four or five signer keys
+
+This is an accepted limit (the project owner's decision, 6 November 2026): Kaspa's governance takes effect at once, and 4 keys can replace the minter's guardian along with the signers. A delay would need a veto too, since 4 of the 5 signers are already the problem, and the covenant keeps its simpler form. What protects kUSDT here is that the five operators are truly independent.
 
 With 4 keys the Kaspa side loses its limits, because 4 signers set them. `set_limits` can raise the ceiling and
 the refill rate, so minting is bounded only by the remaining hard cap (`remaining`, 1 billion USDT at launch).

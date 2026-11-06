@@ -22,6 +22,8 @@ most 500 000 in any 24 hours), and the monitor pauses the vaults the moment it s
 
 ## Blocked recipients
 
+**After a reorg that flips a mint and a skip, the coordinator and the monitor need an operator.** Only the signers undo what the dropped blocks accepted. The coordinator and the monitor keep following a minter state that is gone, so they fail safe: the monitor raises `minter-lost` and pauses, and no signer signs a refund from such a view. An operator then brings them back from the launch record.
+
 **A blocked recipient is never paid.** This was decided on 4 November 2026.
 
 Ethereum USDT keeps a blacklist (`isBlackListed(address)`), edited by Tether. BSC-USD

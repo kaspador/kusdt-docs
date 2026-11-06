@@ -42,7 +42,7 @@ that lands anyway is held until the address is unblocked. See [Blocked recipient
 ## External review (5 November 2026)
 
 An outside reviewer sent twelve questions and findings. Each is answered below; the code changes are in the
-mainnet release candidates since commit `1e3f969` (the current one is `mainnet-v0.9.8-rc.6`). This is still not an audit.
+mainnet release candidates since commit `1e3f969` (the current one is `mainnet-v0.9.8-rc.7`). This is still not an audit.
 
 | # | Finding | Response |
 |---|---|---|
@@ -70,6 +70,18 @@ A second outside review read the off-chain services and filed three findings ([G
 | 3 | The monitor failed open: one unreadable RPC stopped the whole check, the pause included | Each chain is checked on its own, INV-1 is never judged on partial backing, and a chain unreadable for 10 minutes pauses everything ([The monitor](/security/monitor/#when-it-cannot-read-a-chain)) |
 
 Checking finding 1 turned up the same gap in the releases and refunds the monitor reads (only their amounts were compared); it is fixed with it.
+
+## Third outside review (6 November 2026)
+
+A third review read the code at commit `a0ab050`. Each finding was checked against the code. Four are fixed in commit `57af0de`; one is accepted as a documented limit. This is still not an audit.
+
+| # | Severity as reported | Finding | Response |
+|---|---|---|---|
+| 1 | High | `set_signers` (4 of 5) replaces the signer set and the minter's guardian together, so the quorum the pause polices can remove it | Accepted by the project owner: the covenant does not change. The same 4 keys can already unpause and raise the limits, so this adds little to what 4 keys can do. It needs 4 of 5 keys, and the vaults' and the pool's guardians are not theirs to change ([Four or five signer keys](/security/threat-model/#four-or-five-signer-keys)) |
+| 2 | High | After a reorg that flipped a skip and a mint, a signer's follower kept a minter state that no longer existed, and signed a refund from its old skip record: the depositor would keep the kUSDT and get the USDT back | Fixed: the follower undoes the moves the dropped blocks accepted, and a refund needs the minter it follows to be unspent on its own node |
+| 3 | Medium | The owner's events, the queued operations and the vault's signers came from one RPC, so a lying RPC could hide an owner action | Fixed: every RPC must agree. Checking it found that one RPC saying "already paused" could also stop the pause: that now takes every RPC, and a pause or a cancel goes through each RPC in turn |
+| 4 | Medium | `POST /redeems` kept every unproved claim for good, with a node lookup each pass | Fixed: claims nobody has proved are capped, get a bounded share of each pass and expire. Checking it found they also counted as pending burns in the public supply: they no longer do |
+| 5 | Medium | The JSON parser rewrote text inside strings, and rounded a large integer standing alone | Fixed: it reads JSON's own structure. The two low findings in the same code (a marker a string could collide with, a comparison that showed a secret's length) are fixed with it |
 
 ## Are the Ethereum and BNB Chain vaults safe?
 
