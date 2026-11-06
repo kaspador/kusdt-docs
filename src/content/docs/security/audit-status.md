@@ -42,7 +42,7 @@ that lands anyway is held until the address is unblocked. See [Blocked recipient
 ## External review (5 November 2026)
 
 An outside reviewer sent twelve questions and findings. Each is answered below; the code changes are in the
-mainnet release candidates from `mainnet-v0.9.8-rc.1` (now `mainnet-v0.9.8-rc.5`). This is still not an audit.
+mainnet release candidates since commit `1e3f969` (the current one is `mainnet-v0.9.8-rc.6`). This is still not an audit.
 
 | # | Finding | Response |
 |---|---|---|
@@ -61,7 +61,7 @@ mainnet release candidates from `mainnet-v0.9.8-rc.1` (now `mainnet-v0.9.8-rc.5`
 
 ## Outside source review of the services (5 November 2026)
 
-A second outside review read the off-chain services and filed three findings ([GitHub issue #2](https://github.com/kaspador/kusdt/issues/2)). None touches the covenants or the vault. All three were confirmed in the code and fixed the same day, in `mainnet-v0.9.8-rc.3`:
+A second outside review read the off-chain services and filed three findings ([GitHub issue #2](https://github.com/kaspador/kusdt/issues/2)). None touches the covenants or the vault. All three were confirmed in the code and fixed the same day, in commit `4a037d0`:
 
 | # | Finding | Fix |
 |---|---|---|
