@@ -90,8 +90,8 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 </tr>
 <tr>
 <td>4 or 5 signers</td>
-<td>Raise the mint allowance, so only the remaining hard cap bounds minting; unpause; replace the signers and the guardian</td>
-<td>Same as 3: the vault’s allowance and signer set belong to the owner</td>
+<td>Raise the mint allowance, so only the remaining hard cap bounds minting; unpause; replace the signers and the minter’s guardian, so that the minter can no longer be paused</td>
+<td>Same as 3: the vault’s allowance and signer set belong to the owner, and the vaults’ and the pool’s guardians are not theirs to change</td>
 </tr>
 <tr>
 <td>Guardian key</td>
@@ -191,8 +191,8 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 </tr>
 <tr>
 <td>Reorgs</td>
-<td>Finality on both sides; the follower goes back to the fork point if Kaspa’s chain moves anyway</td>
-<td>Fixed 4 November 2026 (the follower rewind)</td>
+<td>Finality on both sides; the follower goes back to the fork point if Kaspa’s chain moves anyway. A signer also undoes the minter moves the dropped blocks accepted, and signs no refund unless the minter it follows is on its node, so a skip the new chain replaced with a mint can’t be paid as a refund</td>
+<td>Fixed 4 November 2026 (the follower rewind) and 6 November 2026 (undoing the moves, from an outside review)</td>
 </tr>
 <tr>
 <td>Replay across chains, vaults or deployments</td>
@@ -349,6 +349,7 @@ BridgeMint takes 4 signers, and unpausing a vault takes the owner. The owner the
 providers. The pool’s circuit breaker lets sells take at most 10 % of the KAS reserve per hour, and the guardian
 then pauses the pool (see <a href="/kusdt-docs/contracts/kaspool/#the-circuit-breaker">KasPool</a>).</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="four-or-five-signer-keys">Four or five signer keys</h3><a class="sl-anchor-link" href="#four-or-five-signer-keys"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Four or five signer keys”</span></a></div>
+<p>This is an accepted limit (the project owner’s decision, 6 November 2026): Kaspa’s governance takes effect at once, and 4 keys can replace the minter’s guardian along with the signers. A delay would need a veto too, since 4 of the 5 signers are already the problem, and the covenant keeps its simpler form. What protects kUSDT here is that the five operators are truly independent.</p>
 <p>With 4 keys the Kaspa side loses its limits, because 4 signers set them. <code dir="auto">set_limits</code> can raise the ceiling and
 the refill rate, so minting is bounded only by the remaining hard cap (<code dir="auto">remaining</code>, 1 billion USDT at launch).
 <code dir="auto">unpause</code> can undo the guardian’s pause of the minter, and <code dir="auto">set_signers</code> can replace the signer set and the
