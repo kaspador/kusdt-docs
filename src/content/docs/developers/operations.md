@@ -48,6 +48,7 @@ holds a compose file (its own pruned Kaspa node, the service and Caddy), a confi
 | `deploy/mainnet-coordinator` | The coordinator's operator | The public API (`/api/v1/`) |
 | `deploy/mainnet-monitor` | The monitor's operator (the guardian), and a second monitor in watch-only mode | `GET /health` and `/api/v1/monitor`; acknowledging alarms from the operator's addresses only |
 | `deploy/mainnet-deployer` | The deployer, once | Nothing: `npm run mainnet:plan`, `mainnet:execute` and `mainnet:verify` from a checkout of the tag |
+| `deploy/mainnet-web` | The site's operator | The web app, built for mainnet, with its own Caddy (`/swap` is `swap.html`, with that page's preview tags) |
 
 The image has two tools for every operator:
 

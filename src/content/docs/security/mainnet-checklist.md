@@ -85,4 +85,4 @@ real USDT, and a simnet Kaspa node. It passed on 5 November 2026. It covered:
 - a live monitor with a canceller key: an announced call passes quietly, an unannounced `setSigners` is alarmed
   and cancelled, the Safe's admin call is alarmed, the guardian pauses, and the integrators' signal says stop.
 
-The rehearsal for release candidate `mainnet-v0.9.8-rc.3` passed all 48 checks.
+The rehearsal for release candidate `mainnet-v0.9.8-rc.4` passed all 48 checks.
