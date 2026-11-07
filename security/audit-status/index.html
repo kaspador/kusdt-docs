@@ -77,7 +77,7 @@ not use kUSDT with funds you cannot afford to lose.</p></div></aside>
 <tbody>
 <tr>
 <td>BridgeMint</td>
-<td>21 tests in Kaspa’s script engine, including attacks; every test transaction checked for relay standardness</td>
+<td>22 tests in Kaspa’s script engine, including attacks; every test transaction checked for relay standardness</td>
 </tr>
 <tr>
 <td>kUSDT token family</td>
@@ -89,7 +89,7 @@ not use kUSDT with funds you cannot afford to lose.</p></div></aside>
 </tr>
 <tr>
 <td>KusdtVault</td>
-<td>85 Hardhat tests, including randomized invariant runs and non-standard tokens; reviewed line by line by the project owner against the specification</td>
+<td>102 Hardhat tests, including randomized invariant runs and non-standard tokens; reviewed line by line by the project owner against the specification</td>
 </tr>
 <tr>
 <td>End to end (Kaspa)</td>
@@ -178,7 +178,7 @@ mainnet release candidates since commit <code dir="auto">1e3f969</code> (the cur
 <tr>
 <td>4</td>
 <td>The testnet runs all signers on one host</td>
-<td>True; mainnet needs five independent operators, each with its own node and RPCs. The mainnet packages are built for that</td>
+<td>True; mainnet needs five independent operators, each with its own node and RPCs. The mainnet packages are built for that, and five operators are lined up</td>
 </tr>
 <tr>
 <td>5</td>
@@ -223,7 +223,7 @@ mainnet release candidates since commit <code dir="auto">1e3f969</code> (the cur
 </tbody>
 </table>
 <div class="sl-heading-wrapper level-h2"><h2 id="outside-source-review-of-the-services-5-november-2026">Outside source review of the services (5 November 2026)</h2><a class="sl-anchor-link" href="#outside-source-review-of-the-services-5-november-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Outside source review of the services (5 November 2026)”</span></a></div>
-<p>A second outside review read the off-chain services and filed three findings (<a href="https://github.com/kaspador/kusdt/issues/2">GitHub issue #2</a>). None touches the covenants or the vault. All three were confirmed in the code and fixed the same day, in commit <code dir="auto">4a037d0</code>:</p>
+<p>A second outside review read the off-chain services and filed three findings. None touches the covenants or the vault. All three were confirmed in the code and fixed the same day, in commit <code dir="auto">4a037d0</code>:</p>
 <table>
 <thead>
 <tr>
@@ -296,7 +296,7 @@ mainnet release candidates since commit <code dir="auto">1e3f969</code> (the cur
 </tbody>
 </table>
 <div class="sl-heading-wrapper level-h2"><h2 id="fourth-outside-review-7-november-2026">Fourth outside review (7 November 2026)</h2><a class="sl-anchor-link" href="#fourth-outside-review-7-november-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Fourth outside review (7 November 2026)”</span></a></div>
-<p>Each finding was checked against the code, and all five are fixed. This is still not an audit.</p>
+<p>Each finding was checked against the code, and all five are fixed, in commit <code dir="auto">a7ded23</code> on <code dir="auto">main</code>. The current release candidate, <code dir="auto">mainnet-v0.9.8-rc.7</code>, predates them. This is still not an audit.</p>
 <table>
 <thead>
 <tr>
@@ -343,7 +343,7 @@ mainnet release candidates since commit <code dir="auto">1e3f969</code> (the cur
 <p>As far as testing can show, and not audited yet.</p>
 <p><strong>Tested.</strong></p>
 <ul>
-<li>85 vault tests: replay, signature order and malleability, reentrancy, fee-on-transfer tokens, backing never
+<li>102 vault tests: replay, signature order and malleability, reentrancy, fee-on-transfer tokens, backing never
 overdrawn, and the rate limits.</li>
 <li>Fork rehearsals on the real USDT and BSC-USD, including the blacklist checks.</li>
 <li>The internal security review found the vault sound.</li>

@@ -87,8 +87,7 @@ covenant’s order.</li>
 covenant ID. Followers ignore it. The internal security review found that followers had adopted such decoys; they
 now take successors only from covenant-bound authorized outputs (regression tests:
 <code dir="auto">bridge/packages/protocol/src/decoys.test.ts</code>, <code dir="auto">bridge/kaspa/tests/decoy_outputs.rs</code>).</p>
-<p>A decoding mistake therefore cannot be adopted silently. If the computed successor is not among the outputs, the
-follower stops with an error, and the monitor treats it as an alarm (<code dir="auto">minter-unverifiable</code>). For a mint, every
+<p>A decoding mistake therefore cannot be adopted silently. If the computed successor is not among the outputs, the follower refuses it with an error and keeps the state it holds. The monitor treats that as an alarm (<code dir="auto">minter-unverifiable</code>); the coordinator and the signers log it. For a mint, every
 recipient’s script must be among the outputs too. Where the successor depends on which input paid (a pool sell,
 add or first deposit), every kUSDT input is tried, and only one whose result the outputs hold is taken.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="reading-in-acceptance-order">Reading in acceptance order</h2><a class="sl-anchor-link" href="#reading-in-acceptance-order"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Reading in acceptance order”</span></a></div>
@@ -110,9 +109,7 @@ transaction bodies it had dropped or never fetched, and a restart with the same 
 <p>Now, when the node reports any <code dir="auto">removedChainBlockHashes</code>, the follower goes back to the <strong>fork point</strong>: the
 selected parent of the first added chain block. It fetches the block bodies again from there and hands the
 transactions out again.</p>
-<p>Handing a transaction out twice is safe. A transaction the follower already followed spends a state it no longer
-holds, so it is ignored. The regression test is <code dir="auto">bridge/services/src/shared/accepted.test.ts</code>, which fails on the
-old code.</p>
+<p>Handing a transaction out twice is safe. A transaction the follower already followed spends a state it no longer holds, so it is ignored. A transaction the new chain no longer accepts is different: it leaves the follower on a state that is gone. So a signer undoes the minter moves the dropped blocks accepted, newest first, from a journal of its last 256 moves, and holds the state the new chain spends again. It also signs no refund unless the minter it follows is unspent on its own node (see <a href="/kusdt-docs/protocol/refunds/">Refunds</a>). The coordinator and the monitor do not undo moves: the monitor raises <code dir="auto">minter-lost</code> and pauses, and an operator brings them back (see <a href="/kusdt-docs/security/known-limits/">Known limits</a>). The regression tests are <code dir="auto">bridge/services/src/shared/accepted.test.ts</code>, <code dir="auto">bridge/services/src/review3.test.ts</code> and <code dir="auto">bridge/services/src/signer/signer.test.ts</code>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="who-follows-what">Who follows what</h2><a class="sl-anchor-link" href="#who-follows-what"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Who follows what”</span></a></div>
 <table>
 <thead>
@@ -125,18 +122,18 @@ old code.</p>
 <tbody>
 <tr>
 <td>Monitor</td>
-<td>BridgeMint, every kUSDT burn</td>
+<td>BridgeMint, the pool, every kUSDT burn</td>
 <td>Minted supply, mints against deposits, releases against burns, governance (see <a href="/kusdt-docs/security/monitor/">The monitor</a>)</td>
 </tr>
 <tr>
 <td>Coordinator</td>
-<td>BridgeMint, the pool, positions</td>
-<td><code dir="auto">GET /status</code>, <code dir="auto">GET /pool</code>, <code dir="auto">GET /positions</code>, and supply in <code dir="auto">GET /reserves</code></td>
+<td>BridgeMint, the pool, positions, kUSDT states and burns</td>
+<td><code dir="auto">GET /status</code>, <code dir="auto">GET /pool</code>, <code dir="auto">GET /positions</code>, <code dir="auto">GET /tokens</code>, the redemptions it pays, and supply in <code dir="auto">GET /reserves</code></td>
 </tr>
 <tr>
 <td>Each signer</td>
 <td>BridgeMint, from its own Kaspa node</td>
-<td>Signing a refund only for a nonce it sees skipped and never minted</td>
+<td>Signing a refund only for a nonce it sees skipped and never minted, and only while the minter it follows is unspent on its node</td>
 </tr>
 <tr>
 <td>Wallet</td>

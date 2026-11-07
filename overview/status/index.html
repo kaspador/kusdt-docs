@@ -64,9 +64,7 @@
 			scroller.scrollTop = window._starlightScrollRestore;
 			delete window._starlightScrollRestore;
 		})();
-	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"><a href="https://trestly.io/" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">Open the app</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M19.33 10.18a1 1 0 0 1-.77 0 1 1 0 0 1-.62-.93l.01-1.83-8.2 8.2a1 1 0 0 1-1.41-1.42l8.2-8.2H14.7a1 1 0 0 1 0-2h4.25a1 1 0 0 1 1 1v4.25a1 1 0 0 1-.62.93Z"/><path d="M11 4a1 1 0 1 1 0 2H7a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-4a1 1 0 1 1 2 0v4a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h4Z"/></svg></a></div><button type="button" role="switch" class="theme-switch" aria-label="Switch between dark and light" title="Switch between dark and light" data-theme-switch><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M4.8 19.2l2.1-2.1M17.1 6.9l2.1-2.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 13.4A9 9 0 1 1 10.6 3a7.2 7.2 0 0 0 10.4 10.4z"/></svg><span class="theme-knob theme-knob-sun"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M4.8 19.2l2.1-2.1M17.1 6.9l2.1-2.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="theme-knob theme-knob-moon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 13.4A9 9 0 1 1 10.6 3a7.2 7.2 0 0 0 10.4 10.4z"/></svg></span></button></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#components" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Components</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#what-the-simnet-run-shows" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">What the simnet run shows</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-whole-bridge-on-one-machine" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The whole bridge on one machine</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#addresses" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Addresses</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/kusdt-docs/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C3fM4Kra.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#components" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Components</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#what-the-simnet-run-shows" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">What the simnet run shows</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-whole-bridge-on-one-machine" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The whole bridge on one machine</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#addresses" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Addresses</span></a></li></ul></nav></starlight-toc><script type="module" src="/kusdt-docs/_astro/TableOfContents.astro_astro_type_script_index_0_lang.BpJaGz7G.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Status</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><p>As of 4 November 2026. The specification is <strong>v1, for testnet</strong>. kUSDT is deployed on testnet (TN10, Sepolia and
-BSC testnet), and the public testnet is open at <a href="https://trestly.io">trestly.io</a>, with test
-coins only. Nothing is on mainnet. To try it, see <a href="/kusdt-docs/getting-started/public-testnet/">Test on the public testnet</a>.</p>
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"><a href="https://trestly.io/" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">Open the app</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M19.33 10.18a1 1 0 0 1-.77 0 1 1 0 0 1-.62-.93l.01-1.83-8.2 8.2a1 1 0 0 1-1.41-1.42l8.2-8.2H14.7a1 1 0 0 1 0-2h4.25a1 1 0 0 1 1 1v4.25a1 1 0 0 1-.62.93Z"/><path d="M11 4a1 1 0 1 1 0 2H7a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-4a1 1 0 1 1 2 0v4a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h4Z"/></svg></a></div><button type="button" role="switch" class="theme-switch" aria-label="Switch between dark and light" title="Switch between dark and light" data-theme-switch><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M4.8 19.2l2.1-2.1M17.1 6.9l2.1-2.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 13.4A9 9 0 1 1 10.6 3a7.2 7.2 0 0 0 10.4 10.4z"/></svg><span class="theme-knob theme-knob-sun"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M4.8 19.2l2.1-2.1M17.1 6.9l2.1-2.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="theme-knob theme-knob-moon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 13.4A9 9 0 1 1 10.6 3a7.2 7.2 0 0 0 10.4 10.4z"/></svg></span></button></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#components" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Components</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#what-the-simnet-run-shows" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">What the simnet run shows</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-whole-bridge-on-one-machine" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The whole bridge on one machine</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#addresses" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Addresses</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/kusdt-docs/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C3fM4Kra.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#components" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Components</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#what-the-simnet-run-shows" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">What the simnet run shows</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-whole-bridge-on-one-machine" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The whole bridge on one machine</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#addresses" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Addresses</span></a></li></ul></nav></starlight-toc><script type="module" src="/kusdt-docs/_astro/TableOfContents.astro_astro_type_script_index_0_lang.BpJaGz7G.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Status</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><p>As of 7 November 2026. The specification is <strong>v1, for testnet</strong>. kUSDT is deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at <a href="https://trestly.io">trestly.io</a>, with test coins only. The latest testnet release is <code dir="auto">v0.9.11</code>, with wallet 0.9.7. The mainnet candidate is <code dir="auto">mainnet-v0.9.8-rc.7</code>, a pre-release and not audited; <code dir="auto">main</code> is ahead of it by the fourth outside review’s fixes. The public testnet’s services run an image from before the third and fourth reviews, so those fixes are not live in them yet. Nothing is on mainnet. To try it, see <a href="/kusdt-docs/getting-started/public-testnet/">Test on the public testnet</a>.</p>
 <aside aria-label="Not audited" class="starlight-aside starlight-aside--danger"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 7a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V8a1 1 0 0 0-1-1Zm0 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm9.71-7.44-5.27-5.27a1.05 1.05 0 0 0-.71-.29H8.27a1.05 1.05 0 0 0-.71.29L2.29 7.56a1.05 1.05 0 0 0-.29.71v7.46c.004.265.107.518.29.71l5.27 5.27c.192.183.445.286.71.29h7.46a1.05 1.05 0 0 0 .71-.29l5.27-5.27a1.05 1.05 0 0 0 .29-.71V8.27a1.05 1.05 0 0 0-.29-.71ZM20 15.31 15.31 20H8.69L4 15.31V8.69L8.69 4h6.62L20 8.69v6.62Z"/></svg>Not audited</p><div class="starlight-aside__content"><p>No external audit has taken place. Mainnet requires audits and the other steps in the
 <a href="/kusdt-docs/security/mainnet-checklist/">mainnet checklist</a>.</p></div></aside>
 <div class="sl-heading-wrapper level-h2"><h2 id="components">Components</h2><a class="sl-anchor-link" href="#components"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Components”</span></a></div>
@@ -90,7 +88,7 @@ coins only. Nothing is on mainnet. To try it, see <a href="/kusdt-docs/getting-s
 <td>BridgeMint covenant</td>
 <td>Kaspa L1</td>
 <td>Written</td>
-<td>21 script-engine tests, attacks included; simnet run</td>
+<td>22 script-engine tests, attacks included; simnet run</td>
 </tr>
 <tr>
 <td>kUSDT token family (KCC20, TokenSeed, BridgeMint)</td>
@@ -102,13 +100,13 @@ coins only. Nothing is on mainnet. To try it, see <a href="/kusdt-docs/getting-s
 <td>KasPool covenants (Pool, Position)</td>
 <td>Kaspa L1</td>
 <td>Written, with the circuit breaker and the pause</td>
-<td>20 script-engine tests; simnet run; the forged-kUSDT dump capped in <code dir="auto">local:e2e</code></td>
+<td>23 script-engine tests; simnet run; the forged-kUSDT dump capped in <code dir="auto">local:e2e</code></td>
 </tr>
 <tr>
 <td>KusdtVault</td>
 <td>Ethereum, BNB Chain</td>
 <td>Written</td>
-<td>85 Hardhat tests; reviewed line by line against the specification</td>
+<td>102 Hardhat tests; reviewed line by line against the specification</td>
 </tr>
 <tr>
 <td>Transaction builders</td>
@@ -132,13 +130,13 @@ coins only. Nothing is on mainnet. To try it, see <a href="/kusdt-docs/getting-s
 <td>Web app</td>
 <td>Browser</td>
 <td>Built (<code dir="auto">bridge/web</code>)</td>
-<td>72 unit tests, 73 end-to-end tests on the live stack, 14 driving the real wallet extension</td>
+<td>133 unit tests, 160 end-to-end tests on the live stack, 25 driving the real wallet extension</td>
 </tr>
 <tr>
 <td>Wallet extension</td>
 <td>Browser</td>
 <td>Built (<code dir="auto">wallet/extension</code>), tested against the local stack; a testnet build is downloadable, not released to any store</td>
-<td>78 unit tests, simnet, smoke and live-stack suites</td>
+<td>123 unit tests, simnet and smoke suites, 7 against the live stack. Its page interface is specified (<a href="/kusdt-docs/protocol/wallet-provider/">Wallet provider</a>)</td>
 </tr>
 <tr>
 <td>Refunds</td>
@@ -160,9 +158,45 @@ coins only. Nothing is on mainnet. To try it, see <a href="/kusdt-docs/getting-s
 </tr>
 <tr>
 <td>Deployment tooling</td>
-<td>Docker image, compose file, runbook</td>
+<td>Docker image, testnet compose file, runbook, mainnet packages</td>
 <td>Written</td>
 <td>See <a href="/kusdt-docs/developers/operations/">Operations</a></td>
+</tr>
+<tr>
+<td>Vault owner: AccessManager under a Safe</td>
+<td>Ethereum, BNB Chain</td>
+<td>Built and rehearsed, not on any live vault: testnet vaults keep a plain owner</td>
+<td>17 Hardhat tests; <code dir="auto">mainnet:rehearse</code></td>
+</tr>
+<tr>
+<td>Mainnet packages: signer, coordinator, monitor, deployer, web app</td>
+<td>Off-chain</td>
+<td>Built; nothing deployed</td>
+<td><code dir="auto">mainnet:rehearse</code> on forks and simnet, 49 checks; <code dir="auto">local:rotate</code>, 16 checks</td>
+</tr>
+<tr>
+<td>Signer keys in an HSM or KMS</td>
+<td>Off-chain</td>
+<td>Built, as an option</td>
+<td>See <a href="/kusdt-docs/developers/operations/#signer-keys-in-an-hsm-or-kms">Operations</a></td>
+</tr>
+<tr>
+<td>Proof of reserves</td>
+<td>Browser</td>
+<td>Live on the testnet: the web app’s Reserves page</td>
+<td>Reads the vaults and the minter itself, next to <code dir="auto">GET /reserves</code> and the monitor’s check</td>
+</tr>
+<tr>
+<td>Reproducible covenant bytecode</td>
+<td>CI</td>
+<td>Built</td>
+<td><code dir="auto">tools/check-artifacts.mjs</code> and a CI job recompile and compare, byte for byte</td>
+</tr>
+<tr>
+<td>Outside reviews</td>
+<td>Code and services</td>
+<td>Four so far, each finding answered. Not an audit</td>
+<td>See <a href="/kusdt-docs/security/audit-status/">Audit status</a></td>
 </tr>
 <tr>
 <td>Testnet deployment</td>
@@ -175,6 +209,12 @@ coins only. Nothing is on mainnet. To try it, see <a href="/kusdt-docs/getting-s
 <td>Kaspa, Ethereum, BNB Chain</td>
 <td>Not yet</td>
 <td>Gated on the <a href="/kusdt-docs/security/mainnet-checklist/">mainnet checklist</a></td>
+</tr>
+<tr>
+<td>Signer operators</td>
+<td>Mainnet</td>
+<td>Five lined up; nothing runs on mainnet yet</td>
+<td>The <a href="/kusdt-docs/security/mainnet-checklist/">mainnet checklist</a>, item 1</td>
 </tr>
 </tbody>
 </table>
@@ -191,7 +231,7 @@ coins only. Nothing is on mainnet. To try it, see <a href="/kusdt-docs/getting-s
 <li>a buy, a sell, a liquidity deposit, a liquidity withdrawal, and the admin collecting the protocol fees.</li>
 </ol>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-whole-bridge-on-one-machine">The whole bridge on one machine</h2><a class="sl-anchor-link" href="#the-whole-bridge-on-one-machine"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The whole bridge on one machine”</span></a></div>
-<p>On 3 November 2026 the local end-to-end run passed. It runs two Hardhat chains (chain IDs 31337 and 31338,
+<p>The local end-to-end run first passed on 3 November 2026. It has passed with the pool attack below since 4 November 2026, most recently on 7 November 2026. It runs two Hardhat chains (chain IDs 31337 and 31338,
 standing in for Ethereum and BNB Chain, with MockUSDT at 6 and 18 decimals and a vault each), the kaspad simnet,
 the 5 signers, the coordinator and the monitor, all on one machine. It showed:</p>
 <ol>
@@ -257,7 +297,7 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 </tr>
 <tr>
 <td>Monitor status (read-only)</td>
-<td><code dir="auto">https://trestly.io/monitor/health</code>, <code dir="auto">https://trestly.io/monitor/api/v1/monitor</code></td>
+<td><code dir="auto">https://trestly.io/monitor/health</code>, <code dir="auto">https://trestly.io/monitor/api/v1/monitor</code>, <code dir="auto">https://trestly.io/monitor/api/v1/signal</code></td>
 <td>to be published</td>
 </tr>
 <tr>

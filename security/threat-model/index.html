@@ -121,7 +121,7 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 </tbody>
 </table>
 <div class="sl-heading-wrapper level-h2"><h2 id="attack-vectors">Attack vectors</h2><a class="sl-anchor-link" href="#attack-vectors"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Attack vectors”</span></a></div>
-<p>A review of every attack we know of, as of 4 November 2026. Status means:</p>
+<p>A review of every attack we know of, as of 7 November 2026. Status means:</p>
 <ul>
 <li><strong>tested</strong>: an attack run or a test shows the defence works;</li>
 <li><strong>bounded</strong>: the attack works, but a limit caps what it can take;</li>
@@ -234,7 +234,7 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 <tr>
 <td>Sandwiching</td>
 <td>A swap spends the exact pool state it was quoted on, so a front-run makes it fail, never fill worse. But the wallet used to re-quote by itself within your slippage, so a bot could take up to that slippage. Now the wallet asks before a worse price: it goes ahead on its own only when a new quote is at least as good as the one you confirmed</td>
-<td>By design on-chain; the wallet fix is being built</td>
+<td>By design on-chain; fixed in the wallet 4 November 2026, with tests</td>
 </tr>
 <tr>
 <td>Inflating the first depositor’s shares</td>
@@ -290,7 +290,7 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 </tr>
 <tr>
 <td>The extension’s supply chain (npm dependencies)</td>
-<td>A lockfile audit and reproducible builds</td>
+<td>A lockfile audit and reproducible builds. CI already reproduces the WebAssembly core the wallet embeds; the extension’s own bundle is not yet checked</td>
 <td>Open</td>
 </tr>
 <tr>
@@ -303,9 +303,9 @@ then refills, up to twice its ceiling can move in any 24-hour window.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="before-mainnet-in-order">Before mainnet, in order</h3><a class="sl-anchor-link" href="#before-mainnet-in-order"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Before mainnet, in order”</span></a></div>
 <ol>
 <li>The pool’s circuit breaker. <strong>Done.</strong></li>
-<li>No silent worse re-quotes in the wallet. <strong>Being built.</strong></li>
+<li>No silent worse re-quotes in the wallet. <strong>Done.</strong></li>
 <li>At least 2 independent monitors, with external alerts on <code dir="auto">/health</code>.</li>
-<li>Five independent signer operators.</li>
+<li>Five independent signer operators. Five are lined up; nothing runs on mainnet yet.</li>
 <li>External audits of the covenants, their compiler and the vault, and allowances sized to what can be lost.
 With 3 stolen keys, today’s limits risk about 500 000 USDT from the vaults, plus at most about 10 % of the
 pool’s KAS.</li>
@@ -401,7 +401,7 @@ checked against a node.</p>
 pauses both vaults, the minter and the pool; it never unpauses. A compromised monitor can pause (as above) or fail to pause
 when something breaks. Without a pause, the allowances still cap what 3 bad signers can move.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="evidence-a-bad-quorum-in-the-local-run">Evidence: a bad quorum in the local run</h2><a class="sl-anchor-link" href="#evidence-a-bad-quorum-in-the-local-run"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Evidence: a bad quorum in the local run”</span></a></div>
-<p>The local end-to-end run (<code dir="auto">npm run local:e2e</code>, passed on 3 November 2026) plays the 3-key attack:</p>
+<p>The local end-to-end run (<code dir="auto">npm run local:e2e</code>, with the pool step since 4 November 2026, most recently passing on 7 November 2026) plays the 3-key attack:</p>
 <table>
 <thead>
 <tr>

@@ -81,13 +81,13 @@ directly from a chain or carries signatures that a contract checks.</p>
 <td>Vault</td>
 <td>Each signer</td>
 <td><code dir="auto">Deposit</code> events</td>
-<td>Read from the signer’s own EVM RPC; counted only once the block is finalized</td>
+<td>Read from every one of the signer’s own EVM RPCs, which must agree on every field; counted only once the block is finalized</td>
 </tr>
 <tr>
 <td>Kaspa</td>
 <td>Each signer</td>
 <td>Burn outputs and BridgeMint state</td>
-<td>Read from the signer’s own Kaspa node; counted only 1 000 DAA below the virtual DAA score</td>
+<td>Read from the signer’s own Kaspa node; counted only 1 000 DAA below the virtual DAA score (300 on testnet), and deeper for larger burns</td>
 </tr>
 <tr>
 <td>Signer</td>
@@ -111,13 +111,13 @@ directly from a chain or carries signatures that a contract checks.</p>
 <td>Vaults and Kaspa</td>
 <td>Monitor</td>
 <td>Deposits, releases, refunds, backing, mints, burns, governance</td>
-<td>Read from the monitor’s own nodes, Kaspa in acceptance order; nothing from the coordinator (see <a href="/kusdt-docs/security/monitor/">The monitor</a>)</td>
+<td>Read from the monitor’s own nodes, Kaspa in acceptance order; nothing from the coordinator. Owner events and queued AccessManager operations must agree on every RPC; a disagreement counts as a failed read, and 10 minutes of failed reads is an alarm that pauses everything (see <a href="/kusdt-docs/security/monitor/">The monitor</a>)</td>
 </tr>
 <tr>
 <td>Monitor</td>
 <td>Guardian action</td>
 <td>Pause</td>
-<td>The vault accepts <code dir="auto">pause</code> from the guardian or owner; BridgeMint accepts a transaction signed by the guardian key</td>
+<td>The vault accepts <code dir="auto">pause</code> from the guardian or owner; BridgeMint and the pool accept a transaction signed by the guardian’s Kaspa key</td>
 </tr>
 <tr>
 <td>Coordinator</td>
@@ -180,14 +180,20 @@ nodes.</p>
 <tr>
 <td>Guardian Kaspa key</td>
 <td>Monitor</td>
-<td>The pause transaction</td>
-<td><code dir="auto">BridgeMint.pause</code></td>
+<td>The pause transactions</td>
+<td><code dir="auto">BridgeMint.pause</code>, <code dir="auto">Pool.pause</code></td>
 </tr>
 <tr>
 <td>Guardian EVM address</td>
 <td>Monitor</td>
 <td>The <code dir="auto">pause()</code> call</td>
 <td><code dir="auto">KusdtVault.pause</code></td>
+</tr>
+<tr>
+<td>Pool admin key</td>
+<td>The operator, offline</td>
+<td><code dir="auto">collect</code>, <code dir="auto">unpause</code>, <code dir="auto">set_keys</code> transactions</td>
+<td><code dir="auto">Pool</code></td>
 </tr>
 <tr>
 <td>Vault owner</td>

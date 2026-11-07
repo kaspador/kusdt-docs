@@ -177,8 +177,7 @@ coordinator’s word for a deposit, a burn, finality or an amount.</li>
 <li><strong>Signers are independent.</strong> Before mainnet, the five must be run by five independent operators, each with
 their own nodes (<a href="/kusdt-docs/security/mainnet-checklist/">mainnet checklist</a>). Each needs a pruned Kaspa node with
 <code dir="auto">--utxoindex</code> and at least 2 independent EVM RPC providers per chain, different from the other signers’. See
-<a href="/kusdt-docs/developers/operations/#what-a-signer-needs">What a signer needs</a>. Today all 5 testnet signers run on one
-machine.</li>
+<a href="/kusdt-docs/developers/operations/#what-a-signer-needs">What a signer needs</a>. Five operators are lined up for mainnet. Today all 5 testnet signers run on one machine.</li>
 <li><strong>Forged kUSDT looks real to the pool.</strong> With 3 stolen signer keys it is the same token. The pool’s circuit
 breaker caps a dump at about 10 % of its KAS per hour, until the guardian pauses it. See
 <a href="/kusdt-docs/contracts/kaspool/#the-circuit-breaker">KasPool</a>.</li>

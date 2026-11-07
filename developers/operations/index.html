@@ -94,7 +94,7 @@
 <tr>
 <td>Coordinator</td>
 <td>Next to the signers</td>
-<td>Any host; it holds nothing that moves funds</td>
+<td>A host of its own; its keys pay network costs (KAS and gas) and can’t move bridge funds</td>
 </tr>
 <tr>
 <td>Monitor (guardian)</td>
@@ -124,11 +124,10 @@ put each service’s config and keys from the server bundle in <code dir="auto">
 <li><code dir="auto">npm run testnet:e2e</code>: deposits on both chains, mints, a redemption paid on BSC testnet, a pool swap, and
 reserves and the monitor healthy. Sepolia finality takes about 13 minutes.</li>
 </ol>
-<p>One image (<code dir="auto">deploy/services.Dockerfile</code>) runs every role: signer, coordinator or monitor.</p>
+<p>One image (<code dir="auto">deploy/services.Dockerfile</code>) runs every role: signer, coordinator, monitor or the testnet faucet.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-mainnet-packages">The mainnet packages</h2><a class="sl-anchor-link" href="#the-mainnet-packages"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The mainnet packages”</span></a></div>
 <p>Every server these need, on one page: <a href="/kusdt-docs/developers/mainnet-servers/">Mainnet servers</a>.</p>
-<p>Each mainnet operator gets a package from the repository, also attached to each mainnet release. Each package
-holds a compose file (its own pruned Kaspa node, the service and Caddy), a config template and a step-by-step guide.</p>
+<p>Each mainnet operator gets a package from the repository, also attached to each mainnet release. The signer, coordinator and monitor packages each hold a compose file (a pruned Kaspa node, the service and Caddy), a config template and a step-by-step guide. The deployer’s holds its guide and an inputs template, and the web package holds its own compose file, Caddy, a config template and a guide.</p>
 <table>
 <thead>
 <tr>
@@ -151,7 +150,7 @@ holds a compose file (its own pruned Kaspa node, the service and Caddy), a confi
 <tr>
 <td><code dir="auto">deploy/mainnet-monitor</code></td>
 <td>The monitor’s operator (the guardian), and a second monitor in watch-only mode</td>
-<td><code dir="auto">GET /health</code> and <code dir="auto">/api/v1/monitor</code>; acknowledging alarms from the operator’s addresses only</td>
+<td><code dir="auto">GET /health</code>, <code dir="auto">/api/v1/signal</code> and <code dir="auto">/api/v1/monitor</code>; acknowledging alarms from the operator’s addresses only</td>
 </tr>
 <tr>
 <td><code dir="auto">deploy/mainnet-deployer</code></td>
@@ -196,7 +195,7 @@ resumes without deploying anything twice.</li>
 scripts and reads every vault parameter.</li>
 </ul>
 <p><code dir="auto">npm run mainnet:rehearse</code> runs all three against forks of Ethereum and BNB Chain (chain IDs 1 and 56, the real
-USDT) and a simnet node. It also runs the five signers and every role’s preflight against the result.</p>
+USDT) and a simnet node. It also runs the five signers and every role’s preflight against the result. A rehearsal plan runs on local RPCs only: one naming any other RPC is refused, and a plan whose target and Kaspa network disagree is refused too. <code dir="auto">execute</code>’s confirmation follows the plan’s Kaspa network, not its name.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="what-a-signer-needs">What a signer needs</h2><a class="sl-anchor-link" href="#what-a-signer-needs"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “What a signer needs”</span></a></div>
 <div class="sl-heading-wrapper level-h3"><h3 id="kaspa-a-pruned-node">Kaspa: a pruned node</h3><a class="sl-anchor-link" href="#kaspa-a-pruned-node"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Kaspa: a pruned node”</span></a></div>
 <p>A <strong>pruned</strong> rusty-kaspa node with <code dir="auto">--utxoindex</code> is enough; an archival node is not needed. A signer checks burns
@@ -204,7 +203,7 @@ and skips in the UTXO set, and follows the minter in acceptance order from its o
 history.</p>
 <ul>
 <li><strong>Disk.</strong> The TN10 node here (pruned, <code dir="auto">--utxoindex</code>) uses 59.7 GB. Mainnet also runs at 10 blocks per second,
-so plan a 250 GB SSD for headroom.</li>
+so plan about 250 GB for the node. That is a planning figure, not a measurement, and the packages ask for a 500 GB NVMe SSD (<a href="/kusdt-docs/developers/mainnet-servers/">Mainnet servers</a>).</li>
 <li><strong>Keep the state file.</strong> A signer must keep, and back up, its state file (<code dir="auto">statePath</code>).</li>
 <li><strong>Joining late.</strong> A signer that joins after the pruning window cannot rescan from the launch. It starts from a
 recent checkpoint instead: the current minter UTXO and state (<code dir="auto">initialMinter</code>, with <code dir="auto">scanFrom</code>). The minter’s
@@ -249,7 +248,7 @@ token blocks (see <a href="/kusdt-docs/security/known-limits/#blocked-recipients
 <td><code dir="auto">minDepthDaa</code></td>
 <td>Coordinator, signers</td>
 <td>20 DAA scores (2 on simnet)</td>
-<td>How deep a Kaspa chain block must be before it is read. The monitor’s own <code dir="auto">minDepthDaa</code> stays 10. See <a href="/kusdt-docs/architecture/following-states/#when-the-chain-moves-anyway">Following covenant states</a></td>
+<td>How deep a Kaspa chain block must be before it is read. The monitor’s own default is 10 (the testnet’s config sets 20). See <a href="/kusdt-docs/architecture/following-states/#when-the-chain-moves-anyway">Following covenant states</a></td>
 </tr>
 <tr>
 <td><code dir="auto">blockedRecheckMs</code></td>
@@ -268,7 +267,7 @@ marked as spent after 10 minutes is freed too. Before, two rejected mints left t
 sompi” with 940 KAS.</li>
 </ul>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-testnet-deployment">The testnet deployment</h2><a class="sl-anchor-link" href="#the-testnet-deployment"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The testnet deployment”</span></a></div>
-<p><code dir="auto">deployments/testnet.json</code>, deployed 4 November 2026:</p>
+<p><code dir="auto">deployments/testnet.json</code>, deployed 4 November 2026; the current pool since 5 November:</p>
 <table>
 <thead>
 <tr>
@@ -294,6 +293,10 @@ sompi” with 940 KAS.</li>
 <td><code dir="auto">102a59644f81734faa6e7870a694ee8da047b02b8bc21945576f535f94f5efb4</code></td>
 </tr>
 <tr>
+<td>KasPool covenant ID, retired (its breaker counted gross sells)</td>
+<td><code dir="auto">0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9</code></td>
+</tr>
+<tr>
 <td>KasPool covenant ID, retired (no circuit breaker)</td>
 <td><code dir="auto">f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b</code></td>
 </tr>
@@ -307,7 +310,7 @@ sompi” with 940 KAS.</li>
 </tr>
 <tr>
 <td>Monitor (read-only)</td>
-<td><code dir="auto">https://trestly.io/monitor/health</code> and <code dir="auto">https://trestly.io/monitor/api/v1/monitor</code></td>
+<td><code dir="auto">https://trestly.io/monitor/health</code>, <code dir="auto">https://trestly.io/monitor/api/v1/monitor</code> and <code dir="auto">https://trestly.io/monitor/api/v1/signal</code></td>
 </tr>
 <tr>
 <td>Wallet (testnet build)</td>
@@ -315,12 +318,10 @@ sompi” with 940 KAS.</li>
 </tr>
 </tbody>
 </table>
-<p>The pool was opened on 4 November 2026 with 500 KAS and 15.7 kUSDT.</p>
+<p>The current pool was opened on 5 November 2026. Its two predecessors are retired.</p>
 <p>The services run on one public test host, in isolated containers (<code dir="auto">deploy/compose.testnet.yml</code>): a Kaspa TN10
-node, five signer containers each mounting only its own keys, the coordinator, the monitor and a static web
-container. All run as unprivileged users, with a read-only root filesystem and no capabilities (the web container
-keeps only <code dir="auto">NET_BIND_SERVICE</code>, which its Caddy binary needs to start). No container publishes a port. Only the
-coordinator, the monitor and the web app are reachable through the host’s reverse proxy; the node and the signers
+node, five signer containers each mounting only its own keys, the coordinator, the monitor, the testnet kUSDT faucet and a static web container. All run as unprivileged users, with a read-only root filesystem and no capabilities (the web container
+keeps only <code dir="auto">NET_BIND_SERVICE</code>, which its Caddy binary needs to start). No container publishes a port. Only the coordinator, the monitor, the faucet and the web app are reachable through the host’s reverse proxy; the node and the signers
 are not on its network.</p>
 <p>This is a testnet convenience. On mainnet each signer is a different operator on its own machine with its own
 nodes (SPEC §12).</p>
@@ -339,11 +340,15 @@ serves <code dir="auto">trestly.io</code> (<code dir="auto">deploy/kusdt.caddy</
 </thead>
 <tbody>
 <tr>
-<td><code dir="auto">/api/v1/*</code></td>
+<td><code dir="auto">/api/v1/faucet*</code></td>
+<td>The testnet faucet (<code dir="auto">kusdt-faucet:9320</code>)</td>
+</tr>
+<tr>
+<td>Any other <code dir="auto">/api/v1/*</code></td>
 <td>The coordinator (<code dir="auto">kusdt-coordinator:9300</code>)</td>
 </tr>
 <tr>
-<td><code dir="auto">GET</code> or <code dir="auto">HEAD</code> <code dir="auto">/monitor/health</code> and <code dir="auto">/monitor/api/v1/monitor</code></td>
+<td><code dir="auto">GET</code> or <code dir="auto">HEAD</code> <code dir="auto">/monitor/health</code>, <code dir="auto">/monitor/api/v1/signal</code> and <code dir="auto">/monitor/api/v1/monitor</code></td>
 <td>The monitor (<code dir="auto">kusdt-monitor:9310</code>), with <code dir="auto">/monitor</code> stripped</td>
 </tr>
 <tr>
@@ -356,11 +361,9 @@ serves <code dir="auto">trestly.io</code> (<code dir="auto">deploy/kusdt.caddy</
 </tr>
 </tbody>
 </table>
-<p>The web container is Caddy serving static files only (<code dir="auto">deploy/web.Caddyfile</code>): the built web app, and the wallet
-download under <code dir="auto">/downloads/</code>.</p>
+<p>The web container is Caddy serving static files only (<code dir="auto">deploy/web.Caddyfile</code>): the built web app, these docs under <code dir="auto">/docs/</code>, and the wallet download under <code dir="auto">/downloads/</code>.</p>
 <aside aria-label="Danger" class="starlight-aside starlight-aside--danger"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 7a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V8a1 1 0 0 0-1-1Zm0 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm9.71-7.44-5.27-5.27a1.05 1.05 0 0 0-.71-.29H8.27a1.05 1.05 0 0 0-.71.29L2.29 7.56a1.05 1.05 0 0 0-.29.71v7.46c.004.265.107.518.29.71l5.27 5.27c.192.183.445.286.71.29h7.46a1.05 1.05 0 0 0 .71-.29l5.27-5.27a1.05 1.05 0 0 0 .29-.71V8.27a1.05 1.05 0 0 0-.29-.71ZM20 15.31 15.31 20H8.69L4 15.31V8.69L8.69 4h6.62L20 8.69v6.62Z"/></svg>Danger</p><div class="starlight-aside__content"><p>Never publish the signers’ ports or the monitor’s acknowledge route.</p></div></aside>
-<p>The web app (<code dir="auto">bridge/web</code>, with <code dir="auto">testnet.public.json</code> for the public testnet) and these docs (<code dir="auto">docs/</code>) are static sites: <code dir="auto">npm run build</code> in each, and set <code dir="auto">SITE_URL</code>
-for the docs.</p>
+<p>The web app (<code dir="auto">bridge/web</code>, with <code dir="auto">testnet.public.json</code> for the public testnet) and these docs (<code dir="auto">docs/</code>) are static sites. For the web app, <code dir="auto">npm run build</code>, then copy the config to <code dir="auto">dist/config.json</code>. For the docs at <code dir="auto">/docs</code>, <code dir="auto">npm run build:pages</code> with <code dir="auto">SITE_URL</code> and <code dir="auto">BASE_PATH=/docs</code>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="watching-it">Watching it</h2><a class="sl-anchor-link" href="#watching-it"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Watching it”</span></a></div>
 <ul>
 <li><code dir="auto">GET /health</code> on the monitor answers 200 only while it is healthy, its last check is fresh, and its Kaspa view
@@ -373,7 +376,7 @@ wallets that hold kUSDT should poll it on more than one monitor (see <a href="/k
 a human.</li>
 </ul>
 <div class="sl-heading-wrapper level-h2"><h2 id="when-the-monitor-alarms">When the monitor alarms</h2><a class="sl-anchor-link" href="#when-the-monitor-alarms"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “When the monitor alarms”</span></a></div>
-<p>It has already paused every vault and the minter. Then:</p>
+<p>It has already paused every vault, the minter and the pool. Then:</p>
 <ol>
 <li>Read the alarm (<code dir="auto">GET /api/v1/monitor</code>): which invariant, which transactions.</li>
 <li><strong>If it is real:</strong> keep everything paused, rotate the affected keys (vault owner: <code dir="auto">setSigners</code>, <code dir="auto">setGuardian</code>;
@@ -457,7 +460,7 @@ deployment’s signers, the action and the minter’s current admin nonce, and r
 <ol>
 <li><strong>Announce.</strong> Every monitor adds <code dir="auto">announce.json</code>’s <code dir="auto">expectedGovernance</code> and <code dir="auto">expectedOwnerCalls</code>, and restarts.</li>
 <li><strong>The vaults.</strong> The Safe queues <code dir="auto">setSigners</code> in each vault’s AccessManager (<code dir="auto">schedule</code> from <code dir="auto">owner-calls.json</code>).
-The monitors note it as announced. After 48 hours, anyone executes it.</li>
+The monitors note it as announced. After 48 hours, the Safe executes it (<code dir="auto">execute</code> from <code dir="auto">owner-calls.json</code>), within a week.</li>
 <li><strong>Kaspa.</strong> Four current signers run <code dir="auto">govern-sign</code> on <code dir="auto">action.json</code>; the coordinator’s operator runs
 <code dir="auto">govern-submit</code>. It takes effect at once.</li>
 <li><strong>Switch.</strong> Everyone takes <code dir="auto">deployment.next.json</code> and restarts. The new signer starts; the old one stops for good.</li>

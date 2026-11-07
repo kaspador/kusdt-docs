@@ -92,7 +92,7 @@ sources and these docs.</p>
 </tr>
 <tr>
 <td><code dir="auto">bridge/evm</code></td>
-<td>Hardhat: <code dir="auto">KusdtVault</code>, test tokens, 83 tests, <code dir="auto">scripts/deploy.ts</code>, deployment configs</td>
+<td>Hardhat: <code dir="auto">KusdtVault</code>, test tokens, 102 tests, <code dir="auto">scripts/deploy.ts</code>, the AccessManager setup (<code dir="auto">scripts/access-manager.ts</code>), deployment configs</td>
 </tr>
 <tr>
 <td><code dir="auto">bridge/packages/kaspa</code></td>
@@ -108,19 +108,39 @@ sources and these docs.</p>
 </tr>
 <tr>
 <td><code dir="auto">bridge/services</code></td>
-<td>TypeScript: the signer (×5) and the coordinator (EVM watchers, minting, Kaspa scanner, relayer, public API) and the monitor and guardian</td>
+<td>TypeScript: the signer (×5), the coordinator (EVM watchers, minting, Kaspa scanner, relayer, public API), the monitor and guardian, and the testnet faucet</td>
 </tr>
 <tr>
 <td><code dir="auto">bridge/devnet</code></td>
-<td>TypeScript: a simnet miner, <code dir="auto">simnet-e2e.ts</code> (the Kaspa side against a real node) and <code dir="auto">local-e2e.ts</code> (the whole bridge on one machine); see its README</td>
+<td>TypeScript: a simnet miner, the end-to-end runs (<code dir="auto">simnet-e2e.ts</code>, <code dir="auto">local-e2e.ts</code>, <code dir="auto">local-load.ts</code>), the rehearsals (<code dir="auto">fork-rehearsal.ts</code>, <code dir="auto">rehearse-mainnet.ts</code>, <code dir="auto">local-rotate.ts</code>), the testnet tools and the mainnet deployer (<code dir="auto">mainnet-deploy.ts</code>); see its README</td>
 </tr>
 <tr>
 <td><code dir="auto">wallet/extension</code></td>
 <td>The wallet extension: React, Vite and Tailwind; KAS and kUSDT, redeem, swap, liquidity, EVM deposits, <code dir="auto">window.kusdt</code>; unit, simnet, smoke and live-stack tests</td>
 </tr>
 <tr>
+<td><code dir="auto">bridge/web</code></td>
+<td>The web app (Trestly): React and Vite; unit and end-to-end tests</td>
+</tr>
+<tr>
 <td><code dir="auto">docs/</code></td>
 <td>This site</td>
+</tr>
+<tr>
+<td><code dir="auto">deploy/</code></td>
+<td>The services image, the testnet compose and Caddy files, the runbook, and the <code dir="auto">mainnet-*</code> packages</td>
+</tr>
+<tr>
+<td><code dir="auto">deployments/</code></td>
+<td>The deployed addresses (<code dir="auto">testnet.json</code>)</td>
+</tr>
+<tr>
+<td><code dir="auto">tools/check-artifacts.mjs</code></td>
+<td>Checks the covenant bytecode’s sources and artifacts against <code dir="auto">bridge/kaspa/artifacts/PROVENANCE.json</code></td>
+</tr>
+<tr>
+<td><code dir="auto">.github/workflows/artifacts.yml</code></td>
+<td>The CI job that recompiles the covenants and the WebAssembly core and compares them</td>
 </tr>
 <tr>
 <td><code dir="auto">tools/rust.sh</code></td>
@@ -132,7 +152,7 @@ sources and these docs.</p>
 </tr>
 <tr>
 <td><code dir="auto">tools/vendor.sh</code></td>
-<td>Fetches third-party sources at pinned commits into <code dir="auto">vendor/</code></td>
+<td>Fetches the specifications and compiler sources into <code dir="auto">vendor/</code>, to read: at pinned commits, except <code dir="auto">kaspanet/kips</code>, which follows master</td>
 </tr>
 <tr>
 <td><code dir="auto">vendor/</code></td>
