@@ -150,7 +150,7 @@ all fixed:</p>
 that lands anyway is held until the address is unblocked. See <a href="/kusdt-docs/security/known-limits/#blocked-recipients">Blocked recipients</a>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="external-review-5-november-2026">External review (5 November 2026)</h2><a class="sl-anchor-link" href="#external-review-5-november-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “External review (5 November 2026)”</span></a></div>
 <p>An outside reviewer sent twelve questions and findings. Each is answered below; the code changes are in the
-mainnet release candidates since commit <code dir="auto">1e3f969</code> (the current one is <code dir="auto">mainnet-v0.9.8-rc.9</code>). This is still not an audit.</p>
+mainnet release candidates since commit <code dir="auto">1e3f969</code> (the current one is <code dir="auto">mainnet-v0.9.8-rc.10</code>). This is still not an audit.</p>
 <table>
 <thead>
 <tr>
@@ -342,7 +342,7 @@ mainnet release candidates since commit <code dir="auto">1e3f969</code> (the cur
 <div class="sl-heading-wrapper level-h2"><h2 id="mint-retries-7-november-2026">Mint retries (7 November 2026)</h2><a class="sl-anchor-link" href="#mint-retries-7-november-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Mint retries (7 November 2026)”</span></a></div>
 <p>An outside reviewer reported that a failed mint could leave the signers and the coordinator on different batches
 for good, and the public testnet stopped minting the same day for that reason. It touches neither the covenants nor
-the vault, and is fixed in commit <code dir="auto">e8e8d71</code>, in <code dir="auto">mainnet-v0.9.8-rc.9</code>.</p>
+the vault, and is fixed in commit <code dir="auto">e8e8d71</code>, in the release candidates since <code dir="auto">mainnet-v0.9.8-rc.9</code>.</p>
 <table>
 <thead>
 <tr>
@@ -363,6 +363,20 @@ the vault, and is fixed in commit <code dir="auto">e8e8d71</code>, in <code dir=
 the signers 35 to 95 seconds over a slow RPC. The fix recovered it without touching the signers’ records. The same
 incident showed a second limit: a signer or monitor that restarts reads every deposit again from the vault’s first
 block, so its RPCs must keep logs that far back. Some free RPCs keep only a few days.</p>
+<p><strong>Since <code dir="auto">mainnet-v0.9.8-rc.10</code>:</strong></p>
+<ul>
+<li><strong>Limits that fit together.</strong> Checking the launch values against the signers’ agreed daily limit (25 000 kUSDT)
+showed that a deposit or a burn larger than a signer’s limit, or a batch of deposits adding up to more, would
+be accepted by the vaults and then never signed. The deployer now refuses vault limits that don’t fit the
+signers’ (<a href="/kusdt-docs/protocol/limits/#at-the-mainnet-launch">Limits</a>), and the coordinator splits a batch that every
+signer finds over its limit.</li>
+<li><strong>Restarts read only new blocks.</strong> Each signer and monitor keeps the deposits it read, so a restart no longer
+needs RPCs with the whole history.</li>
+<li><strong>A mint the monitor can’t check fails closed:</strong> after <code dir="auto">failClosedMs</code> it is the <code dir="auto">unverifiable</code> alarm, and
+everything pauses, as for a chain it can’t read.</li>
+</ul>
+<p>An internal review of these changes found a way the batch split could stall a chain, and a way the saved deposits
+could be written mid-scan. Both are fixed in the candidate. It is not an outside review.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-payout-wait-7-november-2026">The payout wait (7 November 2026)</h2><a class="sl-anchor-link" href="#the-payout-wait-7-november-2026"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The payout wait (7 November 2026)”</span></a></div>
 <p>Added after the fourth review, from research on how bridges lost funds: every payout now waits in the vault, and a
 pause within the wait stops it. See <a href="/kusdt-docs/protocol/redemptions-and-releases/#the-wait">The wait</a>. It is the first change to
