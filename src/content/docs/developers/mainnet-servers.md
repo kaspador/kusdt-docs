@@ -11,9 +11,9 @@ In short: **8 large servers and 1 small one**, none of them shared.
 
 | Server | How many | CPU, RAM, disk | Funds on it |
 |---|---|---|---|
-| Signer | 5 | 8 cores, 16 GB, 500 GB NVMe | None |
-| Coordinator | 1 | 8 cores, 16 GB, 500 GB NVMe | 1 000 KAS (about 600 deposits), 0.5 ETH and 0.5 BNB to start with, kept topped up |
-| Monitor | 2 | 8 cores, 16 GB, 500 GB NVMe | A few KAS, and 0.05 ETH and 0.05 BNB, for a pause |
+| Signer | 5 | 8 cores, 16 GB, 100 GB NVMe | None |
+| Coordinator | 1 | 8 cores, 16 GB, 100 GB NVMe | 1 000 KAS (about 600 deposits), 0.5 ETH and 0.5 BNB to start with, kept topped up |
+| Monitor | 2 | 8 cores, 16 GB, 100 GB NVMe | A few KAS, and 0.05 ETH and 0.05 BNB, for a pause |
 | Website | 1 | The smallest plan: static files, its container capped at 128 MB | None, and no keys |
 
 Each large server runs its own pruned Kaspa node. All of them run Linux with Docker Engine 24+ and the Compose plugin.
@@ -63,6 +63,7 @@ Private keys stay on the machine that made them, with two exceptions: your offli
 
 ## Before buying
 
-- **The 250 GB for a Kaspa node is a planning figure**, scaled up from the testnet node's 60 GB, not a measurement on mainnet. Sync one mainnet node first, then order the rest.
+- **Disk:** a pruned mainnet node's database is about 20 GB (November 2026). 100 GB leaves room for growth, the images and backups.
+- **Memory:** 16 GB is the figure the packages are set for (the node may use up to 14 GB, `KASPAD_MEM`). A monitor on an 8 GB machine needs `KASPAD_MEM` around `6g`; that has not been measured on mainnet, so watch its memory for a day before relying on it. Sync one mainnet node first, then order the rest.
 - **The guides set no bandwidth figure.** Avoid plans with a low traffic cap: a node moves a lot of data.
 - **Don't copy the testnet.** It runs on one host, which suits test coins and nothing else.

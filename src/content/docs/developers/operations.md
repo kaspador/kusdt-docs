@@ -80,8 +80,8 @@ A **pruned** rusty-kaspa node with `--utxoindex` is enough; an archival node is 
 and skips in the UTXO set, and follows the minter in acceptance order from its own saved state. Nothing needs old
 history.
 
-- **Disk.** The TN10 node here (pruned, `--utxoindex`) uses 59.7 GB. Mainnet also runs at 10 blocks per second,
-  so plan about 250 GB for the node. That is a planning figure, not a measurement, and the packages ask for a 500 GB NVMe SSD ([Mainnet servers](/developers/mainnet-servers/)).
+- **Disk.** A pruned mainnet node's database is about 20 GB (November 2026); the TN10 node here (pruned,
+  `--utxoindex`) uses 59.7 GB. The packages ask for a 100 GB NVMe SSD ([Mainnet servers](/developers/mainnet-servers/)).
 - **Keep the state file.** A signer must keep, and back up, its state file (`statePath`).
 - **Joining late.** A signer that joins after the pruning window cannot rescan from the launch. It starts from a
   recent checkpoint instead: the current minter UTXO and state (`initialMinter`, with `scanFrom`). The minter's
