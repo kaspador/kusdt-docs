@@ -22,7 +22,7 @@ As of 7 November 2026. Order follows the project's working plan; there are no da
 - Refunds, a load run, a rehearsal of the vault on mainnet forks, and an internal security review with its fixes.
 - Deployment tooling: a services image, a testnet compose file, a runbook, and mainnet packages for the signer, coordinator, monitor, deployer and web app (built and rehearsed; nothing is on mainnet).
 - The testnets: vaults on Sepolia and BSC testnet, genesis and pool on testnet-10, and the services, public since
-  4 November 2026 at [trestly.io](https://trestly.io) with a downloadable testnet wallet.
+  4 November 2026 at [testnet.trestly.io](https://testnet.trestly.io) with a downloadable testnet wallet.
 - The vault owner as an OpenZeppelin AccessManager under a Safe, which the mainnet deployer builds and verifies, and a monitor that watches the owner and can hold a canceller key.
 - The pool's net-flow circuit breaker, finality tiers for larger burns, and an HSM or KMS signing option.
 - `kusdt govern-sign`, `govern-submit` and `rotate-plan`, with a signer rotation rehearsal.

@@ -110,12 +110,16 @@ Details: [Burn owner and payload](/protocol/burn-owner-and-payload/), [Token met
 ```solidity
 event Deposit(uint64 indexed nonce, address indexed sender, uint8 ownerScheme,
               bytes32 owner, uint256 units, uint256 fee, uint256 minted);
+event ReleaseQueued(bytes32 indexed redeemId, address indexed recipient,
+                    uint256 units, uint256 fee, uint256 payout, uint64 readyAt);
+event RefundQueued(uint64 indexed nonce, address indexed recipient, uint256 units, uint64 readyAt);
+// The USDT has left the vault:
 event Released(bytes32 indexed redeemId, address indexed recipient,
                uint256 units, uint256 fee, uint256 payout);
 event Refunded(uint64 indexed nonce, address indexed recipient, uint256 units);
 ```
 
-Administrative events: `FeesSet`, `DepositLimitsSet`, `ReleaseLimitsSet`, `SignersSet`, `GuardianSet`,
+Administrative events: `FeesSet`, `DepositLimitsSet`, `ReleaseLimitsSet`, `PayoutDelaySet`, `ReleaseCancelled`, `RefundCancelled`, `SignersSet`, `GuardianSet`,
 `FeesWithdrawn`, and OpenZeppelin's `Paused`, `Unpaused`, `OwnershipTransferStarted` and
 `OwnershipTransferred`.
 

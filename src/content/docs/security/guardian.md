@@ -24,7 +24,7 @@ the guardian key is checked only by `pause`.
 | Paused | Stops | Keeps working |
 |---|---|---|
 | BridgeMint | `mint` | Governance (`govern`), including `skip_nonce` and `set_limits` |
-| Vault | `deposit`, `release`, `refund` | Every owner function, so a fix can be made before unpausing |
+| Vault | `deposit`, `release`, `refund`, and the paying of queued payouts (`executeRelease`, `executeRefund`) | Every owner function, so a fix can be made before unpausing, such as cancelling a bad queued payout |
 | KasPool | `buy`, `sell`, `sell_all`, `add`, `init` | `remove`: liquidity providers can always withdraw. `collect` and the admin's key changes |
 
 A pause never affects kUSDT itself. Transfers between users and burns keep working, because the KCC-20 token has

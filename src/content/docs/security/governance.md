@@ -30,8 +30,8 @@ schedules it, waits its delay, then executes it within a week. Calling the vault
 | Role | Held by | Delay | What it may call |
 |---|---|---|---|
 | ADMIN | The Safe only | 48 hours | The manager itself: roles, delays, guardians, which role may call what |
-| GOVERNOR | The Safe | 48 hours | `setFees`, `setDepositLimits`, `setReleaseLimits`, `setSigners`, `withdrawFees`, `transferOwnership` |
-| EMERGENCY | The Safe | 6 hours by default (1 to 48) | `setGuardian`, `unpause`: a stolen guardian key costs hours, not days |
+| GOVERNOR | The Safe | 48 hours | `setFees`, `setDepositLimits`, `setReleaseLimits`, `setPayoutDelay`, `setSigners`, `withdrawFees`, `transferOwnership` |
+| EMERGENCY | The Safe | 6 hours by default (1 to 48) | `setGuardian`, `unpause`, `cancelRelease`, `cancelRefund`: a stolen guardian key costs hours, not days |
 | PAUSER | The Safe | None | `pause`. The guardian still pauses on its own |
 | CANCELLER | Independent cancellers | | Cancel any scheduled GOVERNOR or EMERGENCY call |
 
@@ -56,6 +56,8 @@ one else holds a role. Testnet vaults are owned by the deployer's plain key.
 | `setFees(feeBps, minDepositFee, minReleaseFee)` | `feeBps ≤ 100`; each minimum ≤ 50 USDT |
 | `setDepositLimits(min, max)` | `0 < min ≤ max ≤ 10¹⁵` units |
 | `setReleaseLimits(capacity, refillPerSecond)` | `capacity ≤ 10¹⁵`; a full refill takes at least a day; the allowance earned so far is kept, capped at the new capacity |
+| `setPayoutDelay(seconds)` | 5 minutes to 24 hours; payouts already queued keep their time |
+| `cancelRelease(redeemId)`, `cancelRefund(nonce)` | A payout still queued. Its allowance comes back and it can be queued again, so replace the signers first |
 | `setSigners(address[5])` | 5 distinct, non-zero addresses; effective immediately |
 | `setGuardian(address)` | Non-zero |
 | `unpause()` | |

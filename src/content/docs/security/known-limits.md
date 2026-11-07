@@ -18,7 +18,8 @@ signatures. This is the planned direction, not part of v1, and it has no date.
 removes the risk of unbacked mints. Releases are the other direction: the vaults on Ethereum and BNB Chain would have
 to verify Kaspa burns themselves, which needs a Kaspa light client on the EVM side, a separate and harder project.
 Until then, a release rests on 3 of 5 signers, capped by each vault's release allowance (250 000 USDT at once, at
-most 500 000 in any 24 hours), and the monitor pauses the vaults the moment it sees a release with no burn behind it.
+most 500 000 in any 24 hours). Every payout waits in the vault first, and the monitor pauses the vaults the moment it
+sees one queued with no burn behind it.
 
 ## A reorg that flips a mint and a skip
 
@@ -43,6 +44,9 @@ blacklisted address, and the USDT would be frozen there for good. The bridge sto
 - **A burn that lands anyway is held.** Its status is `blocked`. The coordinator checks it again every hour and
   pays it if the token unblocks the address. A refund to a blocked depositor waits the same way. A held record
   never holds up the others.
+
+One gap: the vault can't read a blocklist, and anyone may pay a queued payout. If the token blocks a recipient during
+the wait, the coordinator holds its payout, but anyone else could still pay it, and the USDT would be frozen there.
 
 Nothing can send a held burn elsewhere. The burn commits to its address, and **no key can redirect it**: the vault
 has no re-target power. Its USDT stays in the vault as backing for as long as the address is blocked.
@@ -140,7 +144,7 @@ Whoever makes the first deposit into a new pool sets its starting price. Arbitra
 ## The testnet runs on one host
 
 The contracts are deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at
-[trestly.io](https://trestly.io). Its five signers, the coordinator and the monitor run on one
+[testnet.trestly.io](https://testnet.trestly.io). Its five signers, the coordinator and the monitor run on one
 test host, in isolated containers, so it is not the federation of five independent operators that mainnet needs
 (see [Operations](/developers/operations/#the-testnet-deployment)). The wallet extension has a testnet build to
 download and is not in any store. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in those services, so they are only as good as their deployment. Those services run an image from before the third and fourth outside reviews, so those fixes are not live in them yet.

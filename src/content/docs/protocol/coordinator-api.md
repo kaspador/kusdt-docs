@@ -5,7 +5,7 @@ description: The coordinator's public, read-mostly JSON API. Nothing in it moves
 
 :::note[Where it runs]
 The coordinator (`bridge/services/src/coordinator/`) serves this API for the public testnet at
-`https://trestly.io/api/v1`, and in the local stack at `http://127.0.0.1:9100/api/v1` (see
+`https://testnet.trestly.io/api/v1`, and in the local stack at `http://127.0.0.1:9100/api/v1` (see
 [Run the simnet flow](/developers/simnet/#a-stack-that-keeps-running)). The mainnet base URL is **to be published**.
 :::
 
@@ -37,7 +37,7 @@ released = the sum of the vaults' Released events
 | `GET /recipients/:chain/:address` | `{chain, address, blocklist, blocked, payable, reason}`: whether the vault would pay `address`. `payable` is false for the zero address, the vault's own address, and an address the token blocks; `reason` says which, or is `null`. Answers 503 when the token can't be read, and 400 for an address that is not `0x` and 40 hex digits. Wallets refuse a burn unless `payable` is true |
 | `GET /deposits?sender=0x…` or `?owner=…` | `{deposits: [{chain, ...}]}`: the matching deposits, newest first |
 | `POST /redeems` | Body `{transaction, transactionId}` (a submitted burn in node JSON, with the ID the node answered) or `{txid, outputIndex, chain, address, state}` (the preimage of a burn without payload). `state` is `{amount, owner, ownerScheme, borrowScheme, borrowGuard, extensionCommitment}`. Answers `{redeems: [{redeemId, status}]}`. A malformed body answers 400, and one above 1 MB answers 413. See [Reporting a burn](#reporting-a-burn) for what a report can and cannot do |
-| `GET /redeems/:txid/:outputIndex` | `{redeemId, txid, outputIndex, chain, address, units, state, status, firstSeen, fee?, payout?, evmTxHash?, attempts?, nextTry?, lastError?, note?, unverified?, checkedAt?, candidates?}`, or 404 if no such redemption was seen. `unverified` marks a claim only a client has made so far, and `candidates` holds other claims waiting for the same outpoint. `fee` and `payout` come from the vault's `Released` event; `attempts`, `nextTry` and `lastError` show the relayer's retries, or why a payout is held |
+| `GET /redeems/:txid/:outputIndex` | `{redeemId, txid, outputIndex, chain, address, units, state, status, firstSeen, fee?, payout?, evmTxHash?, readyAt?, queuedTx?, attempts?, nextTry?, lastError?, note?, unverified?, checkedAt?, candidates?}`, or 404 if no such redemption was seen. `unverified` marks a claim only a client has made so far, and `candidates` holds other claims waiting for the same outpoint. `status` `queued` means the payout is waiting in the vault: `readyAt` says until when (unix seconds) and `queuedTx` is the transaction that queued it. `fee` and `payout` come from the vault's `Released` event; `attempts`, `nextTry` and `lastError` show the relayer's retries, or why a payout is held |
 | `GET /reserves` | `{supply: {minted, released, pendingBurns, circulating}, backing: {<chain name>: units, total}, at: {<chain name>: block}, healthy}`, where `healthy` means `total ≥ minted − released` (INV-1). Each vault's backing is read at the block its releases were counted to (`at`), so a release that just landed never looks like missing backing. `circulating` is `minted − released − pendingBurns`. `pendingBurns` counts burns not yet released, leaving out `invalid` records and claims neither the chain nor the node has shown, so a client's word cannot move it. `at` is `null` for a vault whose releases have not been counted yet. |
 
 ## Status values

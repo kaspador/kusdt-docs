@@ -71,4 +71,5 @@ governance. It also keeps every Kaspa sum far below the 64-bit integer limit.
 | Kaspa allowance (`capacity`, `refill_per_daa`) | 4 of 5 signers (`set_limits`) | Non-negative. The allowance is settled at the old rate first, then lowered to the new ceiling if it is above it |
 | Vault release allowance | Vault owner (`setReleaseLimits`) | `releaseCapacity ≤ 10¹⁵`; `releaseRefillPerSecond ≤ releaseCapacity / 86 400`, so a full refill takes at least a day. Raising the capacity never makes more available at once |
 | Deposit limits | Vault owner (`setDepositLimits`) | `0 < minDeposit ≤ maxDeposit ≤ 10¹⁵` |
+| Payout wait, 10 minutes on mainnet | Vault owner (`setPayoutDelay`) | 5 minutes to 24 hours. See [The wait](/protocol/redemptions-and-releases/#the-wait) |
 | Hard cap | Nobody | Only goes down |

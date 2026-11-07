@@ -23,14 +23,17 @@ The constructor accepts 6 to 18 decimals and checks them against the token's own
 | Function | Who | Does |
 |---|---|---|
 | `deposit(units, ownerScheme, owner)` | Anyone | Locks USDT for kUSDT. See [Deposits and mints](/protocol/deposits-and-mints/) |
-| `release(Release, signatures)` | Anyone, with 3 signer signatures | Pays a Kaspa burn. See [Redemptions and releases](/protocol/redemptions-and-releases/) |
-| `refund(Refund, signatures)` | Anyone, with 3 signer signatures | Returns a skipped deposit. See [Refunds](/protocol/refunds/) |
+| `release(Release, signatures)` | Anyone, with 3 signer signatures | Queues the payout of a Kaspa burn. See [Redemptions and releases](/protocol/redemptions-and-releases/) |
+| `refund(Refund, signatures)` | Anyone, with 3 signer signatures | Queues the return of a skipped deposit. See [Refunds](/protocol/refunds/) |
+| `executeRelease(redeemId)`, `executeRefund(nonce)` | Anyone | Pays a queued payout once its wait is over. Not while paused |
+| `setPayoutDelay(seconds)` | Owner | 5 minutes to 24 hours. Payouts already queued keep their time |
+| `cancelRelease(redeemId)`, `cancelRefund(nonce)` | Owner | Clears a queued payout and returns its allowance. Replace the signers first, then cancel, then unpause |
 | `setFees`, `setDepositLimits`, `setReleaseLimits` | Owner | Within the hard bounds below |
 | `setSigners(address[5])` | Owner | Replaces all 5 signers: distinct, none zero. Old signatures stop counting at once |
 | `setGuardian` | Owner | Not the zero address |
 | `withdrawFees(to, units)` | Owner | At most `feesAccrued`; never touches the backing |
-| `pause` | Guardian or owner | Stops deposits, releases and refunds |
-| `unpause` | Owner | |
+| `pause` | Guardian or owner | Stops deposits, releases, refunds and the paying of queued payouts |
+| `unpause` | Owner | Starts a full wait again for everything queued (`payoutsResumeAt`) |
 | `transferOwnership`, `acceptOwnership` | Owner, then the new owner | Two-step transfer |
 | `renounceOwnership` | Nobody | Disabled: without an owner the vault could never be unpaused |
 
@@ -68,7 +71,7 @@ token.balanceOf(vault) / scale = backing() + feesAccrued
 |---|---|
 | Ethereum USDT returns no value from `transfer` | `SafeERC20` |
 | Fee-on-transfer tokens | `deposit` reverts unless the balance grew by exactly `units × scale` |
-| Reentrancy from a token hook | `nonReentrant` on `deposit`, `release`, `refund` and `withdrawFees` |
+| Reentrancy from a token hook | `nonReentrant` on `deposit`, `release`, `refund`, `executeRelease`, `executeRefund` and `withdrawFees` |
 | Duplicate or reordered signatures | Recovered addresses must be strictly increasing |
 | Malleable signatures | OpenZeppelin `ECDSA.recover` rejects high-s and malformed signatures |
 | Cross-chain or cross-vault replay | The EIP-712 domain includes `chainId` and the vault address |
@@ -82,7 +85,8 @@ token.balanceOf(vault) / scale = backing() + feesAccrued
 
 `signers()`, `isSigner`, `guardian`, `owner`, `params()`, `feeBps`, `minDepositFee`, `minReleaseFee`,
 `minDeposit`, `maxDeposit`, `releaseCapacity`, `releaseRefillPerSecond`, `releaseAvailable()`, `depositNonce`,
-`depositMinted(nonce)`, `isRefunded(nonce)`, `redeemed(redeemId)`, `feesAccrued`, `backing()`, `depositFeeOf`,
+`depositMinted(nonce)`, `isRefunded(nonce)`, `redeemed(redeemId)`, `feesAccrued`, `backing()`, `unreservedBacking()`,
+`reservedUnits`, `payoutDelay`, `payoutsResumeAt`, `pendingReleases(redeemId)`, `pendingRefunds(nonce)`, `depositFeeOf`,
 `releaseFeeOf`, `domainSeparator()`, `releaseDigest`, `refundDigest`, `redeemIdOf`, `scale`, `tokenDecimals`.
 
 ## Default parameters

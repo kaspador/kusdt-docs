@@ -3,7 +3,7 @@ title: Status
 description: What exists today, what is tested, and what is not built yet.
 ---
 
-As of 7 November 2026. The specification is **v1, for testnet**. kUSDT is deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at [trestly.io](https://trestly.io), with test coins only. The latest testnet release is `v0.9.11`, with wallet 0.9.7. The mainnet candidate is `mainnet-v0.9.8-rc.7`, a pre-release and not audited; `main` is ahead of it by the fourth outside review's fixes. The public testnet's services run an image from before the third and fourth reviews, so those fixes are not live in them yet. Nothing is on mainnet. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
+As of 7 November 2026. The specification is **v1, for testnet**. kUSDT is deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at [testnet.trestly.io](https://testnet.trestly.io), with test coins only. The latest testnet release is `v0.9.12`, with wallet 0.9.8. The mainnet candidate is `mainnet-v0.9.8-rc.8`, a pre-release and not audited. The public testnet's services run commit `503a292`, with the third and fourth reviews' fixes. Its vaults predate the [payout wait](/protocol/redemptions-and-releases/#the-wait), which needs a new testnet deployment, so payouts there don't wait yet. Nothing is on mainnet. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
 
 :::danger[Not audited]
 No external audit has taken place. Mainnet requires audits and the other steps in the
@@ -83,10 +83,10 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 | KusdtVault on Ethereum (Sepolia on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
 | KusdtVault on BNB Chain (BSC testnet on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
 | MockUSDT (testnet only) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` on both | not used |
-| Coordinator API | `https://trestly.io/api/v1` | to be published |
-| Web app URL | `https://trestly.io` | to be published |
-| Monitor status (read-only) | `https://trestly.io/monitor/health`, `https://trestly.io/monitor/api/v1/monitor`, `https://trestly.io/monitor/api/v1/signal` | to be published |
-| Wallet download (testnet build) | `https://trestly.io/downloads/kusdt-wallet-testnet.zip` | to be published |
+| Coordinator API | `https://testnet.trestly.io/api/v1` | to be published |
+| Web app URL | `https://testnet.trestly.io` | to be published |
+| Monitor status (read-only) | `https://testnet.trestly.io/monitor/health`, `https://testnet.trestly.io/monitor/api/v1/monitor`, `https://testnet.trestly.io/monitor/api/v1/signal` | to be published |
+| Wallet download (testnet build) | `https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip` | to be published |
 
 The testnet values come from `deployments/testnet.json`.
 

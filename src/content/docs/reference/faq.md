@@ -18,7 +18,7 @@ the issuers of those tokens. kUSDT's own rules are the covenants and contracts d
 ### Is it live?
 
 On testnet only: TN10, Sepolia and BSC testnet, since 4 November 2026. The public testnet is at
-[trestly.io](https://trestly.io), with test coins only, and the testnet wallet can be
+[testnet.trestly.io](https://testnet.trestly.io), with test coins only, and the testnet wallet can be
 downloaded. Nothing is on mainnet. See [Test on the public testnet](/getting-started/public-testnet/) and
 [Status](/overview/status/).
 

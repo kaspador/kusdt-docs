@@ -36,7 +36,7 @@ A review of every attack we know of, as of 7 November 2026. Status means:
 | Attack | What stops it | Status |
 |---|---|---|
 | 3 of 5 signer keys mint unbacked kUSDT | The mint allowance: 500 000 at once, at most 1 000 000 in any 24 hours. The monitor pauses within seconds | Tested: the 400 000 forged mint in `local:e2e` |
-| 3 of 5 signer keys pay out without burns | Each vault's release allowance: 250 000 at once. The monitor raises `release-without-burn` as soon as its Kaspa view has caught up and pauses, so about 250 000 per vault can leave | Bounded |
+| 3 of 5 signer keys pay out without burns | Every payout waits in the vault, 10 minutes on mainnet. The monitor raises `release-without-burn` when one is queued, as soon as its Kaspa view has caught up, and pauses: nothing leaves, however small the theft is split. If no pause comes within the wait (every monitor down, or the pause not mined in time), each vault's release allowance is the bound: 250 000 at once, so about 250 000 per vault | Tested: the small forged payout in `local:load` |
 | A burn reorganized away after its payout | Finality on Kaspa, deeper for larger burns: 1 000 DAA, 6 000 above 10 000 kUSDT, 36 000 above 100 000 | Fixed 5 November 2026 (the tiers) |
 | A compromised vault owner queues new signers or limits | Every owner change waits 48 hours in the AccessManager; the monitor alarms when it is queued, and a canceller (or the monitor itself) cancels it | Bounded (5 November 2026) |
 | 4 of 5 signer keys | They can raise the Kaspa limits and unpause the minter. The vaults' limits and signers belong to the owner (an AccessManager under a Safe on mainnet, 48-hour delays) | Bounded on the vaults; the monitor is the defence on Kaspa |
@@ -44,7 +44,7 @@ A review of every attack we know of, as of 7 November 2026. Status means:
 | A lying coordinator or API | It can stall or censor, nothing more. Wallets check token states against their own node and pin the deployment; signers re-check everything | By design |
 | Fake deposits or burns fed to a signer through its RPC or node | It takes 3 operators' nodes. Every RPC a signer uses must agree on every field of a deposit (its sender, which a refund pays, included) and of every release and refund. Today all 5 testnet signers run on one machine | Open until there are 5 independent operators; the full agreement fixed 5 November 2026 |
 | A wrong redemption report sent first, to strand someone's burn | Claims are checked against the coordinator's node, which decides; a client's transaction cannot edit the token index | Fixed 5 November 2026 |
-| An RPC outage switching the monitor off | Each chain is checked on its own, INV-1 is never judged on partial backing, and a chain unreadable for 10 minutes pauses everything | Fixed 5 November 2026 |
+| An RPC outage switching the monitor off | Each chain is checked on its own, INV-1 is never judged on partial backing, and a chain unreadable for 5 minutes pauses everything, within a payout's wait | Fixed 5 November 2026 |
 | Reorgs | Finality on both sides; the follower goes back to the fork point if Kaspa's chain moves anyway. A signer also undoes the minter moves the dropped blocks accepted, and signs no refund unless the minter it follows is on its node, so a skip the new chain replaced with a mint can't be paid as a refund | Fixed 4 November 2026 (the follower rewind) and 6 November 2026 (undoing the moves, from an outside review) |
 | Replay across chains, vaults or deployments | The EIP-712 domain, the covenant ID in the digests, each `redeemId` paid once | Tested |
 | Decoy outputs fooling the followers | Successors come only from covenant-bound authorized outputs | Fixed in the security review, with tests |
@@ -80,8 +80,9 @@ A review of every attack we know of, as of 7 November 2026. Status means:
 3. At least 2 independent monitors, with external alerts on `/health`.
 4. Five independent signer operators. Five are lined up; nothing runs on mainnet yet.
 5. External audits of the covenants, their compiler and the vault, and allowances sized to what can be lost.
-   With 3 stolen keys, today's limits risk about 500 000 USDT from the vaults, plus at most about 10 % of the
-   pool's KAS.
+   With 3 stolen keys and a pause within the wait, no forged payout leaves the vaults. Without one, today's limits
+   risk about 500 000 USDT from them. Forged kUSDT can still take at most about 10 % of the pool's KAS, and it stays
+   a claim on the vaults: see below.
 
 See also the [mainnet checklist](/security/mainnet-checklist/).
 
@@ -103,12 +104,19 @@ accepts (INV-4).
 | Side | Can | Cannot |
 |---|---|---|
 | Kaspa | Mint kUSDT that no deposit backs, up to the mint allowance: 500 000 USDT at once, at most 1 000 000 USDT in any 24 hours | Exceed the allowance or the hard cap; unpause the minter; change the limits, the signers or the guardian (all of these need 4) |
-| Each vault | Sign releases and refunds that no burn or skip justifies, up to the release allowance: 250 000 USDT at once, at most 500 000 USDT in any 24 hours | Exceed the allowance; change any vault parameter; unpause a paused vault |
+| Each vault | Queue releases and refunds that no burn or skip justifies, up to the release allowance: 250 000 USDT at once, at most 500 000 USDT in any 24 hours. Each is paid only if the vault is not paused when its wait ends | Exceed the allowance; shorten the wait; change any vault parameter; unpause a paused vault |
 
 Unbacked mints or releases make kUSDT in circulation exceed the backing. The monitor checks this (INV-1) and the
 guardian pauses the vaults and the minter. A bad quorum of 3 cannot undo that pause on either side: unpausing
 BridgeMint takes 4 signers, and unpausing a vault takes the owner. The owner then replaces the vault signers with
-`setSigners`.
+`setSigners` and cancels every bad queued payout (`cancelRelease`, `cancelRefund`) **before unpausing**: a pause only
+holds a queued payout, and it would be paid once the vault runs again.
+
+**What the wait does not solve: forged kUSDT already minted.** Three stolen keys can mint up to the allowance, and
+kUSDT burns can't be paused. A burn of forged kUSDT is a real burn, and it looks like any other: signers can't tell it
+apart, the monitor raises nothing about it, and after the vault runs again the honest signers would pay it. So while
+everything is paused the operators have to work out what the forged mint became, and restore INV-1, before any vault
+runs again. There is no list of burns not to pay yet.
 
 Unbacked kUSDT also harms holders and the pool. Sold into KasPool, it takes KAS from the pool's liquidity
 providers. The pool's circuit breaker lets sells take at most 10 % of the KAS reserve per hour, and the guardian

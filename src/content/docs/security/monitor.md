@@ -5,8 +5,8 @@ description: The monitor and guardian service. What it checks, which alarms it r
 
 The **monitor** watches every chain kUSDT touches and holds the **guardian** keys. When something is wrong, it
 pauses both vaults, the minter and the pool. It is written (`bridge/services/src/monitor/`), has run in the local
-end-to-end test, and runs for the public testnet. Its read-only status is public at `https://trestly.io/monitor/health`
-and `https://trestly.io/monitor/api/v1/monitor`; the acknowledge route is not public.
+end-to-end test, and runs for the public testnet. Its read-only status is public at `https://testnet.trestly.io/monitor/health`
+and `https://testnet.trestly.io/monitor/api/v1/monitor`; the acknowledge route is not public.
 
 ## Principles
 
@@ -58,16 +58,25 @@ from the vaults' `Released` events.
 | `pool-unverifiable` | The pool was spent in a way the monitor cannot verify |
 | `mint-of-skipped-nonce`, `skip-of-minted-nonce` | A mint of a nonce that was skipped for a refund, or a skip of one already minted (INV-2) |
 | `mint-unknown-chain` | A mint names a chain the deployment does not have |
-| `unverifiable` | A chain, the Kaspa node, or a step of the check could not be read for `failClosedMs` (10 minutes by default). The monitor fails closed: everything stays paused until it can check again |
+| `refund-mismatch` | A vault queued or paid a refund to anyone but the deposit's sender, or for anything but what it minted. Only signers bind a refund to its depositor, so the monitor checks them |
+| `flagged-payout-still-queued` | A vault runs again with a queued payout that raised an alarm and was not cancelled |
+| `unverifiable` | A chain, the Kaspa node, or a step of the check could not be read for `failClosedMs` (5 minutes by default, shorter than a payout's wait). The monitor fails closed: everything stays paused until it can check again |
 
 The `vault-blocked` check reads the view the deployment names for each chain (`blocklist`: `isBlackListed` for
 Ethereum USDT). BSC-USD keeps no blacklist, so it never fires there. The pause stops new deposits into a vault
 that could not pay them back. See [Blocked recipients](/security/known-limits/#blocked-recipients).
 
-A release with no burn behind it is an alarm **at once**, as soon as the monitor's Kaspa view has caught up (within
-about 50 DAA scores of the virtual): signers sign a release only once its burn is final, 1 000 DAA deep or more, so an
-honest release's burn is always indexed by then. A mint may wait for its deposit, and a refund for its skip, for a
-grace period (`graceMs`, 5 minutes by default), the time a deposit takes to become final on the monitor's own nodes.
+The monitor checks a payout when it is **queued**, not only when it is paid: that is what the vault's
+[wait](/protocol/redemptions-and-releases/#the-wait) is for, since a pause within it stops the payout. A payout with no
+burn behind it is an alarm **at once**, as soon as the monitor's Kaspa view has caught up (within about 50 DAA scores
+of the virtual): signers sign a release only once its burn is final, 1 000 DAA deep or more, so an honest release's
+burn is always indexed by then. A mint may wait for its deposit, and a paid refund for its skip, for a grace period
+(`graceMs`, 5 minutes by default), the time a deposit takes to become final on the monitor's own nodes. A queued
+refund gets at most 2 minutes, so that its alarm comes well within the wait. If the Kaspa view lags too far to judge a
+payout that is still queued two thirds of the way through its wait, that is the `unverifiable` alarm: it fails closed.
+
+A payout that raised an alarm stays on a list until it has left the queue. A vault that runs again with one still
+queued raises `flagged-payout-still-queued`, and the unpause's fresh wait gives the pause time to land.
 A monitor that starts late raises no `release-without-burn` or `refund-without-skip` before its Kaspa scan has
 caught up.
 
@@ -178,7 +187,7 @@ npm run monitor -- <config.json>        # in bridge/services
 | `pollMs` | Optional: time between checks; 2 000 ms by default |
 | `minDepthDaa` | Optional: how far below the virtual a chain block must be before it is read; 10 DAA scores by default |
 | `graceMs` | Optional: how long a mint may wait for its deposit, or a refund for its skip; 300 000 ms by default |
-| `failClosedMs` | Optional: how long a chain or the Kaspa node may stay unreadable before the `unverifiable` alarm pauses everything; 600 000 ms by default |
+| `failClosedMs` | Optional: how long a chain or the Kaspa node may stay unreadable before the `unverifiable` alarm pauses everything; 300 000 ms by default. It must be shorter than the vaults' payout wait: the preflight check refuses anything else on mainnet |
 | `expectedGovernance` | Governance the operators announce in advance, as `{adminNonce, action, params}` (params in hex). Anything else alarms. `kusdt govern-sign` prints the line |
 | `expectedOwnerCalls` | Vault owner actions the operators announce in advance (see [The vault owner](#the-vault-owner)). Anything else alarms |
 | `cancellerEvmSecretPath` | Optional: a key with the canceller role in each vault's AccessManager. The monitor cancels every queued operation nobody announced |

@@ -4,7 +4,7 @@ description: How the bridge is deployed and run. What runs where, the testnet st
 ---
 
 This page follows the runbook in `deploy/README.md`. The testnet is deployed and public (4 November 2026) at
-`https://trestly.io`, on one test host. Nothing is on mainnet.
+`https://testnet.trestly.io`, on one test host. Nothing is on mainnet.
 
 ## What runs where
 
@@ -138,10 +138,10 @@ Two more changes in the coordinator:
 | KasPool covenant ID (TN10) | `102a59644f81734faa6e7870a694ee8da047b02b8bc21945576f535f94f5efb4` |
 | KasPool covenant ID, retired (its breaker counted gross sells) | `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9` |
 | KasPool covenant ID, retired (no circuit breaker) | `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b` |
-| Web app | `https://trestly.io` |
-| Coordinator API | `https://trestly.io/api/v1` |
-| Monitor (read-only) | `https://trestly.io/monitor/health`, `https://trestly.io/monitor/api/v1/monitor` and `https://trestly.io/monitor/api/v1/signal` |
-| Wallet (testnet build) | `https://trestly.io/downloads/kusdt-wallet-testnet.zip` |
+| Web app | `https://testnet.trestly.io` |
+| Coordinator API | `https://testnet.trestly.io/api/v1` |
+| Monitor (read-only) | `https://testnet.trestly.io/monitor/health`, `https://testnet.trestly.io/monitor/api/v1/monitor` and `https://testnet.trestly.io/monitor/api/v1/signal` |
+| Wallet (testnet build) | `https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip` |
 
 The current pool was opened on 5 November 2026. Its two predecessors are retired.
 
@@ -159,8 +159,8 @@ points a local build at services on `127.0.0.1`.
 ## Publishing
 
 The coordinator API and the monitor's status are public, read-only JSON. On the public testnet the host's Caddy
-serves `trestly.io` (`deploy/kusdt.caddy`) with TLS, and routes by path. The old names, `kastools.com` and
-`kusdt.pearlchain.live`, redirect to it permanently, so wallets already installed keep working:
+serves `testnet.trestly.io` (`deploy/kusdt.caddy`) with TLS, and routes by path. Until mainnet, `trestly.io` and the
+old names, `kastools.com` and `kusdt.pearlchain.live`, redirect to it, so wallets already installed keep working:
 
 | Path | Goes to |
 |---|---|
@@ -196,7 +196,17 @@ It has already paused every vault, the minter and the pool. Then:
 1. Read the alarm (`GET /api/v1/monitor`): which invariant, which transactions.
 2. **If it is real:** keep everything paused, rotate the affected keys (vault owner: `setSigners`, `setGuardian`;
    Kaspa: `set_signers`, which needs 4 honest signers), and account for every unit against INV-1 before anything
-   resumes.
+   resumes. In this order, since nothing on chain enforces it:
+   1. **`setSigners`.** It takes the AccessManager's 48 hours, so a vault resumes 48 hours later at the earliest,
+      even though `unpause` alone could run after 6. Until it lands the old signatures still count.
+   2. **`cancelRelease`, `cancelRefund`** for every bad queued payout: a pause only holds it, and it is paid once the
+      vault runs again. Each alarm names the transaction that queued it, and `flagged` in the monitor's status lists
+      what is still queued.
+   3. **Announce each call** in every monitor's `expectedOwnerCalls` before scheduling it, or a monitor with a
+      canceller key cancels it.
+   4. **Forged kUSDT.** Work out what any forged mint became before unpausing, and restore INV-1: its burns are real
+      and would be paid. See the [threat model](/security/threat-model/#a-bad-quorum-three-signer-keys).
+   5. **`unpause`.** Every payout still queued then waits a full wait again.
 3. **If it is a false alarm:** fix the cause, acknowledge it (`POST /api/v1/alarms/:id/acknowledge` with the
    operator bearer), then resume: the vault owner unpauses each vault, 4 of 5 signers sign `unpause` for the
    minter, and the pool admin unpauses the pool (`pool-unpause`).

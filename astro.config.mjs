@@ -29,7 +29,11 @@ export default defineConfig({
       favicon: '/favicon.svg',
       customCss: ['@fontsource-variable/figtree/wght.css', './src/styles/trestly.css'],
       components: { ThemeProvider: './src/components/ThemeProvider.astro', ThemeSelect: './src/components/ThemeSelect.astro' },
-      social: [{ icon: 'external', label: 'Open the app', href: 'https://trestly.io/' }],
+      social: [
+        { icon: 'external', label: 'Open the app', href: 'https://testnet.trestly.io/' },
+        { icon: 'x.com', label: 'Trestly on X', href: 'https://x.com/trestly_io' },
+        { icon: 'telegram', label: 'Trestly on Telegram', href: 'https://t.me/trestly' },
+      ],
       // Starlight writes each page's title and description; the picture is the same on all.
       head: site
         ? [

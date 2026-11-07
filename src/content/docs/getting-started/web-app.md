@@ -5,7 +5,7 @@ description: "Trestly, the web app: what each section does, the two wallets it n
 
 Trestly is the web app: the public front end of the bridge and the pool: a static single-page app in `bridge/web`. It is
 built and tested against the local stack and the testnet. On testnet it is public at
-[trestly.io](https://trestly.io), built with `bridge/web/config/testnet.public.json`. Its mainnet
+[testnet.trestly.io](https://testnet.trestly.io), built with `bridge/web/config/testnet.public.json`. Its mainnet
 URL is **to be published**. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
 
 ## Two wallets

@@ -42,7 +42,7 @@ that lands anyway is held until the address is unblocked. See [Blocked recipient
 ## External review (5 November 2026)
 
 An outside reviewer sent twelve questions and findings. Each is answered below; the code changes are in the
-mainnet release candidates since commit `1e3f969` (the current one is `mainnet-v0.9.8-rc.7`). This is still not an audit.
+mainnet release candidates since commit `1e3f969` (the current one is `mainnet-v0.9.8-rc.8`). This is still not an audit.
 
 | # | Finding | Response |
 |---|---|---|
@@ -85,7 +85,7 @@ A third review read the code at commit `a0ab050`. Each finding was checked again
 
 ## Fourth outside review (7 November 2026)
 
-Each finding was checked against the code, and all five are fixed, in commit `a7ded23` on `main`. The current release candidate, `mainnet-v0.9.8-rc.7`, predates them. This is still not an audit.
+Each finding was checked against the code, and all five are fixed, in commit `a7ded23` on `main`, and in the release candidate `mainnet-v0.9.8-rc.8`. This is still not an audit.
 
 | # | Severity as reported | Finding | Fix |
 |---|---|---|---|
@@ -94,6 +94,13 @@ Each finding was checked against the code, and all five are fixed, in commit `a7
 | 3 | Medium | The committed bytecode couldn't be reproduced offline: the compiler was named at two commits, the reference sources weren't in the repository, and nothing recorded what built it | One compiler commit, the reference's `.ag` files checked in unchanged, a record of what built the bytecode, and a CI job that recompiles and compares ([Build and test](/developers/build-and-test/)). The bytecode itself did not change |
 | 4 | Low | `requestJson` still used the `@@bigint` marker a string could collide with | It writes BigInt values directly, with no marker |
 | 5 | Low | WalletConnect's connect could wait for ever once the QR code showed | Every stage has a limit, 5 minutes with the code up, and the visitor can stop waiting from the wallet menu |
+
+## The payout wait (7 November 2026)
+
+Added after the fourth review, from research on how bridges lost funds: every payout now waits in the vault, and a
+pause within the wait stops it. See [The wait](/protocol/redemptions-and-releases/#the-wait). It is the first change to
+the vault contract since 0.9.0, and **no outside review has seen it yet**. Its own tests, the local run in which three
+stolen keys queue a payout and the monitor stops it, and the mainnet rehearsal all pass, on local chains only.
 
 ## Are the Ethereum and BNB Chain vaults safe?
 
@@ -130,4 +137,5 @@ The [mainnet checklist](/security/mainnet-checklist/) requires external audits o
 
 ## Reporting a vulnerability
 
-The security contact and disclosure process are **to be published**.
+The security contact is the Telegram group [t.me/trestly](https://t.me/trestly). Don't post the details of a
+vulnerability there: say you have one and ask an admin for a private channel.

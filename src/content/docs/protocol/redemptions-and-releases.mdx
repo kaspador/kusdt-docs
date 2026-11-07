@@ -56,12 +56,23 @@ The vault:
 2. computes `fee = max(minReleaseFee, ceil(units × feeBps / 10⁴))` and requires `units > fee`;
 3. verifies at least 3 EIP-712 signatures by distinct **current** signers, given in strictly increasing order of
    signer address (the ordering proves they are distinct);
-4. requires `units ≤ backing()`;
+4. requires `units ≤ unreservedBacking()`, the backing no other queued payout has a claim on;
 5. draws the payout, `units − fee`, from the release allowance;
-6. marks `redeemId` used, adds the fee to `feesAccrued`, and transfers `(units − fee) × scale` to the recipient;
-7. emits `Released(redeemId, recipient, units, fee, payout)`.
+6. marks `redeemId` used and queues the payout;
+7. emits `ReleaseQueued(redeemId, recipient, units, fee, payout, readyAt)`.
 
 Anyone may call `release` with valid signatures. The coordinator normally does.
+
+## The wait
+
+Nothing has left yet. The payout waits in the vault until `readyAt`: 10 minutes on mainnet, which the owner can
+set from 5 minutes to 24 hours. Then anyone may call `executeRelease(redeemId)`, the coordinator normally does, and
+the vault adds the fee to `feesAccrued`, transfers `(units − fee) × scale` to the recipient and emits
+`Released(redeemId, recipient, units, fee, payout)`.
+
+The wait is the guardian's time to pause. Nothing is paid while a vault is paused, and an unpause starts a full wait
+again for everything queued, so if signer keys are stolen, a pause within the wait means no forged payout leaves. Every payout waits, however small: otherwise a thief would split the
+theft into small payouts. See the [threat model](/security/threat-model/).
 
 ## The redeem ID
 

@@ -23,7 +23,7 @@ between Kaspa and the EVM chains is a **federation**: it relies on a group of si
 | Part | Trusted with | Not trusted with |
 |---|---|---|
 | kUSDT covenant family | The token itself. `BridgeMint` is the only issuer | |
-| Vault, one per chain | All locked USDT; pays out only with 3 of 5 signatures, within a daily limit. No proxy and no upgrade key: nobody can swap its code, and a bug means a new vault | |
+| Vault, one per chain | All locked USDT; pays out only with 3 of 5 signatures, within a daily limit, after a wait in which a pause stops the payout. No proxy and no upgrade key: nobody can swap its code, and a bug means a new vault | |
 | Signers (5, independent) | One Kaspa Schnorr key and one EVM ECDSA key each | Acting alone: one or two signers can do nothing |
 | Guardian | One key that can pause the vaults, the minter and the pool | Anything else |
 | Pool admin | The pool's protocol fees, unpausing it, its keys | The reserves, any position, the circuit breaker |

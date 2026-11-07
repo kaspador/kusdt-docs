@@ -23,14 +23,17 @@ struct Refund { uint64 nonce; address recipient; uint256 units; }
 | Check | Rule |
 |---|---|
 | The deposit exists | `nonce < depositNonce` |
-| Not refunded before | `depositMinted[nonce] ≠ 0`; the vault clears it to 0 when it refunds |
+| Not refunded before | `depositMinted[nonce] ≠ 0`; the vault clears it to 0 when it queues the refund |
 | Exact amount | `units` must equal `depositMinted[nonce]`: what the deposit would have minted, not the gross amount |
 | Recipient | Not the zero address, not the vault |
 | Signatures | At least 3 distinct current signers, in strictly increasing address order, same as a release |
-| Backing | `units ≤ backing()` |
+| Backing | `units ≤ unreservedBacking()`, the backing no other queued payout has a claim on |
 | Allowance | `units` is drawn from the same release allowance as releases |
 
-The vault then pays `units × scale` to the recipient and emits `Refunded(nonce, recipient, units)`.
+The vault then queues the refund and emits `RefundQueued(nonce, recipient, units, readyAt)`. Like every payout it
+[waits](/protocol/redemptions-and-releases/#the-wait), 10 minutes on mainnet. Then anyone may call
+`executeRefund(nonce)`, the coordinator normally does, and the vault pays `units × scale` to the recipient and emits
+`Refunded(nonce, recipient, units)`.
 
 ## What the depositor gets back
 

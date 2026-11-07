@@ -14,7 +14,7 @@ covenants, the vault, the signers, or the monitor.
 |---|---|
 | Vault accounting | `balance / scale = backing() + feesAccrued` at all times; only `release` and `refund` reduce backing |
 | Monitor and guardian | The [monitor](/security/monitor/) checks INV-1 with each vault read at one block, from its own nodes; on an `inv1` alarm the guardian pauses both vaults, the minter and the pool |
-| Public check | The web app's [Reserves page](https://trestly.io/reserves) shows it live on the testnet, reading the vaults and the minter itself. The coordinator API's `GET /reserves` reports supply, backing and `healthy`, meaning total backing ≥ minted − released. On mainnet it is to be published live at launch |
+| Public check | The web app's [Reserves page](https://testnet.trestly.io/reserves) shows it live on the testnet, reading the vaults and the minter itself. The coordinator API's `GET /reserves` reports supply, backing and `healthy`, meaning total backing ≥ minted − released. On mainnet it is to be published live at launch |
 
 No single contract can enforce INV-1, because it spans three chains. The randomized vault test checks the vault's
 part after every step.

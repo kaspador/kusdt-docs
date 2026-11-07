@@ -9,8 +9,8 @@ kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is b
 
 For Chromium browsers on a computer: Chrome, Brave and Edge. There is no phone version, and the web app says so on a phone.
 
-1. Download [kusdt-wallet-testnet.zip](https://trestly.io/downloads/kusdt-wallet-testnet.zip) from
-   `https://trestly.io/downloads/kusdt-wallet-testnet.zip`.
+1. Download [kusdt-wallet-testnet.zip](https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip) from
+   `https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip`.
 2. Unzip it.
 3. Open `chrome://extensions`.
 4. Turn on **Developer mode**.

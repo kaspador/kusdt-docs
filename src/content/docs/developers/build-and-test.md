@@ -59,7 +59,7 @@ The end-to-end runs and the stack need the kaspad simnet container; see [Run the
 | Web app | 133 unit, 160 + 25 end to end | `bridge/web` (`npm test`, `npm run e2e`, `npm run e2e:wallet`) |
 | Wallet extension | 123 unit, plus 6 simnet, 7 stack and the smoke suite | `wallet/extension` |
 | Protocol and request-parsing unit tests | 6 | `bridge/kaspa/src/protocol.rs`, `src/model.rs` |
-| Vault (Hardhat) | 102 | `bridge/evm/test/` |
+| Vault (Hardhat) | 121 | `bridge/evm/test/` |
 | Services | 119 | `bridge/services/src/**/*.test.ts` |
 | Kaspa client, protocol, core | 59, 28, 4 | `bridge/packages/*` |
 | Mainnet deployer | 16 | `bridge/devnet/src/mainnet-deploy.test.ts` |

@@ -12,11 +12,13 @@ the project owner's explicit approval.
 | 2 | External audits of `BridgeMint` and `KasPool` (and the SilverScript they compile to) and of the vault | No part is audited yet | Open |
 | 3 | The vault owner is an AccessManager whose admin is a Safe: 48-hour delays, about 6 for the guardian and unpause, and independent cancellers | The owner is the one role not capped by the release allowance | Open: the deployer builds it (`mainnet:plan` refuses anything else on mainnet); the Safe's holders and the cancellers are still to be chosen |
 | 4 | Legal review of holding users' USDT | The vaults custody user funds | Open |
-| 5 | Proof of reserves published live (INV-1) | Anyone should be able to see that backing covers circulation | Open until mainnet: built and live on the testnet at [trestly.io/reserves](https://trestly.io/reserves), which reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check. The mainnet web package carries the same page |
+| 5 | Proof of reserves published live (INV-1) | Anyone should be able to see that backing covers circulation | Open until mainnet: built and live on the testnet at [testnet.trestly.io/reserves](https://testnet.trestly.io/reserves), which reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check. The mainnet web package carries the same page |
 | 6 | kUSDT's genesis reviewed by kascov.io | Wallets mark unreviewed tokens "unvalidated" | Open |
 | 7 | The pool admin key held offline by the operator | It can take only the accrued protocol fees, unpause the pool and hand the keys over ([KasPool](/contracts/kaspool/#protocol-fees-and-the-admin)) | Open |
 | 8 | A decision on redemptions to a blocked recipient | Ethereum USDT can blacklist an address, and a payout there would be frozen | Done (4 November 2026): a blocked recipient is never paid; the burn is held and paid if the address is unblocked. No re-target power exists. See [Blocked recipients](/security/known-limits/#blocked-recipients) |
 | 9 | Burn finality scaled to the payout | A release cannot be undone | Done (5 November 2026): 6 000 DAA above 10 000 kUSDT, 36 000 above 100 000; the preflight refuses shallower tiers |
+| 10 | Every payout waits in the vault, so a pause can stop it | Stolen signer keys could otherwise drain a vault's allowance in small payouts before anyone reacts | Built (7 November 2026): 10 minutes, the deployer and the preflight refuse less than 5. A change to the vault itself, so item 2's audit must cover it. It has not run on the public testnet yet |
+| 11 | `trestly.io` serves mainnet | Until launch it redirects to the testnet | Open: on the launch day take the redirect out of `deploy/kusdt.caddy` |
 
 ## Operations
 
@@ -87,4 +89,4 @@ real USDT, and a simnet Kaspa node. A rehearsal plan runs on simnet and local RP
 - a live monitor with a canceller key: an announced call passes quietly, an unannounced `setSigners` is alarmed
   and cancelled, the Safe's admin call is alarmed, the guardian pauses, and the integrators' signal says stop.
 
-The rehearsal for release candidate `mainnet-v0.9.8-rc.7` passed all 48 checks; on `main`, with the check above added, it passes all 49.
+The rehearsal for release candidate `mainnet-v0.9.8-rc.8` passes all 49 checks, the payout wait of both vaults among those it verifies.
