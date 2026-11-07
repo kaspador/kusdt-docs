@@ -3,7 +3,7 @@ title: Run the simnet flow
 description: Run the Kaspa side of kUSDT against a real kaspad simnet node, or the whole bridge on one machine.
 ---
 
-`bridge/devnet` holds two end-to-end runs and a stack that keeps running, described in `bridge/devnet/README.md`:
+`bridge/devnet` holds two end-to-end runs, a load run and a stack that keeps running, described in `bridge/devnet/README.md`:
 
 | Run | Command (from `bridge/devnet`) | Covers | Time |
 |---|---|---|---|
@@ -30,10 +30,9 @@ well-known development accounts.
    Later runs need only `docker start kusdt-simnet`. A coinbase output matures after about 1 000 DAA, so each run
    first mines about 1 100 blocks to its own addresses (a few seconds).
 2. **Dependencies**: `npm install --legacy-peer-deps` at the repository root.
-3. **The builders**: `bash tools/wasm.sh` builds the WebAssembly core (`@kusdt/core`), which the runs use
-   in-process by default. Set `KUSDT_CORE=cli` to use the native `kusdt-tx` instead: in the pinned Rust container
+3. **The builders**: the WebAssembly core (`@kusdt/core`), which the runs use in-process by default, is checked in. To rebuild it after a Rust change, build the image once (`docker build -t kusdt-rust-wasm:1 -f tools/docker/rust-wasm.Dockerfile tools/docker`), then run `bash tools/wasm.sh`. Set `KUSDT_CORE=cli` to use the native `kusdt-tx` instead: in the pinned Rust container
    against the release build, or the binary named by `KUSDT_TX`.
-4. **For `local:e2e` and `local:stack`**: the EVM build, `npx hardhat compile` in `bridge/evm`.
+4. **For `local:e2e`, `local:load` and `local:stack`**: the EVM build, `npm ci` and `npx hardhat compile` in `bridge/evm`.
 
 ## The Kaspa side: simnet:e2e
 

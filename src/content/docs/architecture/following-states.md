@@ -31,8 +31,7 @@ covenant ID. Followers ignore it. The internal security review found that follow
 now take successors only from covenant-bound authorized outputs (regression tests:
 `bridge/packages/protocol/src/decoys.test.ts`, `bridge/kaspa/tests/decoy_outputs.rs`).
 
-A decoding mistake therefore cannot be adopted silently. If the computed successor is not among the outputs, the
-follower stops with an error, and the monitor treats it as an alarm (`minter-unverifiable`). For a mint, every
+A decoding mistake therefore cannot be adopted silently. If the computed successor is not among the outputs, the follower refuses it with an error and keeps the state it holds. The monitor treats that as an alarm (`minter-unverifiable`); the coordinator and the signers log it. For a mint, every
 recipient's script must be among the outputs too. Where the successor depends on which input paid (a pool sell,
 add or first deposit), every kUSDT input is tried, and only one whose result the outputs hold is taken.
 
@@ -60,17 +59,15 @@ Now, when the node reports any `removedChainBlockHashes`, the follower goes back
 selected parent of the first added chain block. It fetches the block bodies again from there and hands the
 transactions out again.
 
-Handing a transaction out twice is safe. A transaction the follower already followed spends a state it no longer
-holds, so it is ignored. The regression test is `bridge/services/src/shared/accepted.test.ts`, which fails on the
-old code.
+Handing a transaction out twice is safe. A transaction the follower already followed spends a state it no longer holds, so it is ignored. A transaction the new chain no longer accepts is different: it leaves the follower on a state that is gone. So a signer undoes the minter moves the dropped blocks accepted, newest first, from a journal of its last 256 moves, and holds the state the new chain spends again. It also signs no refund unless the minter it follows is unspent on its own node (see [Refunds](/protocol/refunds/)). The coordinator and the monitor do not undo moves: the monitor raises `minter-lost` and pauses, and an operator brings them back (see [Known limits](/security/known-limits/)). The regression tests are `bridge/services/src/shared/accepted.test.ts`, `bridge/services/src/review3.test.ts` and `bridge/services/src/signer/signer.test.ts`.
 
 ## Who follows what
 
 | Follower | Follows | Uses it for |
 |---|---|---|
-| Monitor | BridgeMint, every kUSDT burn | Minted supply, mints against deposits, releases against burns, governance (see [The monitor](/security/monitor/)) |
-| Coordinator | BridgeMint, the pool, positions | `GET /status`, `GET /pool`, `GET /positions`, and supply in `GET /reserves` |
-| Each signer | BridgeMint, from its own Kaspa node | Signing a refund only for a nonce it sees skipped and never minted |
+| Monitor | BridgeMint, the pool, every kUSDT burn | Minted supply, mints against deposits, releases against burns, governance (see [The monitor](/security/monitor/)) |
+| Coordinator | BridgeMint, the pool, positions, kUSDT states and burns | `GET /status`, `GET /pool`, `GET /positions`, `GET /tokens`, the redemptions it pays, and supply in `GET /reserves` |
+| Each signer | BridgeMint, from its own Kaspa node | Signing a refund only for a nonce it sees skipped and never minted, and only while the minter it follows is unspent on its node |
 | Wallet | Its own kUSDT states and the pool, as listed by the API | Before a state is shown or spent, the wallet recomputes its locking script and finds that exact outpoint on the node, with the pinned covenant ID; a state that fails is dropped (tokens) or refused (the pool) |
 
 The coordinator also takes supply from the chain: minted = genesis `remaining` − the minter's `remaining`;

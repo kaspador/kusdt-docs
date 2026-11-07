@@ -3,12 +3,11 @@ title: The wallet
 description: The kUSDT wallet extension, what it does, how it verifies what it shows, and how to hold kUSDT in any KCC-20 wallet.
 ---
 
-The kUSDT wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the
-local stack. A testnet build can be downloaded; it is **not in any store yet**.
+kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the local stack and the public testnet. A testnet build can be downloaded; it is **not in any store yet**.
 
 ## Install
 
-For Chromium browsers: Chrome, Brave and Edge.
+For Chromium browsers on a computer: Chrome, Brave and Edge. There is no phone version, and the web app says so on a phone.
 
 1. Download [kusdt-wallet-testnet.zip](https://trestly.io/downloads/kusdt-wallet-testnet.zip) from
    `https://trestly.io/downloads/kusdt-wallet-testnet.zip`.
@@ -33,7 +32,7 @@ It starts on Testnet. To try it end to end, see [Test on the public testnet](/ge
 It was tested live against `npm run local:stack`: deposits on both chains, a send, a redemption through to its
 release, swaps, and adding and removing liquidity. The live tests also blacklist an address with the dev faucet:
 the wallet refuses it before any burn, and a burn built past the checks is held as `blocked` until the address is
-taken off the list, then released. It also has 78 unit tests, a simnet test, live-stack tests and a browser smoke
+taken off the list, then released. It also has 123 unit tests, a simnet test, live-stack tests and a browser smoke
 test. Its README is `wallet/extension/README.md`.
 
 ## What it trusts, and what it checks

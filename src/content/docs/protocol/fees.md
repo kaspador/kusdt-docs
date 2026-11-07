@@ -69,7 +69,7 @@ and moves with it.
 |---|---|
 | A kUSDT state | 1.5 KAS (the default) |
 | A KasPool Position | 2 KAS |
-| BridgeMint | 1 KAS (changeable with `set_value`, 3 of 5) |
+| BridgeMint | 5 KAS (changeable with `set_value`, 3 of 5) |
 | The Pool | its base deposit (1 KAS in the simnet run) plus the KAS reserve and the protocol's KAS |
 
 The KAS in a newly minted state is paid by the coordinator's Kaspa funding, out of the deposit fee; from then on

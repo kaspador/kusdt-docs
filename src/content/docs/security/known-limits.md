@@ -20,9 +20,11 @@ to verify Kaspa burns themselves, which needs a Kaspa light client on the EVM si
 Until then, a release rests on 3 of 5 signers, capped by each vault's release allowance (250 000 USDT at once, at
 most 500 000 in any 24 hours), and the monitor pauses the vaults the moment it sees a release with no burn behind it.
 
-## Blocked recipients
+## A reorg that flips a mint and a skip
 
-**After a reorg that flips a mint and a skip, the coordinator and the monitor need an operator.** Only the signers undo what the dropped blocks accepted. The coordinator and the monitor keep following a minter state that is gone, so they fail safe: the monitor raises `minter-lost` and pauses, and no signer signs a refund from such a view. An operator then brings them back from the launch record.
+After a reorg that flips a mint and a skip, the coordinator and the monitor need an operator. Only the signers undo what the dropped blocks accepted. The coordinator and the monitor keep following a minter state that is gone, so they fail safe: the monitor raises `minter-lost` and pauses, and no signer signs a refund from such a view. An operator then brings them back from the launch record.
+
+## Blocked recipients
 
 **A blocked recipient is never paid.** This was decided on 4 November 2026.
 
@@ -117,7 +119,7 @@ A bad quorum that broke them would still be capped by the release allowance.
 
 Each swap spends one exact pool state. When several users swap at once, all but one must re-quote and re-sign.
 This is the price of being immune to sandwich attacks. The wallet goes ahead on its own only when the new quote
-is at least as good as the one you confirmed; a worse one asks you again (being built).
+is at least as good as the one you confirmed; a worse one sends nothing and asks you again.
 
 ## The pool caps sells
 
@@ -141,5 +143,4 @@ The contracts are deployed on testnet (TN10, Sepolia and BSC testnet), and the p
 [trestly.io](https://trestly.io). Its five signers, the coordinator and the monitor run on one
 test host, in isolated containers, so it is not the federation of five independent operators that mainnet needs
 (see [Operations](/developers/operations/#the-testnet-deployment)). The wallet extension has a testnet build to
-download and is not in any store. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in those
-services, so they are only as good as their deployment.
+download and is not in any store. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in those services, so they are only as good as their deployment. Those services run an image from before the third and fourth outside reviews, so those fixes are not live in them yet.

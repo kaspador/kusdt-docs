@@ -25,8 +25,7 @@ Details: [The kUSDT token family](/contracts/kusdt-token/), [BridgeMint](/contra
 | `Pool` | A singleton. Its UTXO holds the KAS reserve, a fixed base deposit and the protocol's accrued KAS. Its kUSDT reserve is one `KCC20` state owned by the pool's covenant ID |
 | `Position` | One per liquidity deposit: a number of shares and an owner key |
 
-The pool has an **admin** key that can collect the protocol's share of fees and hand the key on. It cannot touch
-the reserves. Before mainnet, the operator holds the admin key offline. Details: [KasPool](/contracts/kaspool/).
+The pool has an **admin** key that can collect the protocol's share of fees, resume a paused pool and hand the admin and guardian keys on. It cannot touch the reserves. Before mainnet, the operator holds the admin key offline. Details: [KasPool](/contracts/kaspool/).
 
 ## On Ethereum and BNB Chain
 
@@ -45,7 +44,7 @@ Details: [KusdtVault](/contracts/kusdt-vault/).
 
 ### Vault owner
 
-On mainnet, an AccessManager whose admin is a Safe multisig (48-hour delays, independent cancellers). It sets fees and limits within hard bounds, replaces the
+On mainnet, an AccessManager whose admin is a Safe multisig (48-hour delays, about 6 hours for `setGuardian` and `unpause`, independent cancellers). It sets fees and limits within hard bounds, replaces the
 signer set and the guardian, unpauses, and withdraws accrued fees (never more than `feesAccrued`). It cannot move
 backing and cannot renounce ownership. See [Governance](/security/governance/).
 
@@ -68,7 +67,7 @@ Five independent signers, each on its own machine with its own Kaspa node and it
 Every signer checks every request against its own nodes before signing. It also checks rules the vault
 cannot see: a release names the chain and address that the burn owner commits to, a refund pays the
 depositor, and nothing is paid to an address the token blocks (see
-[Blocked recipients](/security/known-limits/#blocked-recipients)).
+[Blocked recipients](/security/known-limits/#blocked-recipients)). Each signer also has its own fuse: it refuses to sign more than its configured daily limit per rolling 24 hours, for mints and for releases and refunds together.
 
 ### Coordinator
 
@@ -85,14 +84,12 @@ See [The monitor](/security/monitor/) and [Guardian and pause](/security/guardia
 
 ### Public API
 
-The coordinator serves the public [API](/protocol/coordinator-api/), including `GET /reserves` for INV-1. Before
-mainnet, proof of reserves is to be published live. The URL is **to be published**.
+The coordinator serves the public [API](/protocol/coordinator-api/), including `GET /reserves` for INV-1. The web app's Reserves page shows proof of reserves live on the testnet; on mainnet it is to be published live at launch. The URL is **to be published**.
 
 ## On the user's device
 
 ### Web app and wallet extension
 
-The [web app](/getting-started/web-app/) (bridge, swap, pool, reserves) and the wallet extension, both built and
-not yet public, hold the user's keys and sign
+The [web app](/getting-started/web-app/) (bridge, swap, pool, reserves) and the wallet extension, both built and not on mainnet (on testnet the web app is public at trestly.io and a wallet build can be downloaded), hold the user's keys and sign
 locally. Both pin the deployment, meaning the kUSDT covenant ID and the vault addresses, so they cannot be pointed
 at a look-alike. See [The wallet](/getting-started/wallet/).

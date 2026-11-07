@@ -8,11 +8,11 @@ the project owner's explicit approval.
 
 | # | Requirement | Why | Status |
 |---|---|---|---|
-| 1 | Five independent signer operators, each with their own nodes | The federation is only as strong as the independence of its members | Open |
+| 1 | Five independent signer operators, each with their own nodes | The federation is only as strong as the independence of its members | Open: five operators are lined up; nothing runs on mainnet yet |
 | 2 | External audits of `BridgeMint` and `KasPool` (and the SilverScript they compile to) and of the vault | No part is audited yet | Open |
 | 3 | The vault owner is an AccessManager whose admin is a Safe: 48-hour delays, about 6 for the guardian and unpause, and independent cancellers | The owner is the one role not capped by the release allowance | Open: the deployer builds it (`mainnet:plan` refuses anything else on mainnet); the Safe's holders and the cancellers are still to be chosen |
 | 4 | Legal review of holding users' USDT | The vaults custody user funds | Open |
-| 5 | Proof of reserves published live (INV-1) | Anyone should be able to see that backing covers circulation | Open |
+| 5 | Proof of reserves published live (INV-1) | Anyone should be able to see that backing covers circulation | Open until mainnet: built and live on the testnet at [trestly.io/reserves](https://trestly.io/reserves), which reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check. The mainnet web package carries the same page |
 | 6 | kUSDT's genesis reviewed by kascov.io | Wallets mark unreviewed tokens "unvalidated" | Open |
 | 7 | The pool admin key held offline by the operator | It can take only the accrued protocol fees, unpause the pool and hand the keys over ([KasPool](/contracts/kaspool/#protocol-fees-and-the-admin)) | Open |
 | 8 | A decision on redemptions to a blocked recipient | Ethereum USDT can blacklist an address, and a payout there would be frozen | Done (4 November 2026): a blocked recipient is never paid; the burn is held and paid if the address is unblocked. No re-target power exists. See [Blocked recipients](/security/known-limits/#blocked-recipients) |
@@ -37,10 +37,10 @@ The runbook is on [Operations](/developers/operations/).
 The [attack review](/security/threat-model/#attack-vectors) adds these, in order:
 
 1. The pool's circuit breaker. **Done.**
-2. No silent worse re-quotes in the wallet. **Being built.**
+2. No silent worse re-quotes in the wallet. **Done.**
 3. At least 2 independent monitors, with external alerts on `/health`.
 4. Five independent signer operators (item 1), each with a pruned Kaspa node and independent EVM RPCs (see
-   [What a signer needs](/developers/operations/#what-a-signer-needs)).
+   [What a signer needs](/developers/operations/#what-a-signer-needs)). Five are lined up.
 5. External audits (item 2), and allowances sized to what can be lost. With 3 stolen keys, today's limits risk
    about 500 000 USDT from the vaults, plus at most about 10 % of the pool's KAS.
 
@@ -66,18 +66,18 @@ The vault's deploy script (`bridge/evm/scripts/deploy.ts`) enforces part of this
 The mainnet deployer (`bridge/devnet/src/mainnet-deploy.ts`, guide in `deploy/mainnet-deployer`) wraps it:
 
 - `plan` checks every input and only reads: the five signers' keys (on the curve, in signer order), the guardian,
-  the pool admin, the coordinator and the deployer, each key in one role only; the owners are contracts; the SPEC
+  the pool admin, the coordinator and the deployer, each key in one role only; on mainnet each owner is an AccessManager with a Safe and named cancellers, a plain owner is refused, and each Safe must be a contract; the SPEC
   §8 limits, with every override named; the deployer can pay.
 - `execute` runs only the plan whose SHA-256 the reviewers confirmed, behind
   `KUSDT_CONFIRM_MAINNET=deploy-kusdt-mainnet`, with the plan's deployer keys, and after the live checks pass
   again. It records each step and never deploys anything twice.
-- `verify` is for every operator: each vault's token, signers in order, guardian, owner and limits, and the launch
+- `verify` is for every operator: each vault's token, signers in order, guardian, owner and limits, its AccessManager (OpenZeppelin's code byte for byte, every role, delay and function), and the launch
   states against the scripts their UTXOs commit to.
 
 `npm run mainnet:rehearse` (in `bridge/devnet`, with `npm run local:stack` up) runs the three commands against
 forks of Ethereum and BNB Chain that keep their chain IDs, so the vault deploy takes its mainnet path against the
-real USDT, and a simnet Kaspa node. It passed on 5 November 2026. It covered:
-- the refusals: a wrong plan hash, no confirmation, the wrong keys;
+real USDT, and a simnet Kaspa node. A rehearsal plan runs on simnet and local RPCs only; a plan whose name and network disagree is refused. It first passed on 5 November 2026. It covered:
+- the refusals: a wrong plan hash, no confirmation, the wrong keys, a rehearsal plan whose network says mainnet;
 - the deploy;
 - a second execute that sent nothing;
 - verify;
@@ -87,4 +87,4 @@ real USDT, and a simnet Kaspa node. It passed on 5 November 2026. It covered:
 - a live monitor with a canceller key: an announced call passes quietly, an unannounced `setSigners` is alarmed
   and cancelled, the Safe's admin call is alarmed, the guardian pauses, and the integrators' signal says stop.
 
-The rehearsal for release candidate `mainnet-v0.9.8-rc.7` passed all 48 checks.
+The rehearsal for release candidate `mainnet-v0.9.8-rc.7` passed all 48 checks; on `main`, with the check above added, it passes all 49.

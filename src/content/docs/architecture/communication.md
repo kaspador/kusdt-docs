@@ -10,13 +10,13 @@ directly from a chain or carries signatures that a contract checks.
 
 | From | To | What | How the receiver checks it |
 |---|---|---|---|
-| Vault | Each signer | `Deposit` events | Read from the signer's own EVM RPC; counted only once the block is finalized |
-| Kaspa | Each signer | Burn outputs and BridgeMint state | Read from the signer's own Kaspa node; counted only 1 000 DAA below the virtual DAA score |
+| Vault | Each signer | `Deposit` events | Read from every one of the signer's own EVM RPCs, which must agree on every field; counted only once the block is finalized |
+| Kaspa | Each signer | Burn outputs and BridgeMint state | Read from the signer's own Kaspa node; counted only 1 000 DAA below the virtual DAA score (300 on testnet), and deeper for larger burns |
 | Signer | Coordinator | Signatures (see below) | The coordinator only relays them; the contracts check them |
 | Coordinator | BridgeMint | Mint transactions | BridgeMint checks 3 signatures, the nonce, the limits and every output |
 | Coordinator | Vault | `release` and `refund` calls | The vault checks 3 signatures, replay, backing and the allowance |
-| Vaults and Kaspa | Monitor | Deposits, releases, refunds, backing, mints, burns, governance | Read from the monitor's own nodes, Kaspa in acceptance order; nothing from the coordinator (see [The monitor](/security/monitor/)) |
-| Monitor | Guardian action | Pause | The vault accepts `pause` from the guardian or owner; BridgeMint accepts a transaction signed by the guardian key |
+| Vaults and Kaspa | Monitor | Deposits, releases, refunds, backing, mints, burns, governance | Read from the monitor's own nodes, Kaspa in acceptance order; nothing from the coordinator. Owner events and queued AccessManager operations must agree on every RPC; a disagreement counts as a failed read, and 10 minutes of failed reads is an alarm that pauses everything (see [The monitor](/security/monitor/)) |
+| Monitor | Guardian action | Pause | The vault accepts `pause` from the guardian or owner; BridgeMint and the pool accept a transaction signed by the guardian's Kaspa key |
 | Coordinator | Web app and wallet | Status, pool, positions, token states | Informational; the wallet verifies every covenant state against its node (see [Following covenant states](/architecture/following-states/)) |
 | User | Kaspa | Transfers, swaps, liquidity, burns | Kaspa nodes run the covenants |
 | User | Vault | Deposits | The vault checks the amount and the owner scheme |
@@ -33,8 +33,9 @@ nodes.
 | Kaspa Schnorr key (×5) | Signers | Govern digest (`kUSDT/govern/v1`) | `BridgeMint.govern`: 3 or 4 distinct signers |
 | EVM ECDSA key (×5) | Signers | EIP-712 `Release` | `KusdtVault.release`: 3 or more distinct current signers |
 | EVM ECDSA key (×5) | Signers | EIP-712 `Refund` | `KusdtVault.refund`: same rule |
-| Guardian Kaspa key | Monitor | The pause transaction | `BridgeMint.pause` |
+| Guardian Kaspa key | Monitor | The pause transactions | `BridgeMint.pause`, `Pool.pause` |
 | Guardian EVM address | Monitor | The `pause()` call | `KusdtVault.pause` |
+| Pool admin key | The operator, offline | `collect`, `unpause`, `set_keys` transactions | `Pool` |
 | Vault owner | A Safe, through the AccessManager | Scheduled admin calls, executed after their delay | The AccessManager, then `KusdtVault` (owner only) |
 | User keys | Wallet | Token transfers, swaps, deposits | KCC-20 covenants, KasPool, the vault |
 

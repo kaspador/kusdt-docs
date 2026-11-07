@@ -64,8 +64,7 @@ change where they are paid, including you. Check the chain and the address befor
    bridge can read them. See [Burn owner and payload](/protocol/burn-owner-and-payload/).
 2. **The burn state exists on Kaspa.** Its owner is a hash of a script that starts with `OP_RETURN`, which no
    transaction can ever satisfy.
-3. **Finality.** The bridge waits until the burn's accepting block is at least 1 000 DAA scores below the
-   current virtual DAA score, about 100 seconds (300 DAA scores on testnet). See [Finality](/protocol/finality/).
+3. **Finality.** The bridge waits until the burn's accepting block is deep enough below the current virtual DAA score. On mainnet that is 1 000 DAA scores (about 100 seconds), 6 000 (about 10 minutes) above 10 000 kUSDT, and 36 000 (about an hour) above 100 000 kUSDT. On testnet it is 300 DAA scores for every burn. See [Finality](/protocol/finality/).
 4. **Each signer reads the burn** from its own Kaspa node.
 5. **Each signer checks and signs.** It checks that the burn owner matches the chain and address, and that the
    amount is above the release fee. It then signs an EIP-712 `Release` message.
@@ -91,7 +90,7 @@ The release fee is 0.20 % of the amount, with a minimum of 5 USDT on Ethereum an
 
 ## How long it takes
 
-About 100 seconds of Kaspa finality, then the signers and an EVM transaction. If the vault's release allowance
+Kaspa finality (about 100 seconds; about 10 minutes above 10 000 kUSDT and about an hour above 100 000 kUSDT on mainnet), then the signers and an EVM transaction. If the vault's release allowance
 is used up, your release waits until it refills. See [Limits](/protocol/limits/).
 
 ## If something goes wrong

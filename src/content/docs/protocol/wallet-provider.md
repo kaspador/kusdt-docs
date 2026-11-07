@@ -4,8 +4,7 @@ description: The window.kusdt interface that the kUSDT wallet extension injects 
 ---
 
 :::note[Built, not released]
-The wallet extension (`wallet/extension`) implements this interface and was tested against the local stack. It is
-not released to any store yet.
+The wallet extension (`wallet/extension`) implements this interface and was tested against the local stack. A testnet build can be downloaded; it is not in any store yet.
 :::
 
 The extension injects `window.kusdt`, an EIP-1193-style object:
@@ -37,8 +36,7 @@ Amounts are decimal strings (or safe integers) of the smallest unit. `params` ma
 array whose first item is the object.
 
 Only `kaspa_getNetwork` answers any page. Every other method needs a site connected on the wallet's current
-network (`kaspa_requestAccounts`); connections are per network. Sending, redeeming, swapping, liquidity and
-switching the network open the wallet's own window, every time.
+network (`kaspa_requestAccounts`); connections are per network. Sending, redeeming, swapping and liquidity open the wallet's own window, every time. So does switching the network, unless the wallet is already there or nothing is deployed there.
 
 ## Switching the network
 

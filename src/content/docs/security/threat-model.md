@@ -23,7 +23,7 @@ then refills, up to twice its ceiling can move in any 24-hour window.
 
 ## Attack vectors
 
-A review of every attack we know of, as of 4 November 2026. Status means:
+A review of every attack we know of, as of 7 November 2026. Status means:
 
 - **tested**: an attack run or a test shows the defence works;
 - **bounded**: the attack works, but a limit caps what it can take;
@@ -56,7 +56,7 @@ A review of every attack we know of, as of 4 November 2026. Status means:
 | Attack | What stops it | Status |
 |---|---|---|
 | Forged kUSDT dumped into the pool | The biggest one. A forged mint and a sell can land in the same block, so no monitor can stop it. The pool's **circuit breaker** stops it on-chain: sells take at most 10 % of the KAS reserve per hour ([KasPool](/contracts/kaspool/#the-circuit-breaker)). The monitor then pauses the pool with everything else: swaps and new liquidity stop, withdrawals stay open, and only the pool admin resumes | Fixed 4 November 2026. Tested: in `local:e2e`, 400 000 forged kUSDT get under 10 % of the pool's KAS |
-| Sandwiching | A swap spends the exact pool state it was quoted on, so a front-run makes it fail, never fill worse. But the wallet used to re-quote by itself within your slippage, so a bot could take up to that slippage. Now the wallet asks before a worse price: it goes ahead on its own only when a new quote is at least as good as the one you confirmed | By design on-chain; the wallet fix is being built |
+| Sandwiching | A swap spends the exact pool state it was quoted on, so a front-run makes it fail, never fill worse. But the wallet used to re-quote by itself within your slippage, so a bot could take up to that slippage. Now the wallet asks before a worse price: it goes ahead on its own only when a new quote is at least as good as the one you confirmed | By design on-chain; fixed in the wallet 4 November 2026, with tests |
 | Inflating the first depositor's shares | 1 000 shares are locked at `init` and can never be withdrawn | By design |
 | Rounding and overflow | Exact 128-bit products and bounds on every input | Tested; needs the audit |
 | Swap spam | Griefing only: each swap pays the network fee and 0.30 % | Bounded |
@@ -70,15 +70,15 @@ A review of every attack we know of, as of 4 November 2026. Status means:
 |---|---|---|
 | Phishing: a fake app, extension or token | The wallet pins the covenant ID and the vaults. Check the covenant ID | By design |
 | Malicious sites and clipboard swaps | The wallet's approval window shows the exact address. It is the last defence | By design; it relies on the user reading it |
-| The extension's supply chain (npm dependencies) | A lockfile audit and reproducible builds | Open |
+| The extension's supply chain (npm dependencies) | A lockfile audit and reproducible builds. CI already reproduces the WebAssembly core the wallet embeds; the extension's own bundle is not yet checked | Open |
 | Mistakes | A burn to a wrong address cannot be undone. The wallet refuses the burns it knows can't be paid | By design |
 
 ### Before mainnet, in order
 
 1. The pool's circuit breaker. **Done.**
-2. No silent worse re-quotes in the wallet. **Being built.**
+2. No silent worse re-quotes in the wallet. **Done.**
 3. At least 2 independent monitors, with external alerts on `/health`.
-4. Five independent signer operators.
+4. Five independent signer operators. Five are lined up; nothing runs on mainnet yet.
 5. External audits of the covenants, their compiler and the vault, and allowances sized to what can be lost.
    With 3 stolen keys, today's limits risk about 500 000 USDT from the vaults, plus at most about 10 % of the
    pool's KAS.
@@ -159,7 +159,7 @@ when something breaks. Without a pause, the allowances still cap what 3 bad sign
 
 ## Evidence: a bad quorum in the local run
 
-The local end-to-end run (`npm run local:e2e`, passed on 3 November 2026) plays the 3-key attack:
+The local end-to-end run (`npm run local:e2e`, with the pool step since 4 November 2026, most recently passing on 7 November 2026) plays the 3-key attack:
 
 | Step | Result |
 |---|---|

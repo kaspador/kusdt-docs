@@ -32,12 +32,11 @@ wallet's Bridge tab have "Get 1,000 test USDT", which calls that open mint from 
 
 <BridgeIn />
 
-1. **Deposit.** In the [web app](/getting-started/web-app/), choose the chain, enter the amount and your Kaspa
-   address. The app converts the address into a KCC-2 owner (see
+1. **Deposit.** On the [web app](/getting-started/web-app/)'s Bridge page, set From to your chain and To to Kaspa, then enter the amount and your Kaspa address. The app converts the address into a KCC-2 owner (see
    [Kaspa recipients](/protocol/identifiers-and-units/#kaspa-recipients)). Your EVM wallet then asks you to
    approve the vault to take exactly that amount, and then to call `deposit(units, ownerScheme, owner)`. On
    Ethereum there can be a third prompt first: Ethereum's USDT refuses to change a non-zero allowance, so the app
-   resets an old allowance to 0 before it approves. The app then follows the deposit until it is minted.
+   resets an old allowance to 0 before it approves. The app then follows the deposit in its own window until it is minted. You can close the window: the bridge keeps going, and a tag stays in the corner of the page until it is done.
 2. **The vault records it.** The vault takes the USDT, keeps the fee, and emits a `Deposit` event with the next
    deposit number (the *nonce*) and the amount to mint.
 3. **Finality.** The bridge waits until the deposit's block is at or below the chain's *finalized* block, the

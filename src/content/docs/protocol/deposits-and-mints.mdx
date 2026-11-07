@@ -61,9 +61,12 @@ and every amount, so a signature cannot be reused for anything else.
 The specification requires every signer to check every request against its own nodes, and to take nothing the
 coordinator says as fact. For a mint, that means a signer signs only if:
 
-- the deposit's block is final (see [Finality](/protocol/finality/));
+- the deposit's block is final and every one of its EVM RPCs reports the same event, field for field (see [Finality](/protocol/finality/));
 - the recipients and amounts in the digest equal the events' `ownerScheme`, `owner` and `minted`, nonce by nonce;
-- the nonces are the next ones BridgeMint expects for that chain, as read from its own Kaspa node.
+- the vault's `depositMinted(nonce)`, read on every RPC, is not zero, so a refunded nonce is never minted;
+- it has not signed a different mint starting at that nonce.
+
+The signer does not read the next nonce from Kaspa: BridgeMint itself refuses a mint that does not start at that chain's next nonce.
 
 ## Ordering and batching
 

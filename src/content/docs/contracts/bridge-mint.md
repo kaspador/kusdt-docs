@@ -122,7 +122,7 @@ they run. BridgeMint's quorum loop is unrolled to 4, so:
 | `pause` | 1 |
 | Total in the script | 9 |
 
-Five separate governance entries would have needed 20 more. That is why governance is a single entry with one
+Five separate governance entries would have needed 20 on their own, 25 in the whole script, above the limit. That is why governance is a single entry with one
 quorum check. See [Signature operations](/kaspa/signature-operations/).
 
 ## Tests

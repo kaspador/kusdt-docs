@@ -54,15 +54,14 @@ fees. You also pay the normal Kaspa network fee in KAS.
 
 ## No sandwiching, no slippage after signing
 
-A swap transaction spends the exact pool UTXO it was built on and names the exact amount you receive. Two
-things follow:
+A swap transaction spends the exact pool UTXO it was built on and names the exact amount you receive. Three things follow:
 
 - **Nobody can worsen your price after you sign.** If another swap lands first, it spends that pool UTXO.
   Your transaction then becomes invalid, rather than executing at a worse price.
 - **You may need to retry.** In a busy moment your app may have to re-quote and re-sign against the new pool
   state.
 - **The wallet asks before a worse price.** It goes ahead on its own only if the new quote is at least as good as
-  the one you confirmed. Your slippage minimum stays the hard floor. (This is being built in the wallet now.)
+  the one you confirmed. Your slippage minimum stays the hard floor.
 
 ## Selling kUSDT
 

@@ -71,7 +71,7 @@ A payload is `7 + 22 × count` bytes. For one burn at output 0 to the address ab
 ## A missing payload
 
 The payload is a convenience, not a requirement. If a burn has no payload, or the payload is wrong, anyone can
-later give the coordinator the preimage: the transaction ID, output index, chain and address. The coordinator
+later give the coordinator the preimage: the transaction ID, output index, chain and address, with the burn state. The coordinator
 checks it against the burn owner. The [coordinator API](/protocol/coordinator-api/) accepts it on
 `POST /redeems`.
 

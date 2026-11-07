@@ -41,7 +41,7 @@ Ethereum or on BNB Chain. kUSDT has 6 decimals, like USDT on Ethereum.
   payout from a vault, and both sides limit how much can move per day.
 - **KasPool**, a constant-product pool, lets anyone swap KAS for kUSDT and back. It also runs as covenants on
   Kaspa L1.
-- A **wallet browser extension** with KCC-20 support is built and tested locally, not yet released.
+- **kUSDT Wallet**, a browser extension with KCC-20 support, has a testnet build to download. It is not in any store.
 
 ## Why Kaspa L1
 
@@ -92,16 +92,17 @@ These are the mainnet defaults from the specification. Testnet uses the same rul
 | Part | Status |
 |---|---|
 | Protocol specification | v1, written for testnet |
-| BridgeMint and the kUSDT token family (Kaspa) | Written; 21 script-engine tests; full Kaspa flow run on a local kaspad v2.1.0 simnet |
-| KasPool (Kaspa) | Written; 12 script-engine tests; full pool flow run on the same simnet |
-| KusdtVault (Ethereum, BNB Chain) | Written; 83 Hardhat tests; reviewed line by line against the specification |
+| BridgeMint and the kUSDT token family (Kaspa) | Written; 22 script-engine tests; full Kaspa flow run on a local kaspad v2.1.0 simnet |
+| KasPool (Kaspa) | Written; 23 script-engine tests; full pool flow run on the same simnet |
+| KusdtVault (Ethereum, BNB Chain) | Written; 102 Hardhat tests; reviewed line by line against the specification |
 | Transaction builders | Written: `kusdt-tx` CLI and a WebAssembly build of the same code |
 | Signer and coordinator services | Written; the whole bridge (two local EVM chains, simnet, 5 signers, coordinator) ran end to end on one machine |
-| Monitor and guardian | Written; in the local run it caught a forged 400 000 kUSDT mint and paused both vaults and the minter within seconds |
-| Web app | Built and tested against the local stack, with the real wallet extension |
+| Monitor and guardian | Written; in the local run it caught a forged 400 000 kUSDT mint and paused both vaults, the minter and the pool within seconds |
+| Web app | Built and tested against the local stack, with the real wallet extension; live on the public testnet |
 | Refunds | Working in the local load run |
 | Wallet extension | Built and tested against the local stack; a testnet build to download, not released to any store |
 | Public testnet deployment | Live since 4 November 2026 at [trestly.io](https://trestly.io), test coins only. See [Test on the public testnet](/getting-started/public-testnet/) |
+| Mainnet | Nothing deployed. The release candidate, `mainnet-v0.9.8-rc.7`, is a pre-release and not audited |
 | External audit | Not audited |
 
 Details are on the [status page](/overview/status/) and the [roadmap](/reference/roadmap/).

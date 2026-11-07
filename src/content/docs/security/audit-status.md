@@ -12,10 +12,10 @@ not use kUSDT with funds you cannot afford to lose.
 
 | Part | Evidence |
 |---|---|
-| BridgeMint | 21 tests in Kaspa's script engine, including attacks; every test transaction checked for relay standardness |
+| BridgeMint | 22 tests in Kaspa's script engine, including attacks; every test transaction checked for relay standardness |
 | kUSDT token family | The KCC20 template matches the standard byte for byte; the checked-in artifact matches the source |
 | KasPool | 23 tests in Kaspa's script engine, including theft attempts through a Position and through the admin path, the circuit breaker and the pause |
-| KusdtVault | 85 Hardhat tests, including randomized invariant runs and non-standard tokens; reviewed line by line by the project owner against the specification |
+| KusdtVault | 102 Hardhat tests, including randomized invariant runs and non-standard tokens; reviewed line by line by the project owner against the specification |
 | End to end (Kaspa) | Every Kaspa-side transaction, bridge and pool, accepted by a kaspad v2.1.0 simnet node |
 | End to end (whole bridge) | `local:e2e` with a forged-mint attack caught by the monitor and its dump into the pool capped by the circuit breaker; `local:load` with concurrent deposits, unpayable burns, a refund, a burn and a refund held for a blocked address and paid once unblocked, and a blocked vault paused |
 | Mainnet forks | `fork:rehearsal`: the vault against the real USDT and BSC-USD, including USDT's blacklist and BSC-USD's lack of one |
@@ -49,7 +49,7 @@ mainnet release candidates since commit `1e3f969` (the current one is `mainnet-v
 | 1 | 3 of 5 signers can release USDT without a burn, up to 250 000 per vault at once | True, and the largest risk in v1. Bounded by each vault's release allowance (at most 500 000 per vault in any 24 hours). The monitor alarms on a release with no burn at once and pauses. Signers can now keep their keys in an HSM or KMS ([Operations](/developers/operations/#signer-keys-in-an-hsm-or-kms)). The zero-knowledge upgrade covers deposits only; releases stay federated until the EVM side can verify Kaspa ([Known limits](/security/known-limits/#the-bridge-is-federated)) |
 | 2 | The vault owner is de facto control, and nobody can cancel a bad proposal | The owner is now an OpenZeppelin AccessManager whose admin is the Safe: 48-hour delays, cancellers who can cancel any queued change, and a monitor that alarms the moment a change is queued and can cancel it ([Governance](/security/governance/)) |
 | 3 | Three signer sets can drift apart | A rotation runbook with tools (`rotate-plan`, `govern-sign`, `govern-submit`) and a local rehearsal; the monitor accepts only announced sets ([Rotating a signer](/developers/operations/#rotating-a-signer)) |
-| 4 | The testnet runs all signers on one host | True; mainnet needs five independent operators, each with its own node and RPCs. The mainnet packages are built for that |
+| 4 | The testnet runs all signers on one host | True; mainnet needs five independent operators, each with its own node and RPCs. The mainnet packages are built for that, and five operators are lined up |
 | 5 | A burn is final after about 100 seconds, before a payout of up to 250 000 | Larger burns now wait longer: 10 minutes above 10 000 kUSDT, an hour above 100 000 ([Finality](/protocol/finality/#larger-burns-wait-longer)) |
 | 6 | Forged kUSDT can be dumped into other pools | True; kUSDT transfers cannot be paused. The monitor now serves a fixed-shape signal for integrators, `GET /api/v1/signal` ([The monitor](/security/monitor/#the-integrators-signal)) |
 | 7 | One monitor, one guardian; recovery takes 48 hours | Two monitors may share the guardian key (it can only pause). The vault's `setGuardian` and `unpause` now wait about 6 hours, not 48 ([A stolen guardian key](/developers/operations/#a-stolen-guardian-key)) |
@@ -61,7 +61,7 @@ mainnet release candidates since commit `1e3f969` (the current one is `mainnet-v
 
 ## Outside source review of the services (5 November 2026)
 
-A second outside review read the off-chain services and filed three findings ([GitHub issue #2](https://github.com/kaspador/kusdt/issues/2)). None touches the covenants or the vault. All three were confirmed in the code and fixed the same day, in commit `4a037d0`:
+A second outside review read the off-chain services and filed three findings. None touches the covenants or the vault. All three were confirmed in the code and fixed the same day, in commit `4a037d0`:
 
 | # | Finding | Fix |
 |---|---|---|
@@ -85,7 +85,7 @@ A third review read the code at commit `a0ab050`. Each finding was checked again
 
 ## Fourth outside review (7 November 2026)
 
-Each finding was checked against the code, and all five are fixed. This is still not an audit.
+Each finding was checked against the code, and all five are fixed, in commit `a7ded23` on `main`. The current release candidate, `mainnet-v0.9.8-rc.7`, predates them. This is still not an audit.
 
 | # | Severity as reported | Finding | Fix |
 |---|---|---|---|
@@ -101,7 +101,7 @@ As far as testing can show, and not audited yet.
 
 **Tested.**
 
-- 85 vault tests: replay, signature order and malleability, reentrancy, fee-on-transfer tokens, backing never
+- 102 vault tests: replay, signature order and malleability, reentrancy, fee-on-transfer tokens, backing never
   overdrawn, and the rate limits.
 - Fork rehearsals on the real USDT and BSC-USD, including the blacklist checks.
 - The internal security review found the vault sound.

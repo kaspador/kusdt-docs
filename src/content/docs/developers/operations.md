@@ -13,7 +13,7 @@ This page follows the runbook in `deploy/README.md`. The testnet is deployed and
 | Vaults | Sepolia and BSC testnet, MockUSDT | Ethereum (USDT) and BNB Chain (BSC-USD); owner = an AccessManager whose admin is a Safe (48-hour delays) |
 | kUSDT, KasPool | Kaspa testnet-10 | Kaspa mainnet; genesis reviewed by kascov.io |
 | Signers ×5 | One host, five containers | Five operators, five machines, each with its own Kaspa node and EVM RPCs |
-| Coordinator | Next to the signers | Any host; it holds nothing that moves funds |
+| Coordinator | Next to the signers | A host of its own; its keys pay network costs (KAS and gas) and can't move bridge funds |
 | Monitor (guardian) | Next to the signers | Its own host and nodes, alerting a human |
 
 ## Testnet, step by step
@@ -35,20 +35,19 @@ All commands run from `bridge/devnet` unless noted. Keys live in `~/.kusdt/testn
 4. `npm run testnet:e2e`: deposits on both chains, mints, a redemption paid on BSC testnet, a pool swap, and
    reserves and the monitor healthy. Sepolia finality takes about 13 minutes.
 
-One image (`deploy/services.Dockerfile`) runs every role: signer, coordinator or monitor.
+One image (`deploy/services.Dockerfile`) runs every role: signer, coordinator, monitor or the testnet faucet.
 
 ## The mainnet packages
 
 Every server these need, on one page: [Mainnet servers](/developers/mainnet-servers/).
 
-Each mainnet operator gets a package from the repository, also attached to each mainnet release. Each package
-holds a compose file (its own pruned Kaspa node, the service and Caddy), a config template and a step-by-step guide.
+Each mainnet operator gets a package from the repository, also attached to each mainnet release. The signer, coordinator and monitor packages each hold a compose file (a pruned Kaspa node, the service and Caddy), a config template and a step-by-step guide. The deployer's holds its guide and an inputs template, and the web package holds its own compose file, Caddy, a config template and a guide.
 
 | Package | For | Caddy serves |
 |---|---|---|
 | `deploy/mainnet-signer` | Each of the five signer operators | The signer, to the coordinator's addresses only |
 | `deploy/mainnet-coordinator` | The coordinator's operator | The public API (`/api/v1/`) |
-| `deploy/mainnet-monitor` | The monitor's operator (the guardian), and a second monitor in watch-only mode | `GET /health` and `/api/v1/monitor`; acknowledging alarms from the operator's addresses only |
+| `deploy/mainnet-monitor` | The monitor's operator (the guardian), and a second monitor in watch-only mode | `GET /health`, `/api/v1/signal` and `/api/v1/monitor`; acknowledging alarms from the operator's addresses only |
 | `deploy/mainnet-deployer` | The deployer, once | Nothing: `npm run mainnet:plan`, `mainnet:execute` and `mainnet:verify` from a checkout of the tag |
 | `deploy/mainnet-web` | The site's operator | The web app, built for mainnet, with its own Caddy (`/swap` is `swap.html`, with that page's preview tags) |
 
@@ -71,7 +70,7 @@ The deployer's commands:
   scripts and reads every vault parameter.
 
 `npm run mainnet:rehearse` runs all three against forks of Ethereum and BNB Chain (chain IDs 1 and 56, the real
-USDT) and a simnet node. It also runs the five signers and every role's preflight against the result.
+USDT) and a simnet node. It also runs the five signers and every role's preflight against the result. A rehearsal plan runs on local RPCs only: one naming any other RPC is refused, and a plan whose target and Kaspa network disagree is refused too. `execute`'s confirmation follows the plan's Kaspa network, not its name.
 
 ## What a signer needs
 
@@ -82,7 +81,7 @@ and skips in the UTXO set, and follows the minter in acceptance order from its o
 history.
 
 - **Disk.** The TN10 node here (pruned, `--utxoindex`) uses 59.7 GB. Mainnet also runs at 10 blocks per second,
-  so plan a 250 GB SSD for headroom.
+  so plan about 250 GB for the node. That is a planning figure, not a measurement, and the packages ask for a 500 GB NVMe SSD ([Mainnet servers](/developers/mainnet-servers/)).
 - **Keep the state file.** A signer must keep, and back up, its state file (`statePath`).
 - **Joining late.** A signer that joins after the pruning window cannot rescan from the launch. It starts from a
   recent checkpoint instead: the current minter UTXO and state (`initialMinter`, with `scanFrom`). The minter's
@@ -116,7 +115,7 @@ Settings the live testnet called for, in each service's config file (`bridge/ser
 | Setting | Services | Default | Why |
 |---|---|---|---|
 | `evmHeadLag` | Coordinator, monitor | 2 blocks (0 on local Hardhat chains, which mine on demand) | EVM reads stay that many blocks below the head. Load-balanced public RPCs can answer from a node a block behind the head they just reported. On Sepolia this made the monitor's `eth_getLogs` fail with "block range extends beyond current head block" |
-| `minDepthDaa` | Coordinator, signers | 20 DAA scores (2 on simnet) | How deep a Kaspa chain block must be before it is read. The monitor's own `minDepthDaa` stays 10. See [Following covenant states](/architecture/following-states/#when-the-chain-moves-anyway) |
+| `minDepthDaa` | Coordinator, signers | 20 DAA scores (2 on simnet) | How deep a Kaspa chain block must be before it is read. The monitor's own default is 10 (the testnet's config sets 20). See [Following covenant states](/architecture/following-states/#when-the-chain-moves-anyway) |
 | `blockedRecheckMs` | Coordinator | 1 hour (60 s on testnet) | How often a held payout is checked again (above) |
 
 Two more changes in the coordinator:
@@ -129,7 +128,7 @@ Two more changes in the coordinator:
 
 ## The testnet deployment
 
-`deployments/testnet.json`, deployed 4 November 2026:
+`deployments/testnet.json`, deployed 4 November 2026; the current pool since 5 November:
 
 | Item | Value |
 |---|---|
@@ -137,19 +136,18 @@ Two more changes in the coordinator:
 | MockUSDT, Sepolia and BSC testnet (the same address on both) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` |
 | kUSDT covenant ID (TN10) | `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314` |
 | KasPool covenant ID (TN10) | `102a59644f81734faa6e7870a694ee8da047b02b8bc21945576f535f94f5efb4` |
+| KasPool covenant ID, retired (its breaker counted gross sells) | `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9` |
 | KasPool covenant ID, retired (no circuit breaker) | `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b` |
 | Web app | `https://trestly.io` |
 | Coordinator API | `https://trestly.io/api/v1` |
-| Monitor (read-only) | `https://trestly.io/monitor/health` and `https://trestly.io/monitor/api/v1/monitor` |
+| Monitor (read-only) | `https://trestly.io/monitor/health`, `https://trestly.io/monitor/api/v1/monitor` and `https://trestly.io/monitor/api/v1/signal` |
 | Wallet (testnet build) | `https://trestly.io/downloads/kusdt-wallet-testnet.zip` |
 
-The pool was opened on 4 November 2026 with 500 KAS and 15.7 kUSDT.
+The current pool was opened on 5 November 2026. Its two predecessors are retired.
 
 The services run on one public test host, in isolated containers (`deploy/compose.testnet.yml`): a Kaspa TN10
-node, five signer containers each mounting only its own keys, the coordinator, the monitor and a static web
-container. All run as unprivileged users, with a read-only root filesystem and no capabilities (the web container
-keeps only `NET_BIND_SERVICE`, which its Caddy binary needs to start). No container publishes a port. Only the
-coordinator, the monitor and the web app are reachable through the host's reverse proxy; the node and the signers
+node, five signer containers each mounting only its own keys, the coordinator, the monitor, the testnet kUSDT faucet and a static web container. All run as unprivileged users, with a read-only root filesystem and no capabilities (the web container
+keeps only `NET_BIND_SERVICE`, which its Caddy binary needs to start). No container publishes a port. Only the coordinator, the monitor, the faucet and the web app are reachable through the host's reverse proxy; the node and the signers
 are not on its network.
 
 This is a testnet convenience. On mainnet each signer is a different operator on its own machine with its own
@@ -166,20 +164,19 @@ serves `trestly.io` (`deploy/kusdt.caddy`) with TLS, and routes by path. The old
 
 | Path | Goes to |
 |---|---|
-| `/api/v1/*` | The coordinator (`kusdt-coordinator:9300`) |
-| `GET` or `HEAD` `/monitor/health` and `/monitor/api/v1/monitor` | The monitor (`kusdt-monitor:9310`), with `/monitor` stripped |
+| `/api/v1/faucet*` | The testnet faucet (`kusdt-faucet:9320`) |
+| Any other `/api/v1/*` | The coordinator (`kusdt-coordinator:9300`) |
+| `GET` or `HEAD` `/monitor/health`, `/monitor/api/v1/signal` and `/monitor/api/v1/monitor` | The monitor (`kusdt-monitor:9310`), with `/monitor` stripped |
 | Any other `/monitor/*` | 404, so the acknowledge route stays private |
 | Everything else | The web container (`kusdt-web:8080`) |
 
-The web container is Caddy serving static files only (`deploy/web.Caddyfile`): the built web app, and the wallet
-download under `/downloads/`.
+The web container is Caddy serving static files only (`deploy/web.Caddyfile`): the built web app, these docs under `/docs/`, and the wallet download under `/downloads/`.
 
 :::danger
 Never publish the signers' ports or the monitor's acknowledge route.
 :::
 
-The web app (`bridge/web`, with `testnet.public.json` for the public testnet) and these docs (`docs/`) are static sites: `npm run build` in each, and set `SITE_URL`
-for the docs.
+The web app (`bridge/web`, with `testnet.public.json` for the public testnet) and these docs (`docs/`) are static sites. For the web app, `npm run build`, then copy the config to `dist/config.json`. For the docs at `/docs`, `npm run build:pages` with `SITE_URL` and `BASE_PATH=/docs`.
 
 ## Watching it
 
@@ -194,7 +191,7 @@ for the docs.
 
 ## When the monitor alarms
 
-It has already paused every vault and the minter. Then:
+It has already paused every vault, the minter and the pool. Then:
 
 1. Read the alarm (`GET /api/v1/monitor`): which invariant, which transactions.
 2. **If it is real:** keep everything paused, rotate the affected keys (vault owner: `setSigners`, `setGuardian`;
@@ -271,7 +268,7 @@ kusdt rotate-plan deployment.json <coordinator API> out/ 4=<new signer's public.
 
 1. **Announce.** Every monitor adds `announce.json`'s `expectedGovernance` and `expectedOwnerCalls`, and restarts.
 2. **The vaults.** The Safe queues `setSigners` in each vault's AccessManager (`schedule` from `owner-calls.json`).
-   The monitors note it as announced. After 48 hours, anyone executes it.
+   The monitors note it as announced. After 48 hours, the Safe executes it (`execute` from `owner-calls.json`), within a week.
 3. **Kaspa.** Four current signers run `govern-sign` on `action.json`; the coordinator's operator runs
    `govern-submit`. It takes effect at once.
 4. **Switch.** Everyone takes `deployment.next.json` and restarts. The new signer starts; the old one stops for good.

@@ -15,7 +15,7 @@ import Sequence from './Sequence.astro';
   items={[
     { kind: 'msg', from: 0, to: 1, label: 'KCC-20 transfer to the burn owner', sub: 'payload "KUSDT" 01 … names the payout' },
     { kind: 'note', at: 1, lines: ['burn state: owner = BLAKE2b(R);', 'it can never move again'] },
-    { kind: 'band', text: 'Finality: the accepting block is at least 1 000 DAA below the virtual DAA score (about 100 s)' },
+    { kind: 'band', text: 'Finality: the accepting block is at least 1 000 DAA below the virtual DAA score (about 100 s), deeper above 10 000 kUSDT (up to 36 000 DAA, about 1 h)' },
     { kind: 'msg', from: 1, to: 2, label: 'reads the burn', sub: "from the signer's own node", dashed: true },
     { kind: 'note', at: 2, lines: ['checks burn owner and amount;', 'ECDSA-signs an EIP-712 Release'] },
     { kind: 'msg', from: 2, to: 3, label: '3 or more signatures', sub: 'sorted by signer address' },

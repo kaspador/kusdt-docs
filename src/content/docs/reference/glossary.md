@@ -29,7 +29,7 @@ description: Terms used in the kUSDT documentation.
 | Extension commitment | A 32-byte hash of extended token state. Zero for every kUSDT state |
 | Finality | The point after which a chain does not reverse a block. See [Finality](/protocol/finality/) |
 | Genesis | The transaction that creates a covenant ID's first UTXOs |
-| Guardian | A key that can pause BridgeMint and the vaults, and nothing else |
+| Guardian | A key that can pause BridgeMint, the vaults and the pool, and nothing else |
 | KAS | Kaspa's native coin. 1 KAS = 10⁸ sompi |
 | KasPool | The KAS⇄kUSDT constant-product pool on Kaspa L1 |
 | KCC | Kaspa Call for Conventions: a shared convention for the Kaspa ecosystem (KCC-1, -2, -20, -23) |

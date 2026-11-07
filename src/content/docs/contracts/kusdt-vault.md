@@ -109,7 +109,7 @@ Measured in Hardhat with mock tokens. Ethereum USDT's own transfer costs a littl
 
 ## Tests
 
-83 Hardhat tests (`bridge/evm/test/`), all passing:
+102 Hardhat tests (`bridge/evm/test/`):
 
 | File | Covers |
 |---|---|
@@ -119,6 +119,7 @@ Measured in Hardhat with mock tokens. Ethereum USDT's own transfer costs a littl
 | `admin.test.ts` | Constructor checks; every setter's bounds, events and owner-only access; signer rotation; pause roles; the guardian can do nothing else; fee withdrawal never touches backing; no function takes backing; two-step ownership; renounce disabled |
 | `invariant.test.ts` | Seeded random sequences of deposits, releases, refunds, fee withdrawals and time jumps, at 6 and 18 decimals. After every step: balance = backing + fees, no dust, the fee and backing models match, the modelled circulation stays at or below the backing (INV-1), and the allowance stays within its capacity |
 | `gas.test.ts` | Gas for deposit, release and refund |
+| `access-manager.test.ts` | The vault owned by an AccessManager: the setup, GOVERNOR's 48 h, EMERGENCY and PAUSER, what cancellers can and cannot cancel, everyone else refused, and changes to the rules taking ADMIN's 48 h |
 
 ## Deploying
 

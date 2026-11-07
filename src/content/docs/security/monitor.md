@@ -56,6 +56,8 @@ from the vaults' `Released` events.
 | `minter-lost` | The minter UTXO it follows is not in the node's UTXO set with kUSDT's covenant ID, on three caught-up checks, and no fetched transaction spends it |
 | `vault-blocked` | The token's blocklist names a vault. That vault can pay nothing out, while deposits still go in |
 | `pool-unverifiable` | The pool was spent in a way the monitor cannot verify |
+| `mint-of-skipped-nonce`, `skip-of-minted-nonce` | A mint of a nonce that was skipped for a refund, or a skip of one already minted (INV-2) |
+| `mint-unknown-chain` | A mint names a chain the deployment does not have |
 | `unverifiable` | A chain, the Kaspa node, or a step of the check could not be read for `failClosedMs` (10 minutes by default). The monitor fails closed: everything stays paused until it can check again |
 
 The `vault-blocked` check reads the view the deployment names for each chain (`blocklist`: `isBlackListed` for
@@ -79,7 +81,7 @@ unreadable for `failClosedMs`, that is the `unverifiable` alarm, and the guardia
 never quietly switches the guardian off. A chain is read all or nothing, so a read that fails halfway counts
 nothing twice.
 
-Fixed on 5 November 2026 after an outside review (GitHub issue #2): before, one failing read stopped the whole
+Fixed on 5 November 2026 after an outside review: before, one failing read stopped the whole
 check, the pause included.
 
 ## The vault owner
@@ -110,7 +112,7 @@ accepting new kUSDT while `ok` is false:
   "version": 1, "at": "2026-11-05T12:00:00.000Z", "ok": true, "reasons": [],
   "checkedAt": "2026-11-05T11:59:58.000Z",
   "backing": { "healthy": true, "owed": "249000000", "total": "249000000" },
-  "paused": { "minter": false, "pool": false, "vaults": { "Sepolia": false, "BSC testnet": false } },
+  "paused": { "minter": false, "pool": false, "vaults": { "sepolia": false, "bsc-testnet": false } },
   "alarms": { "open": 0, "codes": [] }
 }
 ```
@@ -132,7 +134,7 @@ Read it from more than one monitor, and treat no answer as `ok: false`. The same
 
 ## Proof: the attack in the local end-to-end run
 
-`npm run local:e2e` ends with an attack, and it passed on 3 November 2026:
+`npm run local:e2e` ends with an attack. It has passed with every step below since 4 November 2026, most recently on 7 November 2026:
 
 | Step | Result |
 |---|---|
@@ -169,10 +171,10 @@ npm run monitor -- <config.json>        # in bridge/services
 | `kaspaRpc`, `evmRpcs` | The monitor's own Kaspa node and EVM RPCs (by chain code) |
 | `guardianKaspaSecretPath`, `guardianEvmSecretPath` | The guardian keys. Without them the monitor can alarm but not pause |
 | `statePath` | Where it keeps its state between restarts |
-| `initialMinter` | The minter UTXO and state to follow from (the genesis output) |
-| `initialPool` | Optional: the pool UTXO and state to follow from (the pool's genesis output). With it, the guardian pauses the pool too |
+| `initialMinter` | The minter UTXO and state to follow from (the genesis output). Optional when the deployment file has its `launch` record |
+| `initialPool` | Optional: the pool UTXO and state to follow from (the pool's genesis output); defaults to the deployment's `launch` record. With it, the guardian pauses the pool too |
 | `genesisRemaining` | Optional: `remaining` at genesis. Defaults to the initial minter's |
-| `scanFrom` | A block hash at or before the genesis transaction |
+| `scanFrom` | A block hash at or before the genesis transaction. Optional when the deployment file has its `launch` record |
 | `pollMs` | Optional: time between checks; 2 000 ms by default |
 | `minDepthDaa` | Optional: how far below the virtual a chain block must be before it is read; 10 DAA scores by default |
 | `graceMs` | Optional: how long a mint may wait for its deposit, or a refund for its skip; 300 000 ms by default |
@@ -182,6 +184,7 @@ npm run monitor -- <config.json>        # in bridge/services
 | `cancellerEvmSecretPath` | Optional: a key with the canceller role in each vault's AccessManager. The monitor cancels every queued operation nobody announced |
 | `dryRun` | Optional: alarm without pausing anything |
 | `evmHeadLag` | Optional: how many blocks below the EVM head its reads stay; 2 by default, 0 on local Hardhat chains. See [Operations](/developers/operations/#service-settings) |
+| `maxLagDaa` | Optional: how far its Kaspa view may lag before `/health` answers 503 and the integrators' signal says stop; 600 DAA scores by default |
 | `bearerPath` | The operator bearer token for acknowledging alarms |
 | `listen` | `{host, port}` for the HTTP API |
 

@@ -50,14 +50,14 @@ A second monitor can hold the same guardian keys, which is recommended since a g
 
 **Five independent signer operators matter more than the hardware.** Minting and releases take 3 of the 5 signers, and governance on Kaspa takes 4. If one person or one hosting company can reach enough machines, those thresholds protect nothing, and a hosting company can reach what runs on its virtual servers. So each signer should be a different operator on a different provider, and the coordinator and the monitors should be spread out too. See the [threat model](/security/threat-model/#four-or-five-signer-keys).
 
-Private keys never leave the machine that made them. Only `public.json` files travel.
+Private keys stay on the machine that made them, with two exceptions: your offline backup, and the guardian keys a second monitor may hold, which its guide says how to copy. Only `public.json` files are sent around.
 
 ## What needs no server
 
 | Role | Where it lives | What it needs |
 |---|---|---|
-| Deployer | A computer with a checkout of the release, used once at launch | About 20 KAS and gas for about 7.5 M gas on each chain, and a synced mainnet Kaspa node to talk to |
-| Pool admin | A key on an **offline** machine | Nothing else |
+| Deployer | A computer with a checkout of the release, used once at launch | 25 KAS (the launch spends about 20) and gas for about 7.5 M gas on each chain, and a synced mainnet Kaspa node to talk to |
+| Pool admin | A key on an **offline** machine | A little KAS for the fee when it acts, and a way to carry the signed transaction to a node |
 | Cancellers | A hardware wallet, at least one per chain | A little gas. Not a Safe owner, and no other role |
 | The Safe's owners | Their own wallets | Gas for their transactions |
 

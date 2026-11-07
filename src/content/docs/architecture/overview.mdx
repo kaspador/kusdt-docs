@@ -18,8 +18,7 @@ off-chain services run by the bridge operators. The user's apps sit on the user'
 6. **Use kUSDT.** Users send kUSDT, swap in KasPool, add liquidity and burn to redeem, all as Kaspa L1
    transactions.
 7. **Pause.** The monitor checks backing against supply, mints against deposits and releases against burns, from
-   its own nodes. The guardian key can pause both vaults and
-   BridgeMint, and do nothing else.
+   its own nodes. The guardian keys can pause both vaults, BridgeMint and the pool, and do nothing else.
 8. **Configure.** The vault owner sets each vault's parameters within hard bounds, its signer set and its
    guardian.
 9. **Status.** The coordinator serves status to the web app.
@@ -33,8 +32,8 @@ off-chain services run by the bridge operators. The user's apps sit on the user'
 | `KusdtVault`, one per chain | Ethereum, BNB Chain | All locked USDT; pays out only with 3 of 5 signatures, within a daily allowance |
 | Signers (5, independent) | Each on its own machine, with its own Kaspa node and EVM RPCs | One Kaspa Schnorr key and one EVM ECDSA key each |
 | Coordinator | Bridge server | Nothing that moves funds. It collects signatures, submits transactions and serves status |
-| Monitor and guardian | Monitoring server | One key that can pause the vaults, the minter and the pool, and nothing else |
-| Vault owner | An AccessManager whose admin is a Safe (mainnet; 48-hour delays) | Vault parameters within hard bounds, and the vault's signer set |
+| Monitor and guardian | Monitoring server | Two keys, one Kaspa and one EVM, that can pause the vaults, the minter and the pool, and nothing else |
+| Vault owner | An AccessManager whose admin is a Safe (mainnet; 48-hour delays, about 6 hours for `setGuardian` and `unpause`) | Vault parameters within hard bounds, and the vault's signer set |
 | Web app and wallet | The user's device | The user's keys. They pin each deployment |
 
 [Components](/architecture/components/) describes each part in detail, and

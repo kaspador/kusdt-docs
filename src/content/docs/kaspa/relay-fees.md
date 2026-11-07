@@ -22,8 +22,7 @@ Transient mass is **normalized** to compute units before it is compared: blocks 
 against 500 000 of compute mass, so the normalized transient mass is half the raw value.
 
 Before Toccata, mempools relay transactions up to a mass of 100 000. That cap is lifted for good 30 minutes before
-Toccata activates; after it, only the block limits apply (500 000 compute and storage, 1 000 000 transient). The
-kUSDT builders keep compute and storage mass at or below 100 000. Pool transactions go above it in transient mass
+Toccata activates; after it, only the block limits apply (500 000 compute and storage, 1 000 000 transient). The kUSDT builders cap a transaction's mass at 300 000 (`MAX_STANDARD_MASS`), and their tests hold compute mass to 100 000. Pool transactions go above it in transient mass
 (a sell about 108 000, an add about 114 000), which is fine, since covenant transactions only exist after Toccata.
 See [Storage mass](/kaspa/storage-mass/#after-toccata).
 
@@ -46,8 +45,7 @@ dimensions, storage included, as Kaspa's own wallet SDK does. That is always at 
 fee = feerate × max(compute, storage, normalized transient)      feerate ≥ 100 sompi per gram
 ```
 
-They build, measure with Kaspa's mass calculator, and rebuild until the fee covers the mass. For a mint to two
-recipients at 1.5 KAS each, with a storage mass of about 92 000, that is about 9 200 000 sompi, or 0.092 KAS.
+They build, measure with Kaspa's mass calculator, and rebuild until the fee covers the mass. For a mint to three recipients at 1.5 KAS each and a 5 KAS minter, with a storage mass of 87 993, that is 8 799 300 sompi, or about 0.088 KAS.
 
 Every request may set `feerate` (sompi per gram). Lower values are raised to 100.
 

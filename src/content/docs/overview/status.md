@@ -3,9 +3,7 @@ title: Status
 description: What exists today, what is tested, and what is not built yet.
 ---
 
-As of 4 November 2026. The specification is **v1, for testnet**. kUSDT is deployed on testnet (TN10, Sepolia and
-BSC testnet), and the public testnet is open at [trestly.io](https://trestly.io), with test
-coins only. Nothing is on mainnet. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
+As of 7 November 2026. The specification is **v1, for testnet**. kUSDT is deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at [trestly.io](https://trestly.io), with test coins only. The latest testnet release is `v0.9.11`, with wallet 0.9.7. The mainnet candidate is `mainnet-v0.9.8-rc.7`, a pre-release and not audited; `main` is ahead of it by the fourth outside review's fixes. The public testnet's services run an image from before the third and fourth reviews, so those fixes are not live in them yet. Nothing is on mainnet. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
 
 :::danger[Not audited]
 No external audit has taken place. Mainnet requires audits and the other steps in the
@@ -17,21 +15,28 @@ No external audit has taken place. Mainnet requires audits and the other steps i
 | Component | Runs on | Status | Evidence |
 |---|---|---|---|
 | Protocol specification | (document) | v1 | `SPEC.md`, the source of truth for these docs |
-| BridgeMint covenant | Kaspa L1 | Written | 21 script-engine tests, attacks included; simnet run |
+| BridgeMint covenant | Kaspa L1 | Written | 22 script-engine tests, attacks included; simnet run |
 | kUSDT token family (KCC20, TokenSeed, BridgeMint) | Kaspa L1 | Written | KCC20 template matches the standard byte for byte (test) |
-| KasPool covenants (Pool, Position) | Kaspa L1 | Written, with the circuit breaker and the pause | 20 script-engine tests; simnet run; the forged-kUSDT dump capped in `local:e2e` |
-| KusdtVault | Ethereum, BNB Chain | Written | 85 Hardhat tests; reviewed line by line against the specification |
+| KasPool covenants (Pool, Position) | Kaspa L1 | Written, with the circuit breaker and the pause | 23 script-engine tests; simnet run; the forged-kUSDT dump capped in `local:e2e` |
+| KusdtVault | Ethereum, BNB Chain | Written | 102 Hardhat tests; reviewed line by line against the specification |
 | Transaction builders | Rust CLI (`kusdt-tx`) and WebAssembly | Written | The simnet run uses them |
 | Signer and coordinator services | Off-chain | Written | The local end-to-end run (below) |
 | Monitor and guardian service | Off-chain | Written | Caught and paused a forged mint in the local end-to-end run (below) |
-| Web app | Browser | Built (`bridge/web`) | 72 unit tests, 73 end-to-end tests on the live stack, 14 driving the real wallet extension |
-| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack; a testnet build is downloadable, not released to any store | 78 unit tests, simnet, smoke and live-stack suites | Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
+| Web app | Browser | Built (`bridge/web`) | 133 unit tests, 160 end-to-end tests on the live stack, 25 driving the real wallet extension |
+| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack; a testnet build is downloadable, not released to any store | 123 unit tests, simnet and smoke suites, 7 against the live stack. Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
 | Refunds | Services and vault | Working | `local:load`: a deposit skipped and refunded 14.5 USDT |
 | Mainnet fork rehearsal | Forks of Ethereum and BNB Chain | Passed | The vault against the real USDT and BSC-USD |
 | Internal security review | Money paths | Done, fixes applied | See [Audit status](/security/audit-status/) |
-| Deployment tooling | Docker image, compose file, runbook | Written | See [Operations](/developers/operations/) |
+| Deployment tooling | Docker image, testnet compose file, runbook, mainnet packages | Written | See [Operations](/developers/operations/) |
+| Vault owner: AccessManager under a Safe | Ethereum, BNB Chain | Built and rehearsed, not on any live vault: testnet vaults keep a plain owner | 17 Hardhat tests; `mainnet:rehearse` |
+| Mainnet packages: signer, coordinator, monitor, deployer, web app | Off-chain | Built; nothing deployed | `mainnet:rehearse` on forks and simnet, 49 checks; `local:rotate`, 16 checks |
+| Signer keys in an HSM or KMS | Off-chain | Built, as an option | See [Operations](/developers/operations/#signer-keys-in-an-hsm-or-kms) |
+| Proof of reserves | Browser | Live on the testnet: the web app's Reserves page | Reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check |
+| Reproducible covenant bytecode | CI | Built | `tools/check-artifacts.mjs` and a CI job recompile and compare, byte for byte |
+| Outside reviews | Code and services | Four so far, each finding answered. Not an audit | See [Audit status](/security/audit-status/) |
 | Testnet deployment | TN10, Sepolia, BSC testnet | Deployed 4 November 2026 | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. Public from 4 November 2026, on one test host in isolated containers (see [Operations](/developers/operations/#the-testnet-deployment)) |
 | Mainnet deployment | Kaspa, Ethereum, BNB Chain | Not yet | Gated on the [mainnet checklist](/security/mainnet-checklist/) |
+| Signer operators | Mainnet | Five lined up; nothing runs on mainnet yet | The [mainnet checklist](/security/mainnet-checklist/), item 1 |
 
 ## What the simnet run shows
 
@@ -48,7 +53,7 @@ A local Kaspa node (kaspad v2.1.0, simnet) accepted every step of the Kaspa-side
 
 ## The whole bridge on one machine
 
-On 3 November 2026 the local end-to-end run passed. It runs two Hardhat chains (chain IDs 31337 and 31338,
+The local end-to-end run first passed on 3 November 2026. It has passed with the pool attack below since 4 November 2026, most recently on 7 November 2026. It runs two Hardhat chains (chain IDs 31337 and 31338,
 standing in for Ethereum and BNB Chain, with MockUSDT at 6 and 18 decimals and a vault each), the kaspad simnet,
 the 5 signers, the coordinator and the monitor, all on one machine. It showed:
 
@@ -80,7 +85,7 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 | MockUSDT (testnet only) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` on both | not used |
 | Coordinator API | `https://trestly.io/api/v1` | to be published |
 | Web app URL | `https://trestly.io` | to be published |
-| Monitor status (read-only) | `https://trestly.io/monitor/health`, `https://trestly.io/monitor/api/v1/monitor` | to be published |
+| Monitor status (read-only) | `https://trestly.io/monitor/health`, `https://trestly.io/monitor/api/v1/monitor`, `https://trestly.io/monitor/api/v1/signal` | to be published |
 | Wallet download (testnet build) | `https://trestly.io/downloads/kusdt-wallet-testnet.zip` | to be published |
 
 The testnet values come from `deployments/testnet.json`.

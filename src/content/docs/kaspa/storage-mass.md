@@ -18,8 +18,7 @@ C × p² / v        with C = 10¹²  (SOMPI_PER_KASPA × 10 000)
 ```
 
 `p` is the output's **plurality**: how many 100-byte storage units its UTXO occupies. The transaction's storage
-mass is the sum of its outputs' terms, less a term for its inputs. A transaction above 100 000 grams of mass is
-not relayed.
+mass is the sum of its outputs' terms, less a term for its inputs. Before Toccata, a transaction above 100 000 grams of mass is not relayed (see [After Toccata](#after-toccata)).
 
 ## Why covenant UTXOs count double
 
@@ -45,8 +44,7 @@ The output term for different KAS values:
 | 2 KAS | 5 000 | 20 000 |
 | 3 KAS | 3 333 | 13 333 |
 
-A mint creates the BridgeMint successor and its token states, all covenant outputs. With too little KAS per
-state, a mint would exceed the 100 000 limit. The test `bridge/kaspa/tests/standard.rs` runs the real builders
+A mint creates the BridgeMint successor and its token states, all covenant outputs. With too little KAS per state, a mint would cost far more storage mass, and so more fee. The test `bridge/kaspa/tests/standard.rs` runs the real builders
 at their largest shapes, with 1.5 KAS per token state and a 5 KAS minter:
 
 | Transaction | Storage mass |
@@ -97,7 +95,7 @@ some 0.46 KAS per redemption, against about 1.55 KAS with a 1.5 KAS burn (SPEC �
 
 | UTXO | KAS in the simnet run |
 |---|---|
-| BridgeMint | 1 KAS (changeable by `set_value`, 3 of 5) |
+| BridgeMint | 5 KAS (changeable by `set_value`, 3 of 5) |
 | TokenSeed | 1 KAS |
 | kUSDT state | 1.5 KAS |
 | KasPool Position | 2 KAS |

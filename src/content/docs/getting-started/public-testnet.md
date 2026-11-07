@@ -17,7 +17,7 @@ mainnet. Never send real USDT, ETH, BNB or KAS to any testnet address. Nothing h
 | Web app | [trestly.io](https://trestly.io) |
 | Wallet (testnet build) | [kusdt-wallet-testnet.zip](https://trestly.io/downloads/kusdt-wallet-testnet.zip) |
 | Coordinator API | `https://trestly.io/api/v1` ([Coordinator API](/protocol/coordinator-api/)) |
-| Monitor status (read-only) | `https://trestly.io/monitor/health`, `https://trestly.io/monitor/api/v1/monitor` |
+| Monitor status (read-only) | `https://trestly.io/monitor/health`, `https://trestly.io/monitor/api/v1/monitor`, `https://trestly.io/monitor/api/v1/signal` |
 | Covenant IDs, vaults, MockUSDT | [Status: Addresses](/overview/status/#addresses), from `deployments/testnet.json` |
 
 All the services run on one public test host, each in its own isolated container. That is a testnet
@@ -26,8 +26,7 @@ convenience: on mainnet each signer is a different operator on its own machine
 
 ## 1. Install the wallet
 
-The kUSDT wallet is a browser extension for Chromium browsers: Chrome, Brave and Edge. It is not in any store
-yet.
+kUSDT Wallet is a browser extension for Chromium browsers on a computer: Chrome, Brave and Edge. It is not in any store yet, and there is no phone version. On a phone you can still bridge USDT in to any Kaspa address.
 
 1. Download [kusdt-wallet-testnet.zip](https://trestly.io/downloads/kusdt-wallet-testnet.zip).
 2. Unzip it.
@@ -38,8 +37,7 @@ yet.
 
 It starts on Testnet. Its Kaspa addresses start with `kaspatest:`. See [The wallet](/getting-started/wallet/).
 
-You also need an EVM wallet in the same browser for deposits from the web app, or you can use the kUSDT wallet's
-own EVM side.
+For deposits from the web app you also need an EVM wallet: one in the same browser, or a phone wallet through WalletConnect. Or use kUSDT Wallet's own EVM side.
 
 ## 2. Get gas and test USDT
 
@@ -59,12 +57,11 @@ get Sepolia ETH or tBNB first. MockUSDT has the same address on both chains,
 
 ## 3. Bridge USDT in
 
-Deposit test USDT from Sepolia or BSC testnet to your wallet's Kaspa address, in the web app's **Bridge → Kaspa**
-or the wallet's Bridge tab. A deposit is between 10 and 100 000 USDT, and pays the deposit fee (0.20 %, at least
+Deposit test USDT from Sepolia or BSC testnet to your wallet's Kaspa address, on the web app's **Bridge** page ([trestly.io/bridge](https://trestly.io/bridge)), with From set to your chain and To set to Kaspa, or in the wallet's Bridge tab. A deposit is between 10 and 100 000 USDT, and pays the deposit fee (0.20 %, at least
 0.50 USDT).
 
 The kUSDT arrives after the deposit's block is finalized on its chain and 3 of the 5 signers approve it. On
-Sepolia that takes about 13 minutes. The web app's **Activity** follows it.
+Sepolia that takes about 13 minutes. The web app shows each step in its own window. You can close it: the bridge keeps going, a tag stays in the corner of the page until it is done, and **Activity** lists it too.
 
 Details: [Bridge USDT in](/getting-started/bridge-in/), [Finality](/protocol/finality/), [Fees](/protocol/fees/).
 
@@ -77,7 +74,7 @@ it in the quote before you sign. Net of buys, sells may take at most 10 % of the
 breaker (SPEC §15), and a larger sell is refused until the window opens again.
 
 The pool was replaced on 5 November 2026 by one whose breaker counts the net flow (sells less buys), so round trips
-cannot use up the hour's room. Use wallet 0.9.4 or later: 0.9.2 and older know only the retired pool, and 0.9.4 gets past a stalled public node by itself.
+cannot use up the hour's room. Use the wallet from the link above (0.9.7 today): 0.9.2 and older know only the retired pool.
 
 Details: [Swap KAS and kUSDT](/getting-started/swap/), [The sell limit](/getting-started/swap/#the-sell-limit),
 [KasPool: the circuit breaker](/contracts/kaspool/#the-circuit-breaker).
@@ -94,7 +91,7 @@ Details: [Providing liquidity](/getting-started/swap/#providing-liquidity),
 
 ## 6. Redeem back to an EVM address
 
-In the web app's **Bridge → EVM** or the wallet, burn kUSDT to an EVM address on Sepolia or BSC testnet. The vault
+On the web app's **Bridge** page, set From to Kaspa and To to Sepolia or BSC testnet (the arrow between them flips the direction), or use the wallet's Bridge tab, and burn kUSDT to an EVM address on that chain. The vault
 pays it once the burn is final and 3 signers approve the release.
 
 - A burn cannot be undone, and nobody can redirect its payout. Check the chain and the address.
@@ -116,8 +113,9 @@ Details: [Redeem kUSDT](/getting-started/redeem/),
 | The web app's **Network** page | The pinned deployment, whether the coordinator serves it, the vaults and the minter (paused or not), the signers |
 | `https://trestly.io/monitor/health` | 200 only while the monitor is healthy and its last check is fresh |
 | `https://trestly.io/monitor/api/v1/monitor` | Minted, released, owed and backing per chain, every alarm and every pause |
+| `https://trestly.io/monitor/api/v1/signal` | The integrators' answer: `ok` false means stop taking new kUSDT |
 
-Both monitor routes are read-only. See [The monitor](/security/monitor/) and [Invariants](/security/invariants/).
+All three monitor routes are read-only. See [The monitor](/security/monitor/) and [Invariants](/security/invariants/).
 
 ## Reporting what you find
 

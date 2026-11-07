@@ -4,8 +4,7 @@ description: The kUSDT transaction builder and protocol helper. One JSON request
 ---
 
 `kusdt-tx` builds every kUSDT and KasPool transaction and computes every protocol value. The same code is compiled
-to WebAssembly (`@kusdt/core`), so the CLI, the simnet run, and later the web app and the wallet share one
-implementation.
+to WebAssembly (`@kusdt/core`), so the CLI, the simnet run, the services, the web app and the wallet share one implementation.
 
 ```sh
 bash tools/rust.sh bridge/kaspa cargo build --release --bin kusdt-tx
@@ -87,6 +86,7 @@ anywhere.
 | `quote` | `{kind: "buy", pool, kasIn}`, `{kind: "sell", pool, tokensIn, nowDaa?}`, `{kind: "add", pool, kasIn, tokensIn}` or `{kind: "remove", pool, shares}` | `{tokensOut}`, `{kasOut, paused}`, `{shares}` or `{kasOut, tokensOut}`. With `nowDaa`, a sell also answers `breaker: {maxKasOut, windowEndsDaa, allowed}` |
 | `script` | `{actor, state}`, actor `KCC20`, `BridgeMint`, `Pool` or `Position` | `{scriptPublicKey}`: the locking script that holds this state |
 | `template` | none | `{templateHash, prefix, suffix}` of the `KCC20` template |
+| `layout` | none (stdin is read and ignored) | Every actor's program layout (prefix, state, suffix) and dispatch tags |
 
 Examples:
 
