@@ -20,6 +20,8 @@ the project owner's explicit approval.
 
 ## Operations
 
+What all of this runs on: [Mainnet servers](/developers/mainnet-servers/).
+
 Not items of the specification's checklist, but part of running the bridge safely:
 
 - the [monitor](/security/monitor/) running on its own nodes, with the guardian keys, and its `GET /health` wired to

@@ -39,6 +39,8 @@ One image (`deploy/services.Dockerfile`) runs every role: signer, coordinator or
 
 ## The mainnet packages
 
+Every server these need, on one page: [Mainnet servers](/developers/mainnet-servers/).
+
 Each mainnet operator gets a package from the repository, also attached to each mainnet release. Each package
 holds a compose file (its own pruned Kaspa node, the service and Caddy), a config template and a step-by-step guide.
 

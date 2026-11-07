@@ -148,6 +148,7 @@ export default defineConfig({
             'developers/verify-template',
             'developers/simnet',
             'developers/operations',
+            'developers/mainnet-servers',
           ],
         },
         {
