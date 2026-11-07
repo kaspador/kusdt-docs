@@ -8,7 +8,6 @@ kUSDT's claim that its token code is the unmodified KCC-20 reference can be chec
 ## 1. Run the test
 
 ```sh
-bash tools/vendor.sh
 bash tools/rust.sh bridge/kaspa cargo test --test template
 ```
 

@@ -22,6 +22,7 @@ Run from the repository root unless noted.
 bash tools/vendor.sh                                                  # once: third-party sources
 bash tools/rust.sh bridge/kaspa cargo test                            # contracts and builders (Docker)
 bash tools/rust.sh bridge/kaspa cargo run --example build_artifacts   # after editing a .ag file
+node tools/check-artifacts.mjs --write                                # then record what built them
 bash tools/rust.sh bridge/kaspa cargo build --release --bin kusdt-tx  # the CLI
 bash tools/wasm.sh                                                    # the WebAssembly core
 npm install --legacy-peer-deps                                        # repository root
@@ -66,6 +67,19 @@ limit. Pool transactions carry more transient mass (a sell about 108 000, an add
 to 250 000, a quarter of the block limit (see [Storage mass](/kaspa/storage-mass/#after-toccata)).
 Print the masses with `bash tools/rust.sh bridge/kaspa cargo test --test standard -- --nocapture`.
 
+
+## Checking the covenant bytecode
+
+The bytecode in `bridge/kaspa/artifacts/` is what controls minting, and anyone can check that it is what the sources compile to. The sources are all in the repository, the KCC-20 reference included (`vendor/kcc20-reference/`), and the compiler is one commit, named in `bridge/kaspa/Cargo.toml`.
+
+```sh
+node tools/check-artifacts.mjs             # one compiler commit; sources, artifacts and bytecode as recorded
+node tools/check-artifacts.mjs --upstream  # also the reference against its pinned commit (needs the network)
+bash tools/rust.sh bridge/kaspa cargo test --locked --test artifacts --test template   # recompiles and compares
+bash tools/wasm.sh && git diff --stat -- bridge/packages/core                          # the WebAssembly core too
+```
+
+The compiler and its dependencies still come from the network the first time; only the `.ag` sources needed no fetching. `bridge/kaspa/artifacts/PROVENANCE.json` records the compiler, the toolchain, and the hash of each source, artifact, WebAssembly core and contract's bytecode. The artifacts name the reference by its path in the container (`/kusdt/vendor/kcc20-reference/...`), so rebuild with `tools/rust.sh`. The `covenant bytecode` CI job runs these on every change to them.
 ## After editing a contract
 
 The builders embed the compiled artifacts. After you change a `.ag` file:

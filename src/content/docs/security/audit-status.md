@@ -83,6 +83,18 @@ A third review read the code at commit `a0ab050`. Each finding was checked again
 | 4 | Medium | `POST /redeems` kept every unproved claim for good, with a node lookup each pass | Fixed: claims nobody has proved are capped, get a bounded share of each pass and expire. Checking it found they also counted as pending burns in the public supply: they no longer do |
 | 5 | Medium | The JSON parser rewrote text inside strings, and rounded a large integer standing alone | Fixed: it reads JSON's own structure. The two low findings in the same code (a marker a string could collide with, a comparison that showed a secret's length) are fixed with it |
 
+## Fourth outside review (7 November 2026)
+
+Each finding was checked against the code, and all five are fixed. This is still not an audit.
+
+| # | Severity as reported | Finding | Fix |
+|---|---|---|---|
+| 1 | High | The deploy's confirmation and its AccessManager rule read a plan's `target`, while its Kaspa network and its RPCs decide where it goes | The word and the rule now follow the network, and a plan whose name and network disagree is refused. Checking it found a wider path: rehearsals use chain IDs 1 and 56 on purpose, so a rehearsal plan pointed at real RPCs passed the chain ID check. A rehearsal now runs on local RPCs only |
+| 2 | Medium | The JSON parser still rounded integers written with a fraction or an exponent | Every integer stays exact in any notation, and one too large for any amount stays text, which BigInt refuses. It remains this project's own parser, tested against `JSON.parse` on random documents, rather than a new dependency in the wallet and the web app |
+| 3 | Medium | The committed bytecode couldn't be reproduced offline: the compiler was named at two commits, the reference sources weren't in the repository, and nothing recorded what built it | One compiler commit, the reference's `.ag` files checked in unchanged, a record of what built the bytecode, and a CI job that recompiles and compares ([Build and test](/developers/build-and-test/)). The bytecode itself did not change |
+| 4 | Low | `requestJson` still used the `@@bigint` marker a string could collide with | It writes BigInt values directly, with no marker |
+| 5 | Low | WalletConnect's connect could wait for ever once the QR code showed | Every stage has a limit, 5 minutes with the code up, and the visitor can stop waiting from the wallet menu |
+
 ## Are the Ethereum and BNB Chain vaults safe?
 
 As far as testing can show, and not audited yet.

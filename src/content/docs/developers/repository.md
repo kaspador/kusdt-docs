@@ -23,7 +23,7 @@ sources and these docs.
 | `tools/rust.sh` | Runs any Rust command in the pinned container |
 | `tools/wasm.sh` | Builds the WebAssembly module into `bridge/packages/core` |
 | `tools/vendor.sh` | Fetches third-party sources at pinned commits into `vendor/` |
-| `vendor/` | The KCC-20 reference, the KCC and KIP texts, SilverScript and Argent (fetched), plus `vendor/third-party/` (checked in) |
+| `vendor/` | The KCC-20 reference that kUSDT imports (checked in, unchanged), the KCC and KIP texts, SilverScript and Argent (fetched), plus `vendor/third-party/` (checked in) |
 
 ## The contracts
 
@@ -45,6 +45,5 @@ so the `KCC20` actor compiles to the bytes wallets recognise. The Rust toolchain
 
 | Source | Use |
 |---|---|
-| `argent-lang/kcc20-reference` | kUSDT imports its `KCC20` and `TokenSeed` actors unchanged |
 | `kaspanet/kccs`, `kaspanet/kips` | The specifications (read, not built) |
 | `kaspanet/silverscript`, `argent-lang/argent` | Compiler sources (read) |
