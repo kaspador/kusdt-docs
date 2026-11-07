@@ -202,8 +202,8 @@ USDT) and a simnet node. It also runs the five signers and every role’s prefli
 and skips in the UTXO set, and follows the minter in acceptance order from its own saved state. Nothing needs old
 history.</p>
 <ul>
-<li><strong>Disk.</strong> The TN10 node here (pruned, <code dir="auto">--utxoindex</code>) uses 59.7 GB. Mainnet also runs at 10 blocks per second,
-so plan about 250 GB for the node. That is a planning figure, not a measurement, and the packages ask for a 500 GB NVMe SSD (<a href="/kusdt-docs/developers/mainnet-servers/">Mainnet servers</a>).</li>
+<li><strong>Disk.</strong> A pruned mainnet node’s database is about 20 GB (November 2026); the TN10 node here (pruned,
+<code dir="auto">--utxoindex</code>) uses 59.7 GB. The packages ask for a 100 GB NVMe SSD (<a href="/kusdt-docs/developers/mainnet-servers/">Mainnet servers</a>).</li>
 <li><strong>Keep the state file.</strong> A signer must keep, and back up, its state file (<code dir="auto">statePath</code>).</li>
 <li><strong>Joining late.</strong> A signer that joins after the pruning window cannot rescan from the launch. It starts from a
 recent checkpoint instead: the current minter UTXO and state (<code dir="auto">initialMinter</code>, with <code dir="auto">scanFrom</code>). The minter’s

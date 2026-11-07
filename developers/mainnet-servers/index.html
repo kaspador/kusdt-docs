@@ -80,19 +80,19 @@
 <tr>
 <td>Signer</td>
 <td>5</td>
-<td>8 cores, 16 GB, 500 GB NVMe</td>
+<td>8 cores, 16 GB, 100 GB NVMe</td>
 <td>None</td>
 </tr>
 <tr>
 <td>Coordinator</td>
 <td>1</td>
-<td>8 cores, 16 GB, 500 GB NVMe</td>
+<td>8 cores, 16 GB, 100 GB NVMe</td>
 <td>1 000 KAS (about 600 deposits), 0.5 ETH and 0.5 BNB to start with, kept topped up</td>
 </tr>
 <tr>
 <td>Monitor</td>
 <td>2</td>
-<td>8 cores, 16 GB, 500 GB NVMe</td>
+<td>8 cores, 16 GB, 100 GB NVMe</td>
 <td>A few KAS, and 0.05 ETH and 0.05 BNB, for a pause</td>
 </tr>
 <tr>
@@ -205,7 +205,8 @@
 </table>
 <div class="sl-heading-wrapper level-h2"><h2 id="before-buying">Before buying</h2><a class="sl-anchor-link" href="#before-buying"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Before buying”</span></a></div>
 <ul>
-<li><strong>The 250 GB for a Kaspa node is a planning figure</strong>, scaled up from the testnet node’s 60 GB, not a measurement on mainnet. Sync one mainnet node first, then order the rest.</li>
+<li><strong>Disk:</strong> a pruned mainnet node’s database is about 20 GB (November 2026). 100 GB leaves room for growth, the images and backups.</li>
+<li><strong>Memory:</strong> 16 GB is the figure the packages are set for (the node may use up to 14 GB, <code dir="auto">KASPAD_MEM</code>). A monitor on an 8 GB machine needs <code dir="auto">KASPAD_MEM</code> around <code dir="auto">6g</code>; that has not been measured on mainnet, so watch its memory for a day before relying on it. Sync one mainnet node first, then order the rest.</li>
 <li><strong>The guides set no bandwidth figure.</strong> Avoid plans with a low traffic cap: a node moves a lot of data.</li>
 <li><strong>Don’t copy the testnet.</strong> It runs on one host, which suits test coins and nothing else.</li>
 </ul>
