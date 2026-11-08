@@ -122,8 +122,8 @@ shows you what it does, signs and submits it. A page never sees a key.</li>
 wallet checks its fields, recomputes its locking script, and finds that exact outpoint on the Kaspa node with
 the same script and the pinned covenant ID. A token state that fails is dropped; a pool state that fails is
 refused. See <a href="/kusdt-docs/architecture/following-states/">Following covenant states</a>.</li>
-<li><strong>It refuses burns the vault cannot pay now</strong>: a payout above the named vault’s release capacity or current
-<code dir="auto">releaseAvailable</code>, an amount above its backing, a paused vault, or an amount at or below the release fee.</li>
+<li><strong>It refuses burns the vault cannot pay now</strong>: an amount, fee included, above the named vault’s release capacity, its current
+<code dir="auto">releaseAvailable</code> or its backing, a paused vault, or an amount at or below the release fee.</li>
 <li><strong>It refuses a recipient the vault would not pay.</strong> Before every burn it asks the coordinator
 (<code dir="auto">GET /recipients/:chain/:address</code>), and it burns only when the answer, about exactly that chain and address,
 says <code dir="auto">payable</code>. See <a href="/kusdt-docs/security/known-limits/#blocked-recipients">Blocked recipients</a>.</li>

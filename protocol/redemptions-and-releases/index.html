@@ -127,7 +127,7 @@ frozen there for good. The signers stop that payout instead.</p>
 <li>verifies at least 3 EIP-712 signatures by distinct <strong>current</strong> signers, given in strictly increasing order of
 signer address (the ordering proves they are distinct);</li>
 <li>requires <code dir="auto">units ≤ unreservedBacking()</code>, the backing no other queued payout has a claim on;</li>
-<li>draws the payout, <code dir="auto">units − fee</code>, from the release allowance;</li>
+<li>draws <code dir="auto">units</code> from the release allowance, the fee included, because the fee leaves the backing too;</li>
 <li>marks <code dir="auto">redeemId</code> used and queues the payout;</li>
 <li>emits <code dir="auto">ReleaseQueued(redeemId, recipient, units, fee, payout, readyAt)</code>.</li>
 </ol>
@@ -155,15 +155,19 @@ output is paid at most once (INV-3).</p>
 </thead>
 <tbody>
 <tr>
-<td><code dir="auto">units ≤ fee</code>, or a zero or vault recipient</td>
+<td><code dir="auto">units ≤ fee</code></td>
+<td>Not paid: marked <code dir="auto">unpayable</code>, looked at again about once a minute, and paid if the fee falls below <code dir="auto">units</code>. Wallets never build one</td>
+</tr>
+<tr>
+<td>A zero or vault recipient</td>
 <td>Never paid: marked <code dir="auto">unpayable</code>, and its kUSDT is lost. Wallets never build one</td>
 </tr>
 <tr>
-<td>Payout above what the allowance holds now, or a paused vault</td>
+<td><code dir="auto">units</code> above what the allowance holds now, or a paused vault</td>
 <td>Reverts; the relayer retries it with its own backoff, without holding up other burns</td>
 </tr>
 <tr>
-<td>Payout above <code dir="auto">releaseCapacity</code> (250 000 USDT by default)</td>
+<td><code dir="auto">units</code> above <code dir="auto">releaseCapacity</code> (250 000 USDT by default)</td>
 <td>Cannot be paid until the owner raises the capacity (within its hard bound). Wallets refuse to build such a burn</td>
 </tr>
 <tr>

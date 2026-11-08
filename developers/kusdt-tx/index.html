@@ -120,7 +120,7 @@ Kaspa’s script engine, checks relay standardness, and prices the fee from Kasp
 </tr>
 <tr>
 <td><code dir="auto">pool-sell</code></td>
-<td>kUSDT in: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">payer</code>, <code dir="auto">tokensIn</code>, <code dir="auto">kasOut</code>, <code dir="auto">tokenValue</code>, <code dir="auto">nowDaa</code> (required: a DAA score the DAG has reached; it becomes the lock time, and is raised to the open window’s start if older). A sell over the circuit breaker is refused</td>
+<td>kUSDT in: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">payer</code>, <code dir="auto">tokensIn</code>, <code dir="auto">kasOut</code>, <code dir="auto">tokenValue</code>, <code dir="auto">nowDaa</code> (required: a DAA score the DAG has reached; the builder claims the age of the <code dir="auto">pool</code> UTXO, <code dir="auto">nowDaa</code> less its <code dir="auto">blockDaaScore</code> capped at two windows, as the input’s relative lock). A sell over the circuit breaker is refused</td>
 </tr>
 <tr>
 <td><code dir="auto">pool-add</code></td>
@@ -219,7 +219,7 @@ anywhere.</p></div></aside>
 </tr>
 <tr>
 <td><code dir="auto">quote</code></td>
-<td><code dir="auto">{kind: "buy", pool, kasIn}</code>, <code dir="auto">{kind: "sell", pool, tokensIn, nowDaa?}</code>, <code dir="auto">{kind: "add", pool, kasIn, tokensIn}</code> or <code dir="auto">{kind: "remove", pool, shares}</code></td>
+<td><code dir="auto">{kind: "buy", pool, kasIn}</code>, <code dir="auto">{kind: "sell", pool, tokensIn, nowDaa?, poolDaa?}</code>, <code dir="auto">{kind: "add", pool, kasIn, tokensIn}</code> or <code dir="auto">{kind: "remove", pool, shares}</code></td>
 <td><code dir="auto">{tokensOut}</code>, <code dir="auto">{kasOut, paused}</code>, <code dir="auto">{shares}</code> or <code dir="auto">{kasOut, tokensOut}</code>. With <code dir="auto">nowDaa</code>, a sell also answers <code dir="auto">breaker: {maxKasOut, windowEndsDaa, allowed}</code></td>
 </tr>
 <tr>

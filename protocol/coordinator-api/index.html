@@ -145,7 +145,7 @@ transactions, checking every successor against the outputs (see
 </tr>
 <tr>
 <td>Redemption</td>
-<td><code dir="auto">seen</code> → <code dir="auto">final</code> → <code dir="auto">signing</code> → <code dir="auto">released</code>, or <code dir="auto">invalid</code> (not in the UTXO set), or <code dir="auto">unpayable</code> (the vault can never pay it: at or below the release fee, or a zero or vault recipient), or <code dir="auto">blocked</code> (held while the token blocks the recipient; back to <code dir="auto">final</code> once it doesn’t)</td>
+<td><code dir="auto">seen</code> → <code dir="auto">final</code> → <code dir="auto">signing</code> → <code dir="auto">released</code>, or <code dir="auto">invalid</code> (not in the UTXO set), or <code dir="auto">unpayable</code> (at or below the release fee, back to <code dir="auto">final</code> if the fee falls below it; or a zero or vault recipient, for good), or <code dir="auto">blocked</code> (held while the token blocks the recipient; back to <code dir="auto">final</code> once it doesn’t)</td>
 </tr>
 </tbody>
 </table>

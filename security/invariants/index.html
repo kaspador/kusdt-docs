@@ -174,8 +174,9 @@ part after every step.</p>
 </table>
 <div class="sl-heading-wrapper level-h2"><h2 id="inv-5-daily-limits">INV-5: daily limits</h2><a class="sl-anchor-link" href="#inv-5-daily-limits"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “INV-5: daily limits”</span></a></div>
 <blockquote>
-<p>Within any 24 hours, at most twice each vault’s release allowance can leave it, whatever signer, guardian or
-coordinator keys are stolen: only the vault owner sets that allowance. At most twice the Kaspa allowance can be
+<p>Within any 24 hours, less than three times each vault’s release allowance can leave it (a full bucket, a day of
+refill and one queue drawn earlier), whatever signer, guardian or coordinator keys are stolen: only the vault owner
+sets that allowance. At most twice the Kaspa allowance can be
 minted unless 4 signer keys are stolen; with 4, the remaining hard cap is the bound and INV-1’s monitor is the
 defence.</p>
 </blockquote>
@@ -201,8 +202,8 @@ defence.</p>
 </tr>
 </tbody>
 </table>
-<p>“Twice” comes from the bucket: an allowance can be spent in full and keeps refilling, so a full bucket plus one
-day of refill can move in any 24-hour window. See <a href="/kusdt-docs/protocol/limits/#most-that-can-move-in-a-window">Limits</a>.</p>
+<p>The bound comes from the bucket: an allowance can be spent in full and keeps refilling, so a full bucket plus one
+day of refill can be drawn in any 24-hour window. On a vault a queue drawn before the window can be paid inside it as well. See <a href="/kusdt-docs/protocol/limits/#most-that-can-move-in-a-window">Limits</a>.</p>
 <table>
 <thead>
 <tr>
@@ -214,12 +215,12 @@ day of refill can move in any 24-hour window. See <a href="/kusdt-docs/protocol/
 <tbody>
 <tr>
 <td>Up to 3 signer keys, the guardian, the coordinator</td>
-<td>At most 2 × 250 000 USDT</td>
+<td>Under 3 × 250 000 USDT</td>
 <td>At most 2 × 500 000 USDT</td>
 </tr>
 <tr>
 <td>4 or 5 signer keys</td>
-<td>At most 2 × 250 000 USDT</td>
+<td>Under 3 × 250 000 USDT</td>
 <td>Up to the remaining hard cap</td>
 </tr>
 <tr>
