@@ -141,7 +141,10 @@ deposit no signer would mint would also hold up every later deposit on its chain
 signers’ limit: a larger one would let someone burn kUSDT that no signer would pay out.</li>
 </ul>
 <p>The deployer refuses a plan that breaks either rule. Deposits and burns over a day’s limit are not lost: they wait
-until the signers’ 24 hours allow them, and a batch of deposits too large for the limit is split.</p>
+until the signers’ 24 hours allow them, and a batch of deposits too large for the limit is split. Each signer’s limit is
+one budget for both chains, so the coordinator keeps what frees for the oldest deposit or payout that only the limit is
+holding up: the chain whose next deposit has waited longest goes first, and younger deposits and payouts wait. That
+wait ends once the oldest one has gone through, and after 25 hours at most.</p>
 <p><strong>Raising them later.</strong> The signers raise their <code dir="auto">dailyLimit</code> in their own config (a payout needs 3 signers with room,
 so the bridge’s limit is the third highest). The vaults’ limits change through the vault owner, with the usual
 48-hour delay. Raise the signers’ limit first, then the vaults’.</p>
@@ -307,7 +310,7 @@ governance. It also keeps every Kaspa sum far below the 64-bit integer limit.</p
 <p>The KAS side of <a href="/kusdt-docs/contracts/kaspool/#the-circuit-breaker">KasPool</a> has its own limit. At most 10 % of its KAS reserve
 (the cap, <code dir="auto">max_out_bps</code>) may leave through sells at once, net of buys, and that allowance refills at one cap per
 <code dir="auto">window_len</code> DAA (36 000, an hour at 10 BPS). Idle time fills it to one cap and no further. At one moment, whatever mix
-of buys, sells and liquidity moves is used, one cap (plus any credit from earlier real buys) is the most that can leave
+of buys, sells and liquidity moves is used, one cap (plus any credit from earlier buys whose KAS is still in the pool) is the most that can leave
 net; over any time <em>t</em> about <code dir="auto">cap + credit + cap × t ÷ window_len</code>. Its clock is the pool UTXO’s own age, which consensus
 proves with a relative lock, so it can’t run ahead of real time or replay idle hours, and the reserve the cap is measured
 on rises only with that claimed time.</p>

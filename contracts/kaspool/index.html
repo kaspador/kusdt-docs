@@ -193,12 +193,16 @@ the deployment’s <code dir="auto">poolId</code>; wallets pin it like kUSDT’s
 <td>The circuit breaker: the share of the KAS reserve that is the cap, and the DAA it takes one cap to refill. Fixed at genesis</td>
 </tr>
 <tr>
-<td><code dir="auto">window_start</code></td>
-<td>Unused since the breaker became a refilling allowance. Keeps its genesis value</td>
+<td><code dir="auto">window_credit</code></td>
+<td>How much of the room buys gave is still KAS those buys left in the reserve. A withdrawal moves it back onto <code dir="auto">window_out</code></td>
+</tr>
+<tr>
+<td>Reserve deposit</td>
+<td>The reserve’s token output keeps at least 1 KAS, enforced by the pool: nothing else binds that KAS</td>
 </tr>
 <tr>
 <td><code dir="auto">window_ref</code>, <code dir="auto">window_out</code></td>
-<td>The KAS reserve the cap is measured on (set by the first deposit, down at once with the reserve, up only with claimed time), and the allowance used so far in net KAS (sells out, less buys in, moving toward zero with claimed time; negative after net buying, at most one cap; never cut to a cap that shrank)</td>
+<td>The KAS reserve the cap is measured on (set by the first deposit, down at once with the reserve, up only with claimed time), and the allowance used so far in net KAS (sells out, less buys in, moving toward zero with claimed time; negative after net buying, at most one cap)</td>
 </tr>
 <tr>
 <td><code dir="auto">paused</code></td>
@@ -287,7 +291,11 @@ off-chain can stop such a dump. The pool limits it on-chain instead.</p>
 </tr>
 <tr>
 <td>Used</td>
-<td><code dir="auto">window_out</code>: the <strong>net</strong> KAS out so far, sells less buys. Only claimed time and real buys lower a positive count; it is never cut to a cap that shrank. Negative after net buying, at most one cap</td>
+<td><code dir="auto">window_out</code>: the <strong>net</strong> KAS out so far, sells less buys. Only claimed time and real buys lower a positive count, and a withdrawal that shrinks the pool cuts it to two of the new caps, which gives no room. Negative after net buying, at most one cap</td>
+</tr>
+<tr>
+<td>Reference</td>
+<td><code dir="auto">window_ref</code> rises only with claimed time, by at most its own size per window. Liquidity added to inflate the cap and withdrawn again earns nothing; a large genuine deposit lifts the cap by about doubling an hour</td>
 </tr>
 <tr>
 <td>Refill</td>
@@ -295,7 +303,7 @@ off-chain can stop such a dump. The pool limits it on-chain instead.</p>
 </tr>
 <tr>
 <td>Buys</td>
-<td>Never capped. Each buy gives sells back the KAS it added to the reserve, at most one cap of credit</td>
+<td>Never capped. Each buy gives sells back the KAS it added to the reserve, at most one cap of credit. If that KAS is then withdrawn, the room goes with it</td>
 </tr>
 <tr>
 <td>Clock</td>

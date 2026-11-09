@@ -92,7 +92,7 @@ URL is <strong>to be published</strong>. To try it, see <a href="/kusdt-docs/get
 </tbody>
 </table>
 <p>Without the extension, every Kaspa-side action explains how to get it. On a phone, where it can’t run, the page says so: swaps, redemptions and liquidity need a computer, and you can still bridge USDT in to any Kaspa address.</p>
-<p>The header has one <strong>Connect Wallet</strong> menu for both wallets. A connected wallet shows as a chip, whose popup has its address, to copy, and its balances. A switch changes between day and night.</p>
+<p>The header has one wallet button for both wallets: <strong>Connect Wallet</strong> until one is connected, then <strong>Connected</strong>, with the marks of the networks in use. Its panel shows each connected wallet with <strong>Disconnect</strong> beside its name, then its address, to copy, and its balances, the portfolio’s total, and any wallet still to connect. A switch changes between day and night.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="sections">Sections</h2><a class="sl-anchor-link" href="#sections"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Sections”</span></a></div>
 <table>
 <thead>
@@ -108,7 +108,7 @@ URL is <strong>to be published</strong>. To try it, see <a href="/kusdt-docs/get
 </tr>
 <tr>
 <td><strong>Bridge</strong> (<code dir="auto">/bridge</code>)</td>
-<td>One card with From, To and Amount. To Kaspa, it deposits USDT into the vault: approves exactly the amount, calls <code dir="auto">deposit</code>, then follows the deposit until it is minted, in a window you can close while a tag stays in the corner of the page. On testnet it also has “Get 1,000 test USDT” (MockUSDT’s open mint, paid with gas from your EVM account). From Kaspa, it redeems kUSDT through the wallet, after checking that the named vault can pay it now and would pay the address, and follows it until paid. See <a href="/kusdt-docs/getting-started/bridge-in/">Bridge USDT in</a> and <a href="/kusdt-docs/getting-started/redeem/">Redeem kUSDT</a></td>
+<td>One card with From, To and Amount, with ready amounts under it (10, 20, 50, 100, 500 and Max, greyed out above what you can send), so nothing needs typing: the connected wallet’s address is filled in too. To Kaspa, it deposits USDT into the vault: approves exactly the amount, calls <code dir="auto">deposit</code>, then follows the deposit until it is minted, in a window you can close while a tag stays in the corner of the page. The form says how long a bridge takes (from Ethereum about 15 to 20 minutes, its finality; from BNB Chain under a minute; back from Kaspa its finality and the vault’s wait), and the window and the tag show a progress bar with the time left. On testnet it also has “Get 1,000 test USDT” (MockUSDT’s open mint, paid with gas from your EVM account). From Kaspa, it redeems kUSDT through the wallet, after checking that the named vault can pay it now and would pay the address, and follows it until paid. See <a href="/kusdt-docs/getting-started/bridge-in/">Bridge USDT in</a> and <a href="/kusdt-docs/getting-started/redeem/">Redeem kUSDT</a></td>
 </tr>
 <tr>
 <td><strong>Swap</strong></td>
@@ -117,6 +117,10 @@ URL is <strong>to be published</strong>. To try it, see <a href="/kusdt-docs/get
 <tr>
 <td><strong>Pool</strong></td>
 <td>Reserves, price and TVL; add liquidity, list your positions, remove one</td>
+</tr>
+<tr>
+<td><strong>Portfolio</strong></td>
+<td>What the connected wallets hold on Kaspa, Ethereum and BNB Chain: the total and each network’s share, every asset, liquidity in KasPool, bridges on the way and the wallets. A network can be picked to see only what is there; each row leads to its next step (Bridge, Swap, Pool). USDT and kUSDT count as 1 dollar, KAS at the pool price; coins for network fees are not counted</td>
 </tr>
 <tr>
 <td><strong>Reserves</strong></td>

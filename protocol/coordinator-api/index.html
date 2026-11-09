@@ -86,7 +86,7 @@ transactions, checking every successor against the outputs (see
 <tbody>
 <tr>
 <td><code dir="auto">GET /status</code></td>
-<td><code dir="auto">{network, kaspa: {covenantId, poolId, virtualDaa, minter: {utxo, state}, genesisRemaining, tokenValue, burnValue, finalityDaa, finalityTiers}, chains: [{chain, name, chainId, vault, token, decimals, scannedBlock, depositNonce, backing, releaseAvailable, paused, fees: {feeBps, minDepositFee, minReleaseFee, minDeposit, maxDeposit, releaseCapacity, releaseRefillPerSecond}, blocklist}]}</code>. Each vault’s parameters as it reports them. <code dir="auto">blocklist</code> is the token view the bridge honours (<code dir="auto">isBlackListed</code>), or <code dir="auto">null</code> for a token that keeps none (BSC-USD). <code dir="auto">scannedBlock</code> is the last final block the coordinator read (<code dir="auto">finalizedBlock</code> is its old name)</td>
+<td><code dir="auto">{network, kaspa: {covenantId, poolId, virtualDaa, minter: {utxo, state}, genesisRemaining, tokenValue, burnValue, finalityDaa, finalityTiers}, chains: [{chain, name, chainId, vault, token, decimals, scannedBlock, depositNonce, backing, unreservedBacking, reservedUnits, releaseAvailable, paused, fees: {feeBps, minDepositFee, minReleaseFee, minDeposit, maxDeposit, releaseCapacity, releaseRefillPerSecond}, blocklist}]}</code>. Each vault’s parameters as it reports them. <code dir="auto">blocklist</code> is the token view the bridge honours (<code dir="auto">isBlackListed</code>), or <code dir="auto">null</code> for a token that keeps none (BSC-USD). <code dir="auto">scannedBlock</code> is the last final block the coordinator read (<code dir="auto">finalizedBlock</code> is its old name)</td>
 </tr>
 <tr>
 <td><code dir="auto">GET /tokens?owner=&lt;kaspa address or x-only hex&gt;</code></td>
@@ -110,7 +110,7 @@ transactions, checking every successor against the outputs (see
 </tr>
 <tr>
 <td><code dir="auto">GET /deposits?sender=0x…</code> or <code dir="auto">?owner=…</code></td>
-<td><code dir="auto">{deposits: [{chain, ...}]}</code>: the matching deposits, newest first</td>
+<td><code dir="auto">{deposits: [{chain, ...}], total, limit, offset}</code>: the matching deposits, newest first, at most 1 000 per answer. <code dir="auto">limit</code> and <code dir="auto">offset</code> page them; with no filter an answer holds 100 unless <code dir="auto">limit</code> says more</td>
 </tr>
 <tr>
 <td><code dir="auto">POST /redeems</code></td>

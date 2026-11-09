@@ -79,7 +79,9 @@ again from the fork point. See
 <li><strong>It follows BridgeMint</strong> and adopts each successor state only from the outputs the spending input authorizes
 in the kUSDT family; a plain output paying to the same script is a decoy and is ignored. So it knows exactly
 what was minted, paused and governed.</li>
-<li><strong>It indexes every kUSDT burn</strong>: a kUSDT state, by covenant ID, sent to a P2SH owner.</li>
+<li><strong>It indexes every kUSDT burn</strong>: a kUSDT state, by covenant ID, sent to a P2SH owner, by a transfer or straight
+from a mint (a deposit can name a burn owner). It reads every body seen under a transaction ID, so a rewritten body
+that names fewer states cannot hide one.</li>
 <li><strong>It follows the pool</strong> from its genesis (<code dir="auto">initialPool</code>), verifying each successor the same way.</li>
 <li><strong>It can only stop things.</strong> On any alarm it pauses every vault, the minter and the pool. It never unpauses: that takes 4
 of 5 signers on Kaspa and the vault owner on each chain.</li>
@@ -164,7 +166,19 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 </tr>
 <tr>
 <td><code dir="auto">unpaused-while-alarmed</code>, <code dir="auto">vault-unpaused-while-alarmed</code></td>
-<td>An unpause while an alarm is open</td>
+<td>An unpause of the minter, the pool or a vault while an alarm is open</td>
+</tr>
+<tr>
+<td><code dir="auto">pool-keys-changed</code></td>
+<td>A pool <code dir="auto">set_keys</code> changed the admin or guardian key and the operators did not announce it in <code dir="auto">expectedPoolKeys</code>. A guardian key that is not the monitor’s cannot pause the pool</td>
+</tr>
+<tr>
+<td><code dir="auto">guardian-not-ours</code></td>
+<td>A rotation or a recovery left the minter with a guardian this monitor does not hold, announced or not. It can no longer pause the minter. To change the guardian on purpose, stop every monitor before the change lands and start them with the new key after it</td>
+</tr>
+<tr>
+<td><code dir="auto">pause-failed</code></td>
+<td>A pause (a vault, the minter or the pool) has failed to go out for a minute, or the guardian key is not the one the minter or pool holds, which is at once. It is tried again every round; alarms already open keep everything paused</td>
 </tr>
 <tr>
 <td><code dir="auto">vault-signers-differ</code></td>
@@ -212,7 +226,7 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 </tr>
 <tr>
 <td><code dir="auto">unverifiable</code></td>
-<td>A chain, the Kaspa node, or a step of the check could not be read for <code dir="auto">failClosedMs</code> (5 minutes by default, shorter than a payout’s wait), including the deposits behind a mint; an EVM head that has stopped moving; or a Kaspa view that stays far behind without catching up (see <a href="#when-it-cannot-read-a-chain">below</a>). The monitor fails closed: everything stays paused until it can check again</td>
+<td>A chain, the Kaspa node, or a step of the check could not be read for <code dir="auto">failClosedMs</code> (5 minutes by default, shorter than a payout’s wait), including the deposits behind a mint; an EVM head or a Kaspa virtual DAA that has stopped moving; or a Kaspa view that stays far behind without catching up (see <a href="#when-it-cannot-read-a-chain">below</a>). The monitor fails closed: everything stays paused until it can check again</td>
 </tr>
 </tbody>
 </table>
@@ -247,7 +261,20 @@ check, the pause included.</p>
 would stop all log reading while every read succeeds. The lowest head now must be above the highest head any RPC
 reported <code dir="auto">failClosedMs</code> ago. If it is not, the chain has been unreadable since then, and the <code dir="auto">unverifiable</code> alarm
 comes at once. A real halt of the chain counts the same. <code dir="auto">evmHeadLag: 0</code> means a local chain that mines on demand
-and turns this check off: the preflight check refuses it on mainnet.</li>
+and turns this check off: the preflight check refuses it on mainnet. The samples are kept in the state file, so a
+restart does not start the clock over.</li>
+<li><strong>A Kaspa node that stops.</strong> A node that has lost its peers or stopped syncing still answers, and the lag against
+its own virtual stays small. So its virtual DAA must keep the network’s pace: at least one DAA score a second over
+30 seconds (the network makes 10), or nothing read from that node counts and the failure clock goes back to when it
+fell behind. A pace, not only a rise: a node fed a slow fork still rises. <code dir="auto">minDaaPerSecond</code> sets it. The newest block it
+holds must also be under a minute old by the newest EVM block’s clock (not this machine’s, which may be wrong), so a slow
+node can’t look caught up against itself. A Kaspa node
+that is down at start does not stop the EVM watch, the pauses or the API: each round tries to connect.</li>
+<li><strong>A long history.</strong> A new or rebuilt monitor reads a vault’s outflows and its deposits a piece at a time, each piece
+kept. That is progress, not a failure: it stays off the fail-closed clock, nothing is judged short meanwhile, and
+<code dir="auto">/health</code> answers 503 and <code dir="auto">/api/v1/signal</code> says so until it has caught up. A read that fails still counts.</li>
+<li><strong>A Kaspa reorg.</strong> The monitor keeps what each minter and pool move replaced, and undoes the moves in chain blocks
+the node drops, so it reads what the new chain did. A burn only a dropped block accepted stops counting.</li>
 <li><strong>A Kaspa view that stays behind.</strong> A view that reads fine but lags sees no mints and no governance, while the
 minter and the pool stay open. If the lag stays above <code dir="auto">kaspaLagFailDaa</code> (3 000 DAA scores, 5 minutes on mainnet, by
 default) for <code dir="auto">failClosedMs</code> without falling, that is <code dir="auto">unverifiable</code>. A lag that keeps falling, by at least a tenth
@@ -263,12 +290,17 @@ round gets its pause through every RPC at once, without waiting on <code dir="au
 before the next is tried as well. The monitor does not wait for the pause to be mined: it reads <code dir="auto">paused()</code> every
 round, and a pause still unmined after 30 seconds is replaced at the same nonce with higher fees, through the next
 RPC. A pause that could not be sent is tried again the next round, on Kaspa as well as on the vaults.</p>
+<p>On Kaspa the minter’s and the pool’s pauses are built at the tip: the moves the node’s mempool and the blocks not yet
+read show ahead of the state the monitor has read, newest first, so a steady stream of spends cannot keep them out. A
+pause that goes out and is not followed within 30 seconds is sent again at a higher feerate, multiplied by 4 each try
+up to 1 024 sompi per gram, replacing its earlier copy. None of this is ever taken as the followed state: a spend
+ahead of it that later drops costs one rejected submit, and the tries go on until a pause is followed.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="what-an-outsider-can-and-cannot-do">What an outsider can and cannot do</h3><a class="sl-anchor-link" href="#what-an-outsider-can-and-cannot-do"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “What an outsider can and cannot do”</span></a></div>
 <p>Nothing an outsider can send raises an alarm by itself. A Kaspa transaction with crafted scripts decodes to nothing,
 and an input the monitor cannot decode is skipped without an alarm: a burn that was not indexed backs no release, so a
 release naming it is still <code dir="auto">release-without-burn</code>. Each accepted transaction is read on its own, so one bad
 transaction never costs the rest of its batch. Deposits, however small, raise nothing unless a mint disagrees with
-them. The public endpoints only read, and acknowledging takes the operator bearer token.</p>
+them, and one that names a burn owner is indexed as the burn it is. The public endpoints only read, and acknowledging takes the operator bearer token.</p>
 <p>A burn that a reorg deeper than the scan depth drops is taken out of the index. It counts again only if the new chain
 accepts it.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-vault-owner">The vault owner</h2><a class="sl-anchor-link" href="#the-vault-owner"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The vault owner”</span></a></div>
@@ -364,7 +396,7 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 <tbody>
 <tr>
 <td><code dir="auto">GET /health</code></td>
-<td>200 when healthy and the last check is fresh (under 5 minutes old), otherwise 503. It also answers 503 while its Kaspa view lags (600 DAA scores by default), so an operator learns about a stalled node before alarms would come late. Its <code dir="auto">warnings</code> list a guardian short of gas (under 0.001) or of spendable KAS (under 1 KAS in its four largest coins), read every 5 minutes: a warning is never an alarm and pauses nothing, but top the key up. Wire it to uptime alerts</td>
+<td>200 when healthy and the last check is fresh (under 5 minutes old), otherwise 503. It also answers 503 while its Kaspa view lags (600 DAA scores by default), so an operator learns about a stalled node before alarms would come late. Its <code dir="auto">warnings</code> list a guardian short of gas (under 0.001) or of spendable KAS (under 1 KAS in its four largest coins), and a chain whose releases exceed what its deposits minted by more than its <code dir="auto">releaseCapacity</code> (or <code dir="auto">releaseImbalanceWarnUnits</code>), by name, all read every 5 minutes: a warning is never an alarm and pauses nothing. Moving value across chains is a normal use, and the warning shows when it has gone far. Wire it to uptime alerts</td>
 </tr>
 <tr>
 <td><code dir="auto">GET /api/v1/signal</code></td>
@@ -454,6 +486,18 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 <td>Optional: alarm without pausing anything</td>
 </tr>
 <tr>
+<td><code dir="auto">minDaaPerSecond</code></td>
+<td>Optional: the least the Kaspa node’s virtual DAA must rise per second; 1 by default, a tenth of the network’s pace</td>
+</tr>
+<tr>
+<td><code dir="auto">judgeFromBlock</code></td>
+<td>Optional, per chain: for a monitor rebuilt with no state, the block events are judged from. Take it from a healthy monitor’s <code dir="auto">/api/v1/checkpoint</code></td>
+</tr>
+<tr>
+<td><code dir="auto">initialSkipped</code></td>
+<td>Optional: the skipped nonces from the same checkpoint. With it, a rebuilt monitor still judges a refund below the checkpoint</td>
+</tr>
+<tr>
 <td><code dir="auto">evmHeadLag</code></td>
 <td>Optional: how many blocks below the EVM head its reads stay; 2 by default, 0 on local Hardhat chains, which also turns off the frozen-head check. See <a href="/kusdt-docs/developers/operations/#service-settings">Operations</a></td>
 </tr>
@@ -464,6 +508,14 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 <tr>
 <td><code dir="auto">kaspaLagFailDaa</code></td>
 <td>Optional: how far its Kaspa view may stay behind, without catching up, for <code dir="auto">failClosedMs</code> before the <code dir="auto">unverifiable</code> alarm pauses everything; 3 000 DAA scores by default</td>
+</tr>
+<tr>
+<td><code dir="auto">expectedPoolKeys</code></td>
+<td>Optional: pool key changes the operators announce in advance, as <code dir="auto">{admin, guardian}</code>. A <code dir="auto">set_keys</code> that changes a key and matches none is <code dir="auto">pool-keys-changed</code></td>
+</tr>
+<tr>
+<td><code dir="auto">releaseImbalanceWarnUnits</code></td>
+<td>Optional: the threshold of the <code dir="auto">/health</code> warning about one chain’s releases over its deposits, in kUSDT units. Defaults to that vault’s <code dir="auto">releaseCapacity</code></td>
 </tr>
 <tr>
 <td><code dir="auto">bearerPath</code></td>
@@ -477,5 +529,5 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 </table>
 <aside aria-label="Announce governance first" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>Announce governance first</p><div class="starlight-aside__content"><p>Before the signers rotate keys, change limits or change the minter’s KAS deposit on Kaspa, add the action to
 <code dir="auto">expectedGovernance</code>. Otherwise the monitor raises <code dir="auto">signers-changed</code>, <code dir="auto">limits-raised</code> or <code dir="auto">value-changed</code> and pauses
-everything.</p></div></aside>
+everything. Likewise add a pool key change to <code dir="auto">expectedPoolKeys</code>, or it raises <code dir="auto">pool-keys-changed</code>.</p></div></aside>
 </div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/kusdt-docs/security/guardian/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Previous<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Guardian and pause</span></span></a><a href="/kusdt-docs/security/known-limits/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Next<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Known limits</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

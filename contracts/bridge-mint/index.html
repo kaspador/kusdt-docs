@@ -97,7 +97,11 @@ way new kUSDT comes into existence. There is exactly one BridgeMint UTXO; every 
 </tr>
 <tr>
 <td>Governance</td>
-<td>Unpausing, changing limits, the signer set or the guardian, and skipping a nonce need 4 of 5 and a fresh admin nonce. Only changing the minter’s own KAS deposit needs 3</td>
+<td>Unpausing, changing limits, the signer set or the guardian, skipping a nonce and changing the minter’s own KAS deposit need 4 of 5 and a fresh admin nonce</td>
+</tr>
+<tr>
+<td>Recovery</td>
+<td>If two keys are lost for good, 3 signers can propose a new signer set and guardian. It can be carried out once the minter has stood untouched for 72 hours, and any single signer can veto it until then</td>
 </tr>
 </tbody>
 </table>

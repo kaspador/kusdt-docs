@@ -161,6 +161,11 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <td>Bounded (5 November 2026)</td>
 </tr>
 <tr>
+<td>3 of 5 signer keys try to replace the signers</td>
+<td>A recovery needs the minter to stand untouched for 72 hours, every mint restarts the wait, any single signer can veto it, and the monitor alarms on one nobody announced</td>
+<td>Open by design: one honest signer has to veto in time</td>
+</tr>
+<tr>
 <td>4 of 5 signer keys</td>
 <td>They can raise the Kaspa limits and unpause the minter. The vaults’ limits and signers belong to the owner (an AccessManager under a Safe on mainnet, 48-hour delays)</td>
 <td>Bounded on the vaults; the monitor is the defence on Kaspa</td>
@@ -172,8 +177,13 @@ in that window as well, so just under three times its ceiling can leave a vault.
 </tr>
 <tr>
 <td>A lying coordinator or API</td>
-<td>It can stall or censor, nothing more. Wallets check token states against their own node and pin the deployment; signers re-check everything</td>
+<td>It can stall or censor, nothing more. Wallets check token states against their own node and pin the deployment; signers re-check everything. A rotation keeps the guardian the deployment records, whatever the coordinator says</td>
 <td>By design</td>
+</tr>
+<tr>
+<td>Write access to 3 signers’ hosts</td>
+<td>Their state files say which deposits were skipped, so a forged skip record could get a refund of a minted deposit signed. Write access there is the same as holding those 3 keys. A refund still waits in the vault (10 minutes on mainnet) and the monitor raises <code dir="auto">refund-of-minted-deposit</code></td>
+<td>Open by design: treated as 3 stolen keys</td>
 </tr>
 <tr>
 <td>Fake deposits or burns fed to a signer through its RPC or node</td>
@@ -271,6 +281,11 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <td>Draining the pool by buy-then-sell or add-then-sell cycles at one moment</td>
 <td>The cap’s reference rises only with claimed time, and a positive count is forgiven only by claimed time and real buys, so one cap net (plus credit) is the most one moment can move</td>
 <td>Fixed 8 November 2026 (found in an independent review), with a randomized test of every entry against the bound</td>
+</tr>
+<tr>
+<td>Resetting the breaker with liquidity that is added, used for a buy, and withdrawn at one moment</td>
+<td>A withdrawal hands back the credit of recent buys KAS for KAS, so bought-in KAS that leaves again leaves no room behind</td>
+<td>Fixed 8 November 2026</td>
 </tr>
 <tr>
 <td>Holding a used-up breaker shut with empty pool spends</td>
@@ -480,7 +495,8 @@ than a day;</li>
 <li>set fees up to 1 % and minimum fees up to 50 USDT;</li>
 <li>withdraw accrued fees.</li>
 </ul>
-<p>It cannot withdraw backing directly, and every change becomes public 48 hours before it takes effect (<code dir="auto">setGuardian</code>
+<p>It cannot withdraw backing directly or give up its roles at once (<code dir="auto">renounceRole</code> is closed: a role ends through a
+48-hour admin call), and every change becomes public 48 hours before it takes effect (<code dir="auto">setGuardian</code>
 and <code dir="auto">unpause</code>: about 6 hours). The monitor alarms the moment a change it was not told about is queued, pauses the
 vaults, and can cancel it with a canceller key; the cancellers are parties other than the Safe’s holders. A rogue
 canceller can only cancel, and the Safe can revoke it (that too waits 48 hours, and cancellers cannot cancel it).
