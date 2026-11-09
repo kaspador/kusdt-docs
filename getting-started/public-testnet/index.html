@@ -156,13 +156,13 @@ convenience: on mainnet each signer is a different operator on its own machine
 get Sepolia ETH or tBNB first. MockUSDT has the same address on both chains,
 <code dir="auto">0x5bF185d9ce3A194b7090f069398580A66fb1F8a1</code>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="3-bridge-usdt-in">3. Bridge USDT in</h2><a class="sl-anchor-link" href="#3-bridge-usdt-in"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “3. Bridge USDT in”</span></a></div>
-<p>Deposit test USDT from Sepolia or BSC testnet to your wallet’s Kaspa address, on the web app’s <strong>Bridge</strong> page (<a href="https://testnet.trestly.io/bridge">testnet.trestly.io/bridge</a>), with From set to your chain and To set to Kaspa, or in the wallet’s Bridge tab. A deposit is between 10 and 100 000 USDT, and pays the deposit fee (0.20 %, at least
+<p>Deposit test USDT from Sepolia or BSC testnet to your wallet’s Kaspa address, on the web app’s <strong>Bridge</strong> page (<a href="https://testnet.trestly.io/bridge">testnet.trestly.io/bridge</a>), with From set to your chain and To set to Kaspa, or in the wallet’s Bridge tab. A deposit is between 10 and 100 000 USDT, and pays the deposit fee (0.50 %, at least
 0.50 USDT).</p>
 <p>The kUSDT arrives after the deposit’s block is finalized on its chain and 3 of the 5 signers approve it. On
 Sepolia that takes about 13 minutes. The web app shows each step in its own window, with a progress bar and the time left. You can close it: the bridge keeps going, a tag stays in the corner of the page until it is done, and <strong>Portfolio</strong> and <strong>Activity</strong> list it too.</p>
 <p>Details: <a href="/kusdt-docs/getting-started/bridge-in/">Bridge USDT in</a>, <a href="/kusdt-docs/protocol/finality/">Finality</a>, <a href="/kusdt-docs/protocol/fees/">Fees</a>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="4-swap">4. Swap</h2><a class="sl-anchor-link" href="#4-swap"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “4. Swap”</span></a></div>
-<p>Swap KAS for kUSDT and back in the web app’s <strong>Swap</strong> page or the wallet. Every swap pays 0.30 % of its input.</p>
+<p>Swap KAS for kUSDT and back in the web app’s <strong>Swap</strong> page or the wallet. Every swap pays 0.50 % of its input.</p>
 <p>Testnet liquidity is thin: expect price impact, and check
 it in the quote before you sign. Net of buys, sells may take at most 10 % of the pool’s KAS at once, and that room refills over
 an hour: that is the circuit breaker (SPEC §15), and a larger sell is refused until enough has refilled.</p>
@@ -184,7 +184,7 @@ pays it once the burn is final and 3 signers approve the release.</p>
 <ul>
 <li>A burn cannot be undone, and nobody can redirect its payout. Check the chain and the address.</li>
 <li>An amount at or below the release fee is never paid. Both testnet vaults were deployed with a 0.50 USDT minimum
-release fee, or 0.20 % if that is higher (on mainnet, Ethereum’s minimum is 5 USDT).</li>
+release fee, or 0.50 % if that is higher (on mainnet, Ethereum’s minimum is 5 USDT).</li>
 <li>The burn output carries 0.3 KAS, gone for good since nothing can spend a burn, and the transaction pays a network
 fee. Keep some KAS next to your kUSDT.</li>
 <li>Sepolia’s MockUSDT keeps a Tether-style blacklist. The wallet and the web app refuse a blocked address before

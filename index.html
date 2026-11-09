@@ -57,7 +57,7 @@ Kasplex layer-2 networks, their contracts or their bridges. Its rules run in Kas
 transactions are ordered and confirmed like any KAS payment. <a href="/kusdt-docs/overview/why-kaspa-l1/">Kaspa L1, not a layer 2</a>
 explains the difference.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="how-it-works-in-three-steps">How it works, in three steps</h2><a class="sl-anchor-link" href="#how-it-works-in-three-steps"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “How it works, in three steps”</span></a></div>
-<div class="steps3"><div><div class="n">Step 1</div><div class="h">Deposit</div><p>You lock USDT in the vault on Ethereum or BNB Chain and name a Kaspa address. The vault numbers the deposit and keeps a 0.20 % fee (at least 0.50 USDT).</p></div><div><div class="n">Step 2</div><div class="h">Mint</div><p>Once the deposit is final, at least 3 of the 5 signers sign it. The BridgeMint covenant on Kaspa checks the signatures and the limits, and creates your kUSDT.</p></div><div><div class="n">Step 3</div><div class="h">Use or redeem</div><p>Send kUSDT, or swap it for KAS in KasPool. To redeem, you send it to a burn owner that names your EVM address. The signers approve, and the vault pays you USDT.</p></div></div>
+<div class="steps3"><div><div class="n">Step 1</div><div class="h">Deposit</div><p>You lock USDT in the vault on Ethereum or BNB Chain and name a Kaspa address. The vault numbers the deposit and keeps a 0.50 % fee (at least 0.50 USDT).</p></div><div><div class="n">Step 2</div><div class="h">Mint</div><p>Once the deposit is final, at least 3 of the 5 signers sign it. The BridgeMint covenant on Kaspa checks the signatures and the limits, and creates your kUSDT.</p></div><div><div class="n">Step 3</div><div class="h">Use or redeem</div><p>Send kUSDT, or swap it for KAS in KasPool. To redeem, you send it to a burn owner that names your EVM address. The signers approve, and the vault pays you USDT.</p></div></div>
 <p>The full flows are in <a href="/kusdt-docs/getting-started/bridge-in/">Bridge USDT in</a> and <a href="/kusdt-docs/getting-started/redeem/">Redeem kUSDT</a>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="key-numbers">Key numbers</h2><a class="sl-anchor-link" href="#key-numbers"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Key numbers”</span></a></div>
 <p>These are the mainnet defaults from the specification. Testnet uses the same rules.</p>
@@ -75,7 +75,7 @@ explains the difference.</p>
 </tr>
 <tr>
 <td>Bridge fee</td>
-<td>0.20 % each way</td>
+<td>0.50 % each way</td>
 </tr>
 <tr>
 <td>Minimum fee</td>
@@ -99,7 +99,7 @@ explains the difference.</p>
 </tr>
 <tr>
 <td>Pool fee</td>
-<td>0.30 % per swap (0.25 % to liquidity providers, 0.05 % to the protocol)</td>
+<td>0.50 % per swap (0.45 % to liquidity providers, 0.05 % to the protocol)</td>
 </tr>
 </tbody>
 </table>
@@ -158,7 +158,7 @@ explains the difference.</p>
 </tr>
 <tr>
 <td>Mainnet</td>
-<td>Nothing deployed. The release candidate, <code dir="auto">mainnet-v0.9.8-rc.13</code>, is a pre-release and not audited</td>
+<td>Nothing deployed. The release candidate, <code dir="auto">mainnet-v0.9.8-rc.14</code>, is a pre-release and not audited</td>
 </tr>
 <tr>
 <td>External audit</td>

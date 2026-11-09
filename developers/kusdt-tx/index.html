@@ -92,7 +92,7 @@ Kaspa’s script engine, checks relay standardness, and prices the fee from Kasp
 </tr>
 <tr>
 <td><code dir="auto">mint</code></td>
-<td>A mint: <code dir="auto">minter</code> (UTXO and state), <code dir="auto">chain</code>, <code dir="auto">firstNonce</code>, <code dir="auto">nowDaa</code>, <code dir="auto">recipients</code>, <code dir="auto">signerKeys</code>, <code dir="auto">signerIndices</code>, <code dir="auto">signatures</code>, <code dir="auto">tokenValue</code></td>
+<td>A mint: <code dir="auto">minter</code> (UTXO and state), <code dir="auto">chain</code>, <code dir="auto">firstNonce</code>, <code dir="auto">ageDaa</code> (the minter UTXO’s age it claims, which becomes the input’s sequence; 0 is always valid), <code dir="auto">recipients</code>, <code dir="auto">signerKeys</code>, <code dir="auto">signerIndices</code>, <code dir="auto">signatures</code>, <code dir="auto">tokenValue</code></td>
 </tr>
 <tr>
 <td><code dir="auto">transfer</code></td>
@@ -104,7 +104,7 @@ Kaspa’s script engine, checks relay standardness, and prices the fee from Kasp
 </tr>
 <tr>
 <td><code dir="auto">govern</code></td>
-<td>A governance action: <code dir="auto">minter</code>, <code dir="auto">action</code> (<code dir="auto">kind</code>: <code dir="auto">unpause</code>, <code dir="auto">setLimits</code>, <code dir="auto">setSigners</code>, <code dir="auto">skipNonce</code>, <code dir="auto">setValue</code>), <code dir="auto">nowDaa</code> for <code dir="auto">setLimits</code>, and the quorum</td>
+<td>A governance action: <code dir="auto">minter</code>, <code dir="auto">action</code> (<code dir="auto">kind</code>: <code dir="auto">unpause</code>, <code dir="auto">setLimits</code>, <code dir="auto">setSigners</code>, <code dir="auto">skipNonce</code>, <code dir="auto">setValue</code>), <code dir="auto">ageDaa</code> (optional, 0 if absent; it settles the allowance), and the quorum</td>
 </tr>
 <tr>
 <td><code dir="auto">pool-genesis</code></td>

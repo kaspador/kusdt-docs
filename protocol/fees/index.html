@@ -79,7 +79,7 @@
 <tbody>
 <tr>
 <td><code dir="auto">feeBps</code> (both directions)</td>
-<td>20, which is 0.20 %</td>
+<td>50, which is 0.50 %</td>
 <td>at most 100 (1 %)</td>
 </tr>
 <tr>
@@ -111,17 +111,17 @@
 <tr>
 <td>Deposit</td>
 <td><code dir="auto">units − fee</code> in kUSDT</td>
-<td>250 USDT</td>
+<td>100 USDT</td>
 </tr>
 <tr>
 <td>Release on Ethereum</td>
 <td><code dir="auto">units − fee</code> in USDT</td>
-<td>2 500 USDT</td>
+<td>1 000 USDT</td>
 </tr>
 <tr>
 <td>Release on BNB Chain</td>
 <td><code dir="auto">units − fee</code> in BSC-USD</td>
-<td>250 USDT</td>
+<td>100 USDT</td>
 </tr>
 <tr>
 <td>Refund</td>
@@ -137,7 +137,7 @@
 withdraw them, and never more than <code dir="auto">feesAccrued</code>:</p>
 <div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">vault balance / scale = backing() + feesAccrued</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="vault balance / scale = backing() + feesAccrued"><div></div></button></div></figure></div>
 <div class="sl-heading-wrapper level-h2"><h2 id="pool-fees">Pool fees</h2><a class="sl-anchor-link" href="#pool-fees"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Pool fees”</span></a></div>
-<p>Every KasPool swap pays 0.30 % of its input:</p>
+<p>Every KasPool swap pays 0.50 % of its input:</p>
 <table>
 <thead>
 <tr>
@@ -149,7 +149,7 @@ withdraw them, and never more than <code dir="auto">feesAccrued</code>:</p>
 <tbody>
 <tr>
 <td>Liquidity providers</td>
-<td>0.25 %</td>
+<td>0.45 %</td>
 <td>Stays in the reserves, raising the value of every share</td>
 </tr>
 <tr>
@@ -159,7 +159,7 @@ withdraw them, and never more than <code dir="auto">feesAccrued</code>:</p>
 </tr>
 </tbody>
 </table>
-<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">protocol_cut = floor(input × 5 / 10 000)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">effective    = floor(input × 9 970 / 10 000)    // what the price curve sees</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="protocol_cut = floor(input × 5 / 10 000)effective    = floor(input × 9 970 / 10 000)    // what the price curve sees"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">protocol_cut = floor(input × 5 / 10 000)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">effective    = floor(input × 9 950 / 10 000)    // what the price curve sees</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="protocol_cut = floor(input × 5 / 10 000)effective    = floor(input × 9 950 / 10 000)    // what the price curve sees"><div></div></button></div></figure></div>
 <p>Adding and removing liquidity pay no pool fee.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="kaspa-network-fees">Kaspa network fees</h2><a class="sl-anchor-link" href="#kaspa-network-fees"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Kaspa network fees”</span></a></div>
 <p>Every Kaspa transaction, including mints, transfers, swaps and burns, pays a network fee in KAS. The relay

@@ -85,14 +85,14 @@ URL is <strong>to be published</strong>. To try it, see <a href="/kusdt-docs/get
 <td>Deposits</td>
 </tr>
 <tr>
-<td><a href="/kusdt-docs/getting-started/wallet/">kUSDT Wallet</a> (the browser extension, on computers only)</td>
-<td>Kaspa transactions, which it builds, shows and signs itself</td>
-<td>Redemptions, swaps, liquidity</td>
+<td>A Kaspa wallet on a computer: KasWare, or <a href="/kusdt-docs/getting-started/wallet/">kUSDT Wallet</a> (the browser extension). With KasWare the page builds each kUSDT transaction and KasWare signs it; kUSDT Wallet builds, shows and signs its own</td>
+<td>Kaspa transactions</td>
+<td>Bridging back, swaps, liquidity (adding to the pool needs kUSDT Wallet for now)</td>
 </tr>
 </tbody>
 </table>
-<p>Without the extension, every Kaspa-side action explains how to get it. On a phone, where it can’t run, the page says so: swaps, redemptions and liquidity need a computer, and you can still bridge USDT in to any Kaspa address.</p>
-<p>The header has one wallet button for both wallets: <strong>Connect Wallet</strong> until one is connected, then <strong>Connected</strong>, with the marks of the networks in use. Its panel shows each connected wallet with <strong>Disconnect</strong> beside its name, then its address, to copy, and its balances, the portfolio’s total, and any wallet still to connect. A switch changes between day and night.</p>
+<p>Without a Kaspa wallet, every Kaspa-side action says where to get KasWare or kUSDT Wallet. On a phone, where neither can run, the page says so: swapping, bridging back and the pool need a computer, and you can still bridge USDT to any Kaspa address.</p>
+<p>The header has one wallet button for both wallets: <strong>Connect Wallet</strong> until one is connected, then the marks of the networks in use and the portfolio’s total. Its panel groups the wallets by what they are for (USDT on Ethereum and BNB Chain; KAS and kUSDT on Kaspa): each connected wallet with <strong>Disconnect</strong> beside its name, its address, to copy, its balances and, for the EVM wallet, the network it is on, then the portfolio’s total and any wallet still to connect. The pages show one <strong>Connect Wallet</strong> button where an action needs a wallet; the wallets found are named only in this menu. A switch changes between day and night.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="sections">Sections</h2><a class="sl-anchor-link" href="#sections"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Sections”</span></a></div>
 <table>
 <thead>
@@ -108,31 +108,27 @@ URL is <strong>to be published</strong>. To try it, see <a href="/kusdt-docs/get
 </tr>
 <tr>
 <td><strong>Bridge</strong> (<code dir="auto">/bridge</code>)</td>
-<td>One card with From, To and Amount, with ready amounts under it (10, 20, 50, 100, 500 and Max, greyed out above what you can send), so nothing needs typing: the connected wallet’s address is filled in too. To Kaspa, it deposits USDT into the vault: approves exactly the amount, calls <code dir="auto">deposit</code>, then follows the deposit until it is minted, in a window you can close while a tag stays in the corner of the page. The form says how long a bridge takes (from Ethereum about 15 to 20 minutes, its finality; from BNB Chain under a minute; back from Kaspa its finality and the vault’s wait), and the window and the tag show a progress bar with the time left. On testnet it also has “Get 1,000 test USDT” (MockUSDT’s open mint, paid with gas from your EVM account). From Kaspa, it redeems kUSDT through the wallet, after checking that the named vault can pay it now and would pay the address, and follows it until paid. See <a href="/kusdt-docs/getting-started/bridge-in/">Bridge USDT in</a> and <a href="/kusdt-docs/getting-started/redeem/">Redeem kUSDT</a></td>
+<td>One card in both directions, in the same order: From and To (only real routes), <strong>You send</strong> with ready amounts under it (10, 20, 50, 100, 500 and Max, greyed out above what you can send), <strong>You receive on</strong> the other network with the address it goes to (the connected wallet’s, filled in), then what you pay and how long: the bridge fee, the network fee (ETH or BNB from the EVM wallet; 0.30 KAS and a small fee bridging back) and the time (from Ethereum about 15 to 20 minutes, its finality; from BNB Chain under a minute; back from Kaspa its finality and the vault’s safety wait). The button names what you send: “Bridge 20 USDT from Sepolia”. Limits, the fee rule and the safety wait are in its Details. To Kaspa, it approves exactly the amount, calls <code dir="auto">deposit</code> and follows the bridge until it arrives, in a window you can close while a tag stays in the corner of the page, with a progress bar and the time left. On testnet the balance line offers “Get 1,000 test USDT” (MockUSDT’s open mint, paid with gas from your EVM account) and, bridging back, “Get 25 test kUSDT”. Bridging back, it checks that the vault can pay now and would pay the address, then follows it until paid. See <a href="/kusdt-docs/getting-started/bridge-in/">Bridge USDT in</a> and <a href="/kusdt-docs/getting-started/redeem/">Redeem kUSDT</a></td>
 </tr>
 <tr>
 <td><strong>Swap</strong></td>
-<td>Quotes exactly with the same core the covenant checks against, shows the 0.30 % fee, the price impact and your slippage setting. See <a href="/kusdt-docs/getting-started/swap/">Swap</a></td>
+<td>Buy or sell kUSDT for KAS: what you pay, what you receive (quoted with the same core the covenant checks against), the max price change (0.1 %, 0.5 %, 1 % or your own) and the least you receive, the price, the 0.50 % swap fee, the KAS kept with your kUSDT and the network fee. The price impact, the fee split and the pool’s checks are in its Details. See <a href="/kusdt-docs/getting-started/swap/">Swap</a></td>
 </tr>
 <tr>
 <td><strong>Pool</strong></td>
-<td>Reserves, price and TVL; add liquidity, list your positions, remove one</td>
+<td>The pool’s size, the KAS and kUSDT in it, its price and what it earns; add to the pool (kUSDT Wallet); your share of the pool, each position with Remove. Position IDs, share counts and the checks are in Details</td>
 </tr>
 <tr>
 <td><strong>Portfolio</strong></td>
-<td>What the connected wallets hold on Kaspa, Ethereum and BNB Chain: the total and each network’s share, every asset, liquidity in KasPool, bridges on the way and the wallets. A network can be picked to see only what is there; each row leads to its next step (Bridge, Swap, Pool). USDT and kUSDT count as 1 dollar, KAS at the pool price; coins for network fees are not counted</td>
+<td>What the connected wallets hold on Kaspa, Ethereum and BNB Chain: the total and each network’s share, every asset, liquidity in KasPool, bridges on the way and the wallets. A network can be picked to see only what is there; each row leads to its next step (Bridge, Swap, Pool). USDT and kUSDT count as 1 dollar, KAS at the pool price, ETH and BNB at their Chainlink price feed</td>
 </tr>
 <tr>
 <td><strong>Reserves</strong></td>
-<td>Proof of reserves (INV-1): the coordinator’s figures next to the page’s own reads and the monitor’s check</td>
+<td>Proof of reserves (INV-1): whether every kUSDT is backed, what is owed to kUSDT holders and held in the vaults, where the USDT is per network, and <strong>Bridge status</strong>: each network working or paused, and in its Details each route’s time, fee and limit, the contracts, the kUSDT and pool IDs, and the public RPCs with whether they answer right now. The coordinator’s figures, the page’s own reads, the Kaspa record and the monitor’s check are in Details. <code dir="auto">/network</code> opens Bridge status</td>
 </tr>
 <tr>
 <td><strong>Activity</strong></td>
-<td>Deposits by EVM sender or Kaspa recipient; redemptions, swaps and liquidity started from this browser</td>
-</tr>
-<tr>
-<td><strong>Network</strong></td>
-<td>The pinned deployment, whether the coordinator serves it, vaults and minter (paused or not), signers</td>
+<td>One list of what your wallets did, newest first: bridges to Kaspa sent by the connected EVM wallet or received by the connected Kaspa wallet (on any device), and bridges back, swaps and pool changes started in this browser. Each row says what moved from where to where, what you sent and what you get, and its status. Another address can be looked up</td>
 </tr>
 </tbody>
 </table>
@@ -151,10 +147,11 @@ and not offered for swaps.</li>
 <li><strong>The deployment</strong>: the coordinator must name the pinned covenant ID, pool ID and vaults, or the page says
 plainly that it serves another deployment.</li>
 <li><strong>The recipient</strong> of a redemption: the page asks the coordinator (<code dir="auto">GET /recipients/:chain/:address</code>) before every
-burn and shows the reason inline under “Pay to”. It refuses an address the token blocks, the zero address and
+burn and shows the reason inline under the address. It refuses an address the token blocks, the zero address and
 the vault’s own, and it refuses too while the coordinator can’t answer, asking again every 30 seconds. It never
 offers the other chain for a blocked address. See
 <a href="/kusdt-docs/security/known-limits/#blocked-recipients">Blocked recipients</a>.</li>
+<li><strong>The verdict</strong>: an open monitor alarm or a minter state that fails its script check shows “A safety check failed”; a minter state the node doesn’t confirm is asked about once more before it counts; numbers that disagree are read once more before they turn red; a monitor that can’t be reached shows amber, never green.</li>
 <li><strong>A held payout</strong>: the tracker shows a redemption the coordinator holds (<code dir="auto">blocked</code>) as “Held …”, with the time of
 the next check. A held refund shows the same way.</li>
 </ul>
@@ -170,7 +167,7 @@ the next check. A held refund shows the same way.</li>
 <tbody>
 <tr>
 <td>You need two wallets</td>
-<td>Deposits are EVM transactions; everything on Kaspa is signed by kUSDT Wallet</td>
+<td>Bridging to Kaspa is an EVM transaction; everything on Kaspa is signed by KasWare or kUSDT Wallet</td>
 </tr>
 <tr>
 <td>You need KAS to redeem</td>
@@ -201,7 +198,7 @@ the next check. A held refund shows the same way.</li>
 <tbody>
 <tr>
 <td>Unit tests</td>
-<td>133</td>
+<td>227</td>
 </tr>
 <tr>
 <td>End to end on the live local stack, in Chromium</td>

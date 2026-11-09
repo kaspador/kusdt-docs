@@ -89,8 +89,9 @@ The covenant checks, on-chain, whoever builds the transaction:</p>
 <li>Minting is not paused. Every recipient has <code dir="auto">amount &gt; 0</code>, a valid owner scheme, borrow scheme <code dir="auto">0x00</code>, borrow
 guard of 32 zero bytes, and extension commitment of 32 zero bytes.</li>
 <li><code dir="auto">first_nonce</code> equals the chain’s next nonce. The nonce advances by the number of recipients.</li>
-<li><code dir="auto">tx.daa ≥ now_daa ≥ last_daa</code>. The transaction’s lock time is at least <code dir="auto">now_daa</code>, and consensus accepts it
-only once the DAG has reached that DAA score. This proves <code dir="auto">now_daa</code> without trusting the submitter.</li>
+<li><code dir="auto">age_daa</code> is at most the age of the minter UTXO. The input’s sequence is a relative lock: consensus accepts the
+transaction only once the UTXO is that old, which proves the age without trusting the submitter. The spend starts
+a new UTXO at age zero, so a stretch of time can refill the allowance only once.</li>
 <li>The total is at most the refilled allowance and at most <code dir="auto">remaining</code> (the hard cap).</li>
 <li>Three signatures by distinct signers, in increasing signer order, over the <strong>mint digest</strong>.</li>
 <li>The successor BridgeMint carries exactly the updated state and the same KAS value, and each minted output is

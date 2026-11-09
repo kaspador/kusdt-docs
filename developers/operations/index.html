@@ -282,27 +282,27 @@ sompi” with 940 KAS.</li>
 <tbody>
 <tr>
 <td>KusdtVault, Sepolia</td>
-<td><code dir="auto">0xe0E3642E0a8C9090b88dbB6b69466220d8fBEC94</code></td>
+<td><code dir="auto">0x2Ab8E4b18a73aC2B4ea9e60Ff08699BA667aAc61</code></td>
 </tr>
 <tr>
 <td>KusdtVault, BSC testnet</td>
-<td><code dir="auto">0xEf88F8aE6bC1eBb081Bc3f9e9f35a9aB0f95Da2c</code></td>
+<td><code dir="auto">0xbF7180500C4d596d792e4c8c0fA5F71353a6B3FF</code></td>
 </tr>
 <tr>
 <td>MockUSDT, Sepolia</td>
-<td><code dir="auto">0x90680102e66524b4F2D336FE3987b703956D39E0</code></td>
+<td><code dir="auto">0x31009eCF6Fb661385DFc32293a8844B38Ded4082</code></td>
 </tr>
 <tr>
 <td>MockUSDT, BSC testnet</td>
-<td><code dir="auto">0x7E4bB0261D1fBEe2Ce628C01d16F97b7707322D1</code></td>
+<td><code dir="auto">0x2Ab8E4b18a73aC2B4ea9e60Ff08699BA667aAc61</code></td>
 </tr>
 <tr>
 <td>kUSDT covenant ID (TN10)</td>
-<td><code dir="auto">06c612a483fba77b7dd1074b04a7862c8c1d2073009374b3b7a36ce3a71a6f68</code></td>
+<td><code dir="auto">38ff9d49210de92d00b29113cbe2245e21ad9aa444ad445bbff07f588c07ceca</code></td>
 </tr>
 <tr>
 <td>KasPool covenant ID (TN10)</td>
-<td><code dir="auto">784bf78c7eb231105a683af2b2f0cd6dd5197e8599a1920f992047e19220adcc</code></td>
+<td><code dir="auto">c84fc647b52f05718d13873c77134a14c167f61e43a3507743d58fc494e4610e</code></td>
 </tr>
 <tr>
 <td>Web app</td>
@@ -531,7 +531,7 @@ one vault runs short, for example in a run on Ethereum, an operator rebalances t
 <li>Move that USDT to the short chain (an exchange or another bridge).</li>
 <li>Deposit it into the short vault; the same kUSDT is minted back.</li>
 </ol>
-<p>Backing moves for 0.2 % each way plus the crossing; no new trust is added, and the monitor sees ordinary deposits and
+<p>Backing moves for 0.5 % each way plus the crossing; no new trust is added, and the monitor sees ordinary deposits and
 releases. The operator needs kUSDT to start with, so keep an inventory sized to a day’s release allowance. Holders
 are paid meanwhile as long as the two vaults together cover the supply: a wallet offers the other chain when the one
 they asked for cannot pay now. The vaults back kUSDT together, so a depeg of one chain’s stablecoin is shared by all

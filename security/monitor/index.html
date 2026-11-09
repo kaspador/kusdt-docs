@@ -259,8 +259,8 @@ check, the pause included.</p>
 <ul>
 <li><strong>A head that stops moving.</strong> Logs are read up to the lowest head the RPCs report, so one frozen or lying RPC
 would stop all log reading while every read succeeds. The lowest head now must be above the highest head any RPC
-reported <code dir="auto">failClosedMs</code> ago. If it is not, the chain has been unreadable since then, and the <code dir="auto">unverifiable</code> alarm
-comes at once. A real halt of the chain counts the same. <code dir="auto">evmHeadLag: 0</code> means a local chain that mines on demand
+reported 4 minutes ago (<code dir="auto">failClosedMs</code> less a minute). If it is not, and that holds over consecutive rounds for that minute, the chain has
+been unreadable since then, and the <code dir="auto">unverifiable</code> alarm comes at once, <code dir="auto">failClosedMs</code> after the head stopped. A real halt of the chain counts the same. <code dir="auto">evmHeadLag: 0</code> means a local chain that mines on demand
 and turns this check off: the preflight check refuses it on mainnet. The samples are kept in the state file, so a
 restart does not start the clock over.</li>
 <li><strong>A Kaspa node that stops.</strong> A node that has lost its peers or stopped syncing still answers, and the lag against
