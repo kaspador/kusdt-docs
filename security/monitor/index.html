@@ -495,7 +495,7 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 </tr>
 <tr>
 <td><code dir="auto">initialSkipped</code></td>
-<td>Optional: the skipped nonces from the same checkpoint. With it, a rebuilt monitor still judges a refund below the checkpoint</td>
+<td>The skipped nonces from the same checkpoint. With it, a rebuilt monitor judges a refund of a deposit from before the checkpoint. Without it, it cannot tell a skipped deposit from a minted one, so every such refund is an alarm and a pause. <code dir="auto">kusdt check</code> fails a monitor that starts after deposits were made and has no list</td>
 </tr>
 <tr>
 <td><code dir="auto">evmHeadLag</code></td>
