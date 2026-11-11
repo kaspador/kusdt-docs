@@ -106,7 +106,7 @@ wallet’s Bridge tab have “Get 1,000 test USDT”, which calls that open mint
 approve the vault to take exactly that amount, and then to make the deposit (<code dir="auto">depositAtLeast</code>, which names the
 least kUSDT you accept: see <a href="#what-you-receive">What you receive</a>). On
 Ethereum there can be a third prompt first: Ethereum’s USDT refuses to change a non-zero allowance, so the app
-resets an old allowance to 0 before it approves. The app then follows the deposit in its own window until it is minted. You can close the window: the bridge keeps going, and a tag stays in the corner of the page until it is done.</li>
+resets an old allowance to 0 before it approves. The app then follows the deposit in its own window until it is minted. You can close the window: the bridge keeps going, and a tag stays in the corner of the page until it is done. Stay on the Bridge page until your wallet has sent the deposit itself: if you leave it between the approval and the deposit, the app stops there, asks your wallet for nothing more and tells you so (the approval stays in place for your next bridge, and no USDT has moved).</li>
 <li><strong>The vault records it.</strong> The vault takes the USDT, keeps the fee, and emits a <code dir="auto">Deposit</code> event with the next
 deposit number (the <em>nonce</em>) and the amount to mint.</li>
 <li><strong>Finality.</strong> The bridge waits until the deposit’s block is at or below the chain’s <em>finalized</em> block, the

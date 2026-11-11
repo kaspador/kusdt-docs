@@ -135,7 +135,9 @@ Its config: <code dir="auto">deploymentPath</code>, <code dir="auto">kaspaRpc</c
 never a bridge key), <code dir="auto">statePath</code>, and <code dir="auto">initialPool</code> and <code dir="auto">scanFrom</code> when the deployment’s launch record is not where it
 should start (a checkpoint from the coordinator or a monitor). Optional: <code dir="auto">slackDaa</code> (50), <code dir="auto">tickDelayDaa</code> (25), <code dir="auto">marginDaa</code> (10), <code dir="auto">holdMs</code>
 (an hour), <code dir="auto">maxFeerate</code> (1 000 sompi a gram, ten times the floor), <code dir="auto">coins</code> (4) and <code dir="auto">coinValue</code> (5 KAS), <code dir="auto">alwaysOn</code>
-(tick whenever more than half of the cap is in use, evidence or not), <code dir="auto">dryRun</code>. Each tick spends one of its coins, free
+(tick whenever more than half of the cap is in use, evidence or not), <code dir="auto">dryRun</code>, <code dir="auto">kaspaSubmitRpcs</code> (extra Kaspa nodes its
+tick also goes to while a spend that no block can take holds the pool coin; the coordinator and the monitor take the
+same key for their mints and pauses, see “A parked state coin” in the runbook). Each tick spends one of its coins, free
 again as soon as that tick is neither in the node’s mempool nor accepted; on startup it splits its largest coin into
 the <code dir="auto">coins</code> it keeps (it refuses to start with <code dir="auto">coins</code> and <code dir="auto">coinValue</code> whose split no node would take, such as 8 coins
 of 0.2 KAS; a split refused later shows as a <code dir="auto">warning</code> in <code dir="auto">/health</code>). It asks its node’s mempool once a round, for the
@@ -321,7 +323,7 @@ sompi” with 940 KAS.</li>
 </tr>
 <tr>
 <td>KasPool covenant ID (TN10)</td>
-<td><code dir="auto">1d03dac450f1bb0b79b61e09544a5fbb900d8f1f7f5a8c24a0c785f10148f87e</code></td>
+<td><code dir="auto">091f00d0aee2fb6e69bf4d24488de1527d29063bac9cbadb6fc763bfecf3dcc2</code></td>
 </tr>
 <tr>
 <td>Web app</td>
@@ -395,7 +397,9 @@ and every pause it made.</li>
 <li><code dir="auto">GET /api/v1/signal</code> is the integrators’ answer: <code dir="auto">ok</code> false means stop taking new kUSDT. Pools, exchanges and
 wallets that hold kUSDT should poll it on more than one monitor (see <a href="/kusdt-docs/security/monitor/#the-integrators-signal">The monitor</a>).</li>
 <li>The coordinator logs every mint, release and follower move. <code dir="auto">MINTER NOT FOLLOWED</code> or <code dir="auto">POOL NOT FOLLOWED</code> needs
-a human.</li>
+a human. Before a follower gives a move up it reads that chain block from its node once more, and logs
+<code dir="auto">[kaspa scan] no body in hand proved a spend of a followed state</code>. That line alone needs nothing: only a
+<code dir="auto">NOT FOLLOWED</code> line or an alarm after it does.</li>
 </ul>
 <div class="sl-heading-wrapper level-h2"><h2 id="when-the-monitor-alarms">When the monitor alarms</h2><a class="sl-anchor-link" href="#when-the-monitor-alarms"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “When the monitor alarms”</span></a></div>
 <p>It has already paused every vault, the minter and the pool. Then:</p>
@@ -412,6 +416,8 @@ that was not cancelled, so stolen keys could queue a new forged payout the momen
 vault runs again. Each alarm names the transaction that queued it, and <code dir="auto">flagged</code> in the monitor’s status lists
 what is still queued. A cancelled payout stays cancelled: the vault refuses to queue it again, even with the
 signatures it was first queued with, until the owner reinstates it. Never reinstate a forged one.
+A deposit whose forged refund was cancelled is minted as any other afterwards: the monitor forgets a refund
+when it reads the vault’s <code dir="auto">RefundCancelled</code>, so that mint is no alarm. A refund that is reinstated counts again.
 <code dir="auto">reinstateRelease</code> and <code dir="auto">reinstateRefund</code> are for a payout that was cancelled and should be paid after all
 (an honest payout cancelled by mistake, or one cancelled because the token blocked its recipient during the
 wait and has unblocked it since). They wait 48 hours, a canceller can cancel them, and they must be announced

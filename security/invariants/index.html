@@ -120,7 +120,7 @@ part after every step.</p>
 </tr>
 <tr>
 <td>Signers</td>
-<td>A mint is signed only while the vault’s live <code dir="auto">depositMinted(nonce)</code>, read on every RPC, is non-zero, and never for a nonce the signer’s own minter follower shows skipped: no mint is signed after its refund (tested)</td>
+<td>A mint is signed only while the vault’s live <code dir="auto">depositMinted(nonce)</code>, read on every RPC, is non-zero, and never for a nonce the signer’s own minter follower shows skipped: no mint is signed after its refund (tested). A nonce its follower shows the minter has passed gets no first mint signature either, so old deposits cannot be charged to its daily limit (tested)</td>
 </tr>
 <tr>
 <td>Finality depth</td>
@@ -128,7 +128,7 @@ part after every step.</p>
 </tr>
 <tr>
 <td>Monitor</td>
-<td>A mint that names a deposit a vault refunded, or queued a refund for, is the alarm <code dir="auto">mint-of-refunded-deposit</code>: from the refunds the monitor has seen, which a Kaspa reorg does not make it forget, and from <code dir="auto">isRefunded(nonce)</code> read on every RPC (tested). It comes after the fact and pauses everything; it does not undo the mint</td>
+<td>A mint that names a deposit a vault refunded, or queued a refund for, is the alarm <code dir="auto">mint-of-refunded-deposit</code>: from the refunds the monitor has seen that the owner has not cancelled, which a Kaspa reorg does not make it forget, and from <code dir="auto">isRefunded(nonce)</code> read on every RPC (tested). It comes after the fact and pauses everything; it does not undo the mint</td>
 </tr>
 </tbody>
 </table>

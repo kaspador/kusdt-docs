@@ -85,8 +85,11 @@ that names fewer states cannot hide one. It cannot tell a burn owner from any ot
 output is recorded as a possible burn. A real burn can never be spent, so a record whose output is later spent
 is dropped. Without that, someone moving a few units through their own script left a record per move for good,
 for network fees alone, until the state could no longer be saved. Now the records an outsider can keep are
-bounded by the KAS their unspent outputs hold. A burn dropped by mistake is found again in the UTXO set when
-its release shows up.</li>
+bounded by the KAS their unspent outputs hold. A burn dropped by mistake, or one from before the checkpoint a
+rebuilt monitor started at, is looked for in the UTXO set when its release shows up. “No burn” is then only the
+node’s own answer, given in that round by a node that is synced: a look that failed is made again next round, and
+none is made in a round that did not read Kaspa. A look that keeps failing still fails closed: after two minutes
+for a queued payout (five for a paid one) it is <code dir="auto">unverifiable</code>.</li>
 <li><strong>It follows the pool</strong> from its genesis (<code dir="auto">initialPool</code>), verifying each successor the same way.</li>
 <li><strong>It can only stop things.</strong> On any alarm it pauses every vault, the minter and the pool. It never unpauses: that takes 4
 of 5 signers on Kaspa and the vault owner on each chain.</li>
@@ -151,7 +154,7 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 </tr>
 <tr>
 <td><code dir="auto">release-without-burn</code>, <code dir="auto">release-mismatch</code></td>
-<td>A vault queued or paid a <code dir="auto">redeemId</code> that is no kUSDT burn, or not its amount, or not the recipient its burn owner commits to (INV-3)</td>
+<td>A vault queued or paid a <code dir="auto">redeemId</code> that is no kUSDT burn, or not its amount, or not the recipient its burn owner commits to (INV-3). For a burn the monitor did not read from a block, “no burn” is only its synced node’s own answer, given in that round</td>
 </tr>
 <tr>
 <td><code dir="auto">release-before-finality</code></td>
@@ -167,7 +170,7 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 </tr>
 <tr>
 <td><code dir="auto">mint-of-refunded-deposit</code></td>
-<td>A mint names a deposit a vault refunded, or queued a refund for (INV-2). The monitor keeps every refund it has seen, and a Kaspa reorg does not make it forget one; it also reads the vault’s <code dir="auto">isRefunded(nonce)</code> on every RPC for each mint it checks</td>
+<td>A mint names a deposit a vault refunded, or queued a refund for (INV-2). The monitor keeps every refund it has seen, and a Kaspa reorg does not make it forget one; it also reads the vault’s <code dir="auto">isRefunded(nonce)</code> on every RPC for each mint it checks. A refund the owner cancelled (<code dir="auto">RefundCancelled</code>) is forgotten, since the vault holds that deposit as not refunded again and its mint is the honest way on; one the owner reinstates counts again, and a paid one is never forgotten</td>
 </tr>
 <tr>
 <td><code dir="auto">signers-changed</code>, <code dir="auto">limits-raised</code>, <code dir="auto">value-changed</code></td>
@@ -198,16 +201,20 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 <td>A pause (a vault, the minter or the pool) has failed to go out for a minute, or the guardian key is not the one the minter or pool holds, which is at once. It is tried again every round; alarms already open keep everything paused</td>
 </tr>
 <tr>
+<td><code dir="auto">pause-unlanded</code></td>
+<td>Pauses of the minter or the pool have gone out for three minutes and the Kaspa chain has accepted none: a node took them, no block did. A transaction that no block can take may be holding the coin in ordinary nodes’ mempools (see <a href="/kusdt-docs/security/known-limits/#a-spend-of-the-pool-or-the-minter-that-no-block-can-take">Known limits</a>). The pause is sent again every 30 seconds, also through the extra nodes in <code dir="auto">kaspaSubmitRpcs</code>. The vaults’ pauses do not depend on it</td>
+</tr>
+<tr>
 <td><code dir="auto">vault-signers-differ</code></td>
 <td>A vault’s signers are neither the deployment’s nor a set announced in <code dir="auto">expectedOwnerCalls</code></td>
 </tr>
 <tr>
 <td><code dir="auto">minter-unverifiable</code></td>
-<td>The minter moved in a way the monitor cannot verify</td>
+<td>The minter moved in a way the monitor cannot verify, also after reading that chain block’s transactions from its node a second time</td>
 </tr>
 <tr>
 <td><code dir="auto">minter-lost</code></td>
-<td>The minter UTXO it follows is not in the node’s UTXO set with kUSDT’s covenant ID, on three caught-up checks, and no fetched transaction spends it</td>
+<td>The minter UTXO it follows is not in the node’s UTXO set with kUSDT’s covenant ID, on three caught-up checks, and no fetched transaction spends it. If the minter’s own address holds more coins than can be listed, the check cannot be made: that is neither a miss nor an alarm, and <code dir="auto">/health</code> says so with the address (<a href="/kusdt-docs/security/known-limits/#an-address-that-holds-too-many-coins-cannot-be-listed">Known limits</a>). The same holds for <code dir="auto">pool-lost</code></td>
 </tr>
 <tr>
 <td><code dir="auto">vault-blocked</code></td>
@@ -215,7 +222,7 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 </tr>
 <tr>
 <td><code dir="auto">pool-unverifiable</code></td>
-<td>The pool was spent in a way the monitor cannot verify</td>
+<td>The pool was spent in a way the monitor cannot verify, also after reading that chain block’s transactions from its node a second time</td>
 </tr>
 <tr>
 <td><code dir="auto">pool-lost</code></td>
@@ -243,7 +250,7 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 </tr>
 <tr>
 <td><code dir="auto">unverifiable</code></td>
-<td>A chain, the Kaspa node, or a step of the check could not be read for <code dir="auto">failClosedMs</code> (5 minutes by default, shorter than a payout’s wait), including the deposits behind a mint; an EVM head or a Kaspa virtual DAA that has stopped moving; or a Kaspa view that stays far behind without catching up (see <a href="#when-it-cannot-read-a-chain">below</a>). Also a queued payout that is still unjudged two thirds of the way through its wait, whatever kept it unjudged. The monitor fails closed: everything stays paused until it can check again</td>
+<td>A chain, the Kaspa node, or a step of the check could not be read for <code dir="auto">failClosedMs</code> (5 minutes by default, shorter than a payout’s wait), including the deposits behind a mint; an EVM head or a Kaspa virtual DAA that has stopped moving; or a Kaspa view that stays far behind without catching up (see <a href="#when-it-cannot-read-a-chain">below</a>). Also a queued payout that is still unjudged two thirds of the way through its wait, whatever kept it unjudged; and a payout whose burn could not be looked for in the UTXO set for two minutes (five for a paid one). The monitor fails closed: everything stays paused until it can check again</td>
 </tr>
 <tr>
 <td><code dir="auto">crash-loop</code></td>
@@ -367,7 +374,7 @@ the events of the vault’s own deployment are not owner actions;</li>
 vault or on the manager itself. It is caught when it is queued, a full delay before it can run;</li>
 <li>with <code dir="auto">cancellerEvmSecretPath</code>, a key holding the AccessManager’s canceller role, the monitor cancels what nobody
 announced. Since rc.16 that includes the Safe’s power-adding calls on the manager itself (a role granted, a
-function remapped, a guardian replaced). The removal of a canceller it cannot cancel: nobody can, by design (see
+function remapped, a guardian replaced), and since round 11 its <code dir="auto">revokeRole</code> calls. The removal of a canceller (<code dir="auto">revokeCanceller</code>) it cannot cancel: no canceller can, by design (see
 <a href="/kusdt-docs/security/governance/#kusdtvault-evm-the-owner">Governance</a>). Without the key, it alarms and pauses, and a person cancels. A cancel that fails is tried again every round
 until it goes through, someone else cancels or runs the operation, or the operation has expired. Cancels never hold
 up the checks or the pause.</li>
@@ -451,7 +458,7 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 <tbody>
 <tr>
 <td><code dir="auto">GET /health</code></td>
-<td>200 when healthy and the last check is fresh (under 5 minutes old), otherwise 503. It also answers 503 while its Kaspa view lags (600 DAA scores by default), so an operator learns about a stalled node before alarms would come late. Its <code dir="auto">warnings</code> list a guardian short of gas (under 0.001) or of spendable KAS (under 1 KAS in its four largest coins), and a chain whose releases exceed what its deposits minted by more than its <code dir="auto">releaseCapacity</code> (or <code dir="auto">releaseImbalanceWarnUnits</code>), by name, all read every 5 minutes: a warning is never an alarm and pauses nothing. Moving value across chains is a normal use, and the warning shows when it has gone far. Wire it to uptime alerts</td>
+<td>200 when healthy and the last check is fresh (under 5 minutes old), otherwise 503. It also answers 503 while its Kaspa view lags (600 DAA scores by default), so an operator learns about a stalled node before alarms would come late. Its <code dir="auto">warnings</code> list a guardian short of gas (under 0.001) or of spendable KAS (under 1 KAS in its four largest coins), and a chain whose releases exceed what its deposits minted by more than its <code dir="auto">releaseCapacity</code> (or <code dir="auto">releaseImbalanceWarnUnits</code>), by name, all read every 5 minutes: a warning is never an alarm and pauses nothing. Moving value across chains is a normal use, and the warning shows when it has gone far. Since round 11 the warnings also name a transaction in the monitor’s node’s mempool that spends the minter or the pool coin and that no block will take (looked for every 10 seconds): anyone can place one on the pool for a fee, so it is never an alarm and pauses nothing. Wire it to uptime alerts</td>
 </tr>
 <tr>
 <td><code dir="auto">GET /api/v1/signal</code></td>
@@ -459,7 +466,7 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 </tr>
 <tr>
 <td><code dir="auto">GET /api/v1/monitor</code></td>
-<td>The last check, the alarms, the warnings, the pauses, the cancels, the minter state, and <code dir="auto">pool</code>: <code dir="auto">{utxo, paused, kasReserve, windowOut}</code> (<code dir="auto">null</code> when no pool is configured)</td>
+<td>The last check, the alarms, the warnings, <code dir="auto">parked</code> (the mempool spends of the minter or pool coin that no block will take: <code dir="auto">{txid, what, spends, why, since, lastSeen, feerate}</code>), the pauses, the cancels, the minter state, and <code dir="auto">pool</code>: <code dir="auto">{utxo, paused, kasReserve, windowOut}</code> (<code dir="auto">null</code> when no pool is configured). The lists hold the newest entries (up to 200 open alarms, 50 acknowledged ones, 100 flagged payouts and 100 cancels); <code dir="auto">counts</code> says how many there are in all, with the mint, burn and skip records as counted at the end of the last round</td>
 </tr>
 <tr>
 <td><code dir="auto">POST /api/v1/alarms/:id/acknowledge</code></td>
@@ -467,6 +474,9 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 </tr>
 </tbody>
 </table>
+<p>The four <code dir="auto">GET</code> answers are public. Each is built at most once a second, however many ask, so an answer can be up to a
+second old (an acknowledgement shows at once). With <code dir="auto">apiClientIp</code> set, one client address gets 240 requests a minute
+(HTTP 429 with <code dir="auto">retryAt</code> past that). The requests are answered by the same process that judges and pauses: keep the limit on.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="configuration">Configuration</h3><a class="sl-anchor-link" href="#configuration"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Configuration”</span></a></div>
 <table>
 <thead>
@@ -483,6 +493,10 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 <tr>
 <td><code dir="auto">kaspaRpc</code>, <code dir="auto">evmRpcs</code></td>
 <td>The monitor’s own Kaspa node and EVM RPCs (by chain code)</td>
+</tr>
+<tr>
+<td><code dir="auto">kaspaSubmitRpcs</code></td>
+<td>Optional: extra Kaspa nodes (wRPC URLs) a Kaspa pause is also submitted to when <code dir="auto">kaspaRpc</code> refuses it or does not answer, and at every retry. Nodes that build block templates and are connected to mining nodes. Nothing is read from them</td>
 </tr>
 <tr>
 <td><code dir="auto">guardianKaspaSecretPath</code>, <code dir="auto">guardianEvmSecretPath</code></td>
@@ -575,6 +589,14 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 <tr>
 <td><code dir="auto">bearerPath</code></td>
 <td>The operator bearer token for acknowledging alarms</td>
+</tr>
+<tr>
+<td><code dir="auto">apiClientIp</code></td>
+<td>Turns on the limit of status requests per client address, and says where that address is: <code dir="auto">x-forwarded-for</code> behind the Caddy the mainnet package ships, <code dir="auto">cf-connecting-ip</code> only where nothing but Cloudflare reaches the proxy, <code dir="auto">socket</code> with nothing in front. The preflight check fails a mainnet config without it</td>
+</tr>
+<tr>
+<td><code dir="auto">apiRequestsPerMinute</code></td>
+<td>Optional: how many requests one client address may make a minute; 240 by default. Acknowledging is counted apart from the status requests</td>
 </tr>
 <tr>
 <td><code dir="auto">listen</code></td>

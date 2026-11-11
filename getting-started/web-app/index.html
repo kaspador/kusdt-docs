@@ -158,6 +158,14 @@ the next check. A held refund shows the same way.</li>
 Only a wallet that approved the connection during this visit does. Until then the bridge-back form offers
 “Connect again to use my wallet address”, and Connect ends the stored session first, so your wallet has to
 approve now. Nothing the other end of a stored session sends changes that.</li>
+<li><strong>The form you clicked on</strong>: a form is locked while its action runs, and before every signature the page checks
+that the form still shows what you clicked and that its page is still on screen. If you leave the page while an
+action runs (another page, Back, the same page opened again), your wallet is asked for nothing more for it, and a
+notice on every page says where it stopped: for a bridge to Kaspa, whether its approval was already sent (it stays
+in place for your next bridge; no USDT moved); for a sale with KasWare, whether the kUSDT for it was already set
+aside (it is still yours). The page cannot close a request your wallet is already showing: the notice tells you to
+reject it, and until the wallet has answered it, no new action starts from the site. If you approve it all the
+same, it is sent with the values you entered then, and the site says so and follows it as usual.</li>
 <li><strong>Dollar figures</strong>: KAS is counted at the market price from api.kaspa.org, for display only. No transaction, quote
 or minimum is computed from it.</li>
 </ul>

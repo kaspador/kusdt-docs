@@ -162,8 +162,8 @@ in that window as well, so just under three times its ceiling can leave a vault.
 </tr>
 <tr>
 <td>A compromised vault owner gives itself power through the manager (a new GOVERNOR with no delay, a function remapped)</td>
-<td>Until rc.16 no canceller could cancel such a call: it could be seen for 48 hours and not stopped. Now the cancellers can cancel the manager’s power-adding calls too. Removing a canceller can’t be cancelled (or a rogue one could never be removed), so a stolen Safe must first remove every canceller, 48 hours in plain sight, and then add power, 48 hours more</td>
-<td>Bounded, with tests (10 November 2026): about 96 hours instead of 48. Not prevented: if nobody acts in that time, the Safe’s holder wins</td>
+<td>Until rc.16 no canceller could cancel such a call: it could be seen for 48 hours and not stopped. Now the cancellers can cancel the manager’s power-adding calls too. Removing a canceller can’t be cancelled (or a rogue one could never be removed), so a stolen Safe must first remove every canceller, 48 hours in plain sight, and then add power, 48 hours more. Since round 11 the same holds for taking the Safe’s own roles away under a paused vault (a freeze for good): the cancellers can cancel that too</td>
+<td>Bounded, with tests (10 and 11 November 2026): about 96 hours instead of 48. Not prevented: if nobody acts in that time, the Safe’s holder wins</td>
 </tr>
 <tr>
 <td>A cancelled payout queued again with the signatures it was first queued with</td>
@@ -498,6 +498,12 @@ stop the bridge and the pool:</p>
 <li>stall the bridge, by not collecting or not submitting signatures;</li>
 <li>report false status through its API.</li>
 </ul>
+<p>Whoever takes the coordinator over also holds its five bearer tokens and its address, and can ask the signers for
+signatures. What that can cost is bounded on the signers’ side: each works on at most 16 sign requests at a time and
+600 a minute (its RPC plans are what the requests use), a mint of a deposit the minter has already passed is refused
+and not charged to the daily limit, and a release or refund is signed only for a burn or skip the signer finds
+itself. After such a takeover, have every signer’s operator replace the bearer token before the new coordinator
+goes up.</p>
 <p>It cannot redirect funds: every signature binds the exact recipient and amount, and the contracts check them.
 Anyone holding valid signatures can submit them without the coordinator. Every important API answer can be
 checked against a node.</p>
@@ -562,12 +568,13 @@ than a day;</li>
 48-hour admin call), and every change becomes public 48 hours before it takes effect (<code dir="auto">setGuardian</code>
 and <code dir="auto">unpause</code>: about 6 hours). The monitor alarms the moment a change it was not told about is queued, pauses the
 vaults, and can cancel it with a canceller key; the cancellers are parties other than the Safe’s holders. A rogue
-canceller can only cancel, and the Safe can revoke it (that too waits 48 hours, and cancellers cannot cancel it).</p>
+canceller can only cancel, and the Safe can remove it (that too waits 48 hours, and cancellers cannot cancel it).</p>
 <p>A compromised Safe can also try to change the manager itself, for example grant GOVERNOR to a key of its own with
-no delay. Since rc.16 any one canceller can cancel that as well. To get past the cancellers the Safe must revoke
-each of them first, which waits 48 hours and cannot be cancelled, and only then schedule the change, which waits 48
-hours more: about 96 hours in all, with every step public and alarmed. If nobody acts in that time, nothing else
-stops it.</p>
+no delay. Since rc.16 any one canceller can cancel that as well, and since round 11 also the removal of the Safe’s
+own roles, which would leave a paused vault with nobody to unpause it. To get past the cancellers the Safe must
+remove each of them first, which waits 48 hours and cannot be cancelled by them, and only then schedule the change,
+which waits 48 hours more: about 96 hours in all, with every step public and alarmed. If nobody acts in that time,
+nothing else stops it.</p>
 <p>The owner is the one party whose compromise is not capped by the release allowance, which is why it sits behind a
 multisig, a delay and independent cancellers.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="chains-and-nodes">Chains and nodes</h2><a class="sl-anchor-link" href="#chains-and-nodes"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Chains and nodes”</span></a></div>

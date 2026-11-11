@@ -135,7 +135,7 @@ signer can veto it until then. A mint restarts the wait.</p>
 monitor raises an alarm on a proposal the operators didn’t announce.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="kusdtvault-evm-the-owner">KusdtVault (EVM): the owner</h2><a class="sl-anchor-link" href="#kusdtvault-evm-the-owner"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “KusdtVault (EVM): the owner”</span></a></div>
 <p>Each vault has an <strong>owner</strong>. On mainnet the owner is <code dir="auto">KusdtAccessManager</code>, OpenZeppelin’s <code dir="auto">AccessManager</code> (5.1.0) with
-only <code dir="auto">renounceRole</code> closed, so nobody can give up a role at once and a pause can’t be made permanent. Its only
+<code dir="auto">renounceRole</code> closed, so nobody can give up a role at once, and <code dir="auto">revokeCanceller</code> added (below). Its only
 admin is the project Safe; the vault itself is unchanged. Every owner call goes through the manager: the Safe
 schedules it, waits its delay, then executes it within a week. Calling the vault directly reverts.</p>
 <table>
@@ -176,19 +176,19 @@ schedules it, waits its delay, then executes it within a week. Calling the vault
 <td>CANCELLER</td>
 <td>Independent cancellers</td>
 <td></td>
-<td>Cancel any scheduled GOVERNOR or EMERGENCY call, and the Safe’s scheduled power-adding calls on the manager itself</td>
+<td>Cancel any scheduled GOVERNOR or EMERGENCY call, and the Safe’s scheduled power-adding calls and revocations on the manager itself</td>
 </tr>
 <tr>
 <td>GUARDED</td>
 <td>Nobody</td>
 <td></td>
-<td>Nothing. The manager’s own power-adding functions are mapped to it, so that the cancellers can cancel them</td>
+<td>Nothing. The manager’s own power-adding functions and <code dir="auto">revokeRole</code> are mapped to it, so that the cancellers can cancel them</td>
 </tr>
 </tbody>
 </table>
 <p><strong>One honest canceller stops a bad proposal.</strong> The cancellers are parties other than the Safe’s holders, and the
 monitor can hold a canceller key too, cancelling every queued call nobody announced. A canceller can only cancel:
-a rogue one can hold up vault calls, an emergency unpause included, until the Safe revokes it, which takes 48 hours
+a rogue one can hold up vault calls, an emergency unpause included, until the Safe removes it, which takes 48 hours
 and which no canceller can cancel.</p>
 <p><strong>The cancellers can also cancel the Safe’s power-adding calls on the manager</strong> (since rc.16). A compromised Safe
 could schedule a change to the manager itself, for example a new GOVERNOR with no delay, and use it 48 hours later.
@@ -197,18 +197,27 @@ Before, such a call could be seen but not cancelled. Now the manager’s functio
 <code dir="auto">setTargetClosed</code>, <code dir="auto">updateAuthority</code>) are mapped to GUARDED, a role nobody holds, whose guardian is CANCELLER. That
 changes who may cancel them, not who may call them: only the Safe calls them, with its 48 hours, and any one
 canceller can cancel one while it waits.</p>
-<p><strong>Revoking a canceller is deliberately not cancellable.</strong> If it were, one rogue canceller could cancel its own
-removal for ever. So <code dir="auto">revokeRole</code> stays outside GUARDED. The result: whoever holds the Safe must first remove every
-canceller, which takes 48 hours in plain sight, and only then can schedule a power-adding call, which takes 48
-hours more. <strong>A stolen Safe needs about 96 hours, not 48.</strong> Every monitor alarms the moment such a call is queued
-(<code dir="auto">owner-op-unannounced</code>) and pauses everything. The revocations come first, and they are the signal for the people
-behind the Safe to act: no canceller can stop a revocation.</p>
+<p><strong>Removing a canceller is deliberately not cancellable, and it is the only revocation that isn’t.</strong> If it were, one
+rogue canceller could cancel its own removal for ever. So a canceller is removed through a function of its own,
+<code dir="auto">revokeCanceller</code>, which removes cancellers only and stays outside GUARDED: the Safe’s 48 hours, and only the Safe
+can cancel it. Every other revocation goes through <code dir="auto">revokeRole</code>, which is mapped to GUARDED like the power-adding
+calls (since round 11). Before, <code dir="auto">revokeRole</code> was left outside, and that covered the Safe’s own roles: stolen Safe
+keys could pause a vault and schedule the removal of every role the Safe holds, and 48 hours later nobody could
+ever unpause it, with no canceller able to stop that.</p>
+<p>The result: whoever holds the Safe must first remove every canceller, which takes 48 hours in plain sight, and
+only then can schedule a power-adding call or strip the Safe’s roles, which takes 48 hours more. <strong>A stolen Safe
+needs about 96 hours, not 48, to take a vault’s money or to freeze it for good.</strong> Every monitor alarms the moment
+such a call is queued (<code dir="auto">owner-op-unannounced</code>) and pauses everything. The removals of the cancellers come first,
+and they are the signal for the people behind the Safe to act: no canceller can stop those.</p>
+<p>It is a delay, not a stop. If nobody acts in those 96 hours, stolen Safe keys still win. And one delay grew with
+this change: when a rogue canceller and a role that has to be revoked come together, the Safe needs 48 hours to
+remove the canceller and 48 more for the revocation.</p>
 <p>What a canceller still cannot do: call anything, schedule anything, or stop its own removal. What a rogue
 canceller can do is delay, as above.</p>
 <p>The deployer builds the manager, gives it its roles and gives up every role of its own in the launch
 (<code dir="auto">npm run mainnet:execute</code>), and <code dir="auto">npm run mainnet:verify</code> checks all of it on-chain against the reviewed plan: the
 manager’s code is the build’s byte for byte, the Safe is a genuine one with no modules or guard, every role’s members and delays, every function’s role, that the
-manager’s eight power-adding functions are mapped to GUARDED and <code dir="auto">revokeRole</code> is not, and that no
+manager’s eight power-adding functions and <code dir="auto">revokeRole</code> are mapped to GUARDED and <code dir="auto">revokeCanceller</code> is not, and that no
 one else holds a role. Testnet vaults are owned by the deployer’s plain key.</p>
 <table>
 <thead>
