@@ -199,7 +199,7 @@ bundle as <code dir="auto">keeper.kaspa</code>).</p>
 </tr>
 <tr>
 <td><code dir="auto">kusdt check &lt;config&gt;</code></td>
-<td>A preflight for a signer, the coordinator or the monitor that signs and sends nothing. It checks: <ul><li>the files and their modes;</li><li>the mainnet USDT pins;</li><li>the launch checkpoint, whose signer set must hash from the deployment’s five keys;</li><li>a synced mainnet node with a UTXO index;</li><li>RPCs that agree.</li></ul> Then, by role: a signer is in both vaults at its index; the coordinator reaches each signer as the deployment names it, and holds KAS and gas; the monitor’s keys are the guardian everywhere</td>
+<td>A preflight for a signer, the coordinator or the monitor that signs and sends nothing. It checks: <ul><li>the files and their modes;</li><li>the mainnet USDT pins;</li><li>the launch checkpoint, whose signer set must hash from the deployment’s five keys, and whose DAA score for the minter must not be below the node’s (since round 12);</li><li>the pair: each vault is this kUSDT’s own (it has taken every deposit the minter is past, queued no payout while nothing was minted, and was made before the genesis), and a saved state that shares only the covenant or only a vault with the deployment is told not to start (since round 12);</li><li>a synced mainnet node with a UTXO index;</li><li>RPCs that agree.</li></ul> Then, by role: a signer is in both vaults at its index; the coordinator reaches each signer as the deployment names it, and holds KAS and gas; the monitor’s keys are the guardian everywhere. It also reads the settings that stop or blind a service in silence: a coordinator’s <code dir="auto">holdMints</code> (it must be <code dir="auto">true</code> or <code dir="auto">false</code>, and <code dir="auto">true</code> is a warning that nothing is minted), a monitor’s <code dir="auto">judgeFromBlock</code> (block numbers per chain code, not above an RPC’s head; a warning when the monitor already has a state), and the extra Kaspa nodes of <code dir="auto">kaspaSubmitRpcs</code> (over <code dir="auto">wss://</code> or on your own network; each is asked for its network and whether it is synced). Every line names an RPC or a node by its scheme and host only, so the output can be shown to others: a path, a query or a user part, where a provider’s key sits, is never printed</td>
 </tr>
 </tbody>
 </table>
@@ -229,7 +229,8 @@ history.</p>
 <code dir="auto">--utxoindex</code>) uses 59.7 GB. The packages ask for a 100 GB NVMe SSD (<a href="/kusdt-docs/developers/mainnet-servers/">Mainnet servers</a>).</li>
 <li><strong>Keep the state file.</strong> A signer must keep, and back up, its state file (<code dir="auto">statePath</code>).</li>
 <li><strong>Away too long.</strong> Our compose files run the node with <code dir="auto">--retention-period-days=4</code>. A follower away longer logs that its cursor is older than the
-pruning point, and goes on from a checkpoint in its config (<code dir="auto">GET /api/v1/checkpoint</code> on a coordinator or monitor gives one). It is used only when the saved position is gone.</li>
+pruning point, and goes on from a checkpoint in its config (<code dir="auto">GET /api/v1/checkpoint</code> on a coordinator or monitor gives one). It is used only when the saved position is gone.
+The burns it had read do not all come with it: a signer and the coordinator forget theirs, and a monitor keeps only those that were already deeper than the deepest finality tier. Give a monitor <code dir="auto">initialBurns</code>, <code dir="auto">initialSkipped</code> and <code dir="auto">judgeFromBlock</code> from the same answer of another monitor (the runbook, “The burns from before a monitor’s checkpoint”).</li>
 <li><strong>Joining late.</strong> A signer that joins after the pruning window cannot rescan from the launch. It starts from a
 recent checkpoint instead: the current minter UTXO and state (<code dir="auto">initialMinter</code>, with <code dir="auto">scanFrom</code>). The minter’s
 script commits to its whole state, so the checkpoint can be checked against the UTXO set. The signer then
@@ -472,7 +473,7 @@ died. See <a href="/kusdt-docs/security/monitor/#a-monitor-that-keeps-dying">A m
 <tr>
 <td>Vault owner (a Safe, through an AccessManager on mainnet)</td>
 <td>Parameters within hard bounds, the signer set, the guardian, unpause, cancelling and reinstating payouts, fee withdrawal</td>
-<td>Every change waits its delay (48 hours; 6 for the guardian, unpause and a cancel), the monitor alarms when it is queued, and the cancellers can cancel it, a power-adding change to the manager itself included. To get past the cancellers a stolen Safe must remove them first: about 96 hours in all. The owner can never take backing</td>
+<td>Every change waits its delay (48 hours; 6 for the guardian, unpause and a cancel), the monitor alarms when it is queued, and the cancellers can cancel it, a power-adding change to the manager itself included. To get past the cancellers a stolen Safe must remove them or outlast them: 48 hours from their last cancel, 96 only if they cancel every try until they are removed. It can pause at once and keep a vault paused while it holds the Safe. The owner can never take backing</td>
 </tr>
 <tr>
 <td>Pool admin</td>
@@ -597,7 +598,10 @@ The monitors note it as announced. After 48 hours, the Safe executes it (<code d
 <li><strong>Switch.</strong> Everyone takes <code dir="auto">deployment.next.json</code> and restarts. The new signer starts; the old one stops for good.</li>
 <li><strong>Check.</strong> <code dir="auto">kusdt check</code> on every role, and <code dir="auto">npm run mainnet:verify -- &lt;deployment.json&gt; --plan plan.json --rpc rpc.json --launched</code>
 from a checkout of the tag. <code dir="auto">--launched</code> because the minter and the pool have moved since the launch: the two
-launch-only checks become warnings, and the plan is compared with the genesis five kept in <code dir="auto">launch.signers</code>.</li>
+launch-only checks become warnings, and the plan is compared with the genesis five kept in <code dir="auto">launch.signers</code>.
+If the rotation changed the minter’s guardian, <code dir="auto">deployment.next.json</code> records the new one in <code dir="auto">launch.guardian</code>
+and verify fails on it unless it is named: add <code dir="auto">--expected-guardian &lt;the announced key&gt;</code> (since round 12).
+<code dir="auto">rpc.json</code> needs two providers per chain.</li>
 </ol>
 <p>Between steps 2 and 3 the vaults already want the new key and Kaspa still the old one. The four unchanged signers
 carry both sides, so mints and releases go on. The local rehearsal (<code dir="auto">npm run local:rotate</code> in <code dir="auto">bridge/devnet</code>) runs

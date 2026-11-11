@@ -124,6 +124,13 @@ coordinator, a signer or the pool keeper gives a move up, the follower reads tha
 its node once more. If no body proves the move then either, the outcome is what it was. The regression tests are
 <code dir="auto">bridge/services/src/shared/accepted-budget.test.ts</code> and the <code dir="auto">round11-second-look</code> tests beside the monitor and the
 coordinator.</p>
+<p>Since round 12 the signers, the coordinator and the monitor make those second reads for a whole batch before they
+apply any of it. A follower used to wait on the node in the middle of a batch, with the first transactions of the
+batch already in its state and its saved position still before them; a state saved in that wait held records from
+above its own position, and after a restart and a reorg nothing undid them. Now a follower first walks the batch
+with the states it follows carried along on their own, makes every read there, and then applies the batch and
+writes its position in one run with no wait in it: what is on the disk is the state before a batch, or after it.
+The tests are <code dir="auto">bridge/services/src/shared/look-ahead.test.ts</code> and the <code dir="auto">round12</code> tests beside each service.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="when-the-chain-moves-anyway">When the chain moves anyway</h2><a class="sl-anchor-link" href="#when-the-chain-moves-anyway"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “When the chain moves anyway”</span></a></div>
 <p>A 10 BPS network reorganises a few blocks deep now and then. On 4 November 2026 TN10’s selected chain moved off a
 block the coordinator’s follower had already read 2 DAA scores deep. The follower then waited forever for

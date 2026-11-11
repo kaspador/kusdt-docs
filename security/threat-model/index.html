@@ -112,7 +112,7 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <tr>
 <td>Vault owner</td>
 <td>Nothing</td>
-<td>After its 48-hour delay, unless a canceller cancels it: replace the signers and raise limits within the hard bounds. To act without the cancellers it must first remove them all: about 96 hours</td>
+<td>After its 48-hour delay, unless a canceller cancels it: replace the signers and raise limits within the hard bounds. To act without the cancellers it must remove them all or outlast them: 48 hours from their last cancel (96 only if they cancel every try until they are removed). It can pause at once, and keep a vault paused for as long as it holds the Safe</td>
 </tr>
 <tr>
 <td>Pool admin</td>
@@ -162,8 +162,8 @@ in that window as well, so just under three times its ceiling can leave a vault.
 </tr>
 <tr>
 <td>A compromised vault owner gives itself power through the manager (a new GOVERNOR with no delay, a function remapped)</td>
-<td>Until rc.16 no canceller could cancel such a call: it could be seen for 48 hours and not stopped. Now the cancellers can cancel the manager’s power-adding calls too. Removing a canceller can’t be cancelled (or a rogue one could never be removed), so a stolen Safe must first remove every canceller, 48 hours in plain sight, and then add power, 48 hours more. Since round 11 the same holds for taking the Safe’s own roles away under a paused vault (a freeze for good): the cancellers can cancel that too</td>
-<td>Bounded, with tests (10 and 11 November 2026): about 96 hours instead of 48. Not prevented: if nobody acts in that time, the Safe’s holder wins</td>
+<td>Until rc.16 no canceller could cancel such a call: it could be seen for 48 hours and not stopped. Now the cancellers can cancel the manager’s power-adding calls too. Removing a canceller can’t be cancelled (or a rogue one could never be removed), so a stolen Safe must remove every canceller, 48 hours in plain sight, before a power-adding call can run uncancelled. Since round 11 the same holds for taking the Safe’s own roles away under a paused vault (a freeze that outlasts the keys): the cancellers can cancel that too</td>
+<td>Bounded, with tests (10 and 11 November 2026; the figures corrected in round 12): a theft takes 48 hours from the cancellers’ last cancel, 96 only when they cancel every re-schedule until they are removed. Not prevented: if nobody acts in that time, the Safe’s holder wins. Not bounded at all: a pause. The holder of the Safe’s keys pauses at once and cancels every unpause for as long as it holds them</td>
 </tr>
 <tr>
 <td>A cancelled payout queued again with the signatures it was first queued with</td>
@@ -222,7 +222,7 @@ in that window as well, so just under three times its ceiling can leave a vault.
 </tr>
 <tr>
 <td>A lying coordinator or API</td>
-<td>It can stall or censor, nothing more. Wallets check token states against their own node and pin the deployment; signers re-check everything. A rotation keeps the guardian the deployment records, whatever the coordinator says</td>
+<td>It can stall or censor, nothing more. Wallets check token states against their own node and pin the deployment, and ask the vault itself whether it can pay a burn before they build one; signers re-check everything. A rotation keeps the guardian the deployment records, whatever the coordinator says</td>
 <td>By design</td>
 </tr>
 <tr>
@@ -572,9 +572,12 @@ canceller can only cancel, and the Safe can remove it (that too waits 48 hours, 
 <p>A compromised Safe can also try to change the manager itself, for example grant GOVERNOR to a key of its own with
 no delay. Since rc.16 any one canceller can cancel that as well, and since round 11 also the removal of the Safe’s
 own roles, which would leave a paused vault with nobody to unpause it. To get past the cancellers the Safe must
-remove each of them first, which waits 48 hours and cannot be cancelled by them, and only then schedule the change,
-which waits 48 hours more: about 96 hours in all, with every step public and alarmed. If nobody acts in that time,
-nothing else stops it.</p>
+remove each of them, which waits 48 hours and cannot be cancelled by them. The change itself can be scheduled in
+the same minute and scheduled again whenever it is cancelled, so it runs 48 hours after the cancellers’ last
+cancel: at about hour 96 only if they cancel every re-schedule until they are removed, with every step public and
+alarmed. If nobody acts in that time, nothing else stops it. A pause needs none of this: the Safe pauses a vault at
+once and can cancel every unpause it scheduled, so a vault stays paused for as long as someone holds the Safe’s
+keys.</p>
 <p>The owner is the one party whose compromise is not capped by the release allowance, which is why it sits behind a
 multisig, a delay and independent cancellers.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="chains-and-nodes">Chains and nodes</h2><a class="sl-anchor-link" href="#chains-and-nodes"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Chains and nodes”</span></a></div>

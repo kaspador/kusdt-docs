@@ -468,11 +468,15 @@ from the vault, <code dir="auto">backing()</code> reports 0 rather than underflo
 </tr>
 <tr>
 <td><code dir="auto">access-manager.test.ts</code></td>
-<td>The vault owned by an AccessManager: the setup, GOVERNOR’s 48 h, EMERGENCY and PAUSER, what cancellers can and cannot cancel, everyone else refused, and changes to the rules taking ADMIN’s 48 h. Since rc.16: every power-adding call on the manager cancelled by a canceller and by no outsider, calling rights unchanged, a stolen Safe needing about 96 hours, and a rogue canceller unable to stop its own removal</td>
+<td>The vault owned by an AccessManager: the setup, GOVERNOR’s 48 h, EMERGENCY and PAUSER, what cancellers can and cannot cancel, everyone else refused, and changes to the rules taking ADMIN’s 48 h. Since rc.16: every power-adding call on the manager cancelled by a canceller and by no outsider, calling rights unchanged, a stolen Safe needing 96 hours while the cancellers cancel every try, and a rogue canceller unable to stop its own removal</td>
 </tr>
 <tr>
 <td><code dir="auto">revoke-guard.test.ts</code></td>
-<td>Round 11: the Safe’s own roles scheduled for removal under a paused vault are cancelled by a canceller; <code dir="auto">revokeRole</code> is mapped to GUARDED and <code dir="auto">revokeCanceller</code> to nothing; a canceller can’t cancel its own removal and can’t lock the Safe out; only the Safe calls <code dir="auto">revokeCanceller</code>, which removes cancellers only; a freeze for good takes about 96 hours</td>
+<td>Round 11: the Safe’s own roles scheduled for removal under a paused vault are cancelled by a canceller; <code dir="auto">revokeRole</code> is mapped to GUARDED and <code dir="auto">revokeCanceller</code> to nothing; a canceller can’t cancel its own removal and can’t lock the Safe out; only the Safe calls <code dir="auto">revokeCanceller</code>, which removes cancellers only; a freeze that outlasts the Safe’s keys takes 96 hours while the cancellers cancel</td>
+</tr>
+<tr>
+<td><code dir="auto">safe-compromise-times.test.ts</code></td>
+<td>Round 12: the real figures for stolen Safe keys. A freeze is one transaction (the Safe pauses with no delay and cancels every unpause it scheduled); a theft takes 48 hours from the cancellers’ last cancel, and 96 only when they cancel every re-schedule until they are removed; one Safe transaction queues many operations, each cancelled on its own</td>
 </tr>
 <tr>
 <td><code dir="auto">surge.test.ts</code></td>

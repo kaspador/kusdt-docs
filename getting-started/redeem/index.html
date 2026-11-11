@@ -91,7 +91,9 @@ allowed.</p>
 <p>One burn output is paid in one release, and a vault pays only from its own backing. The wallet and the web app
 refuse a burn the named vault cannot pay now: an amount, fee included, above its release capacity (250 000 USDT by
 default), its current <code dir="auto">releaseAvailable</code> or its backing, or a vault that is paused. They offer the other
-chain when that one can pay.</p>
+chain when that one can pay. They read all of this from the vault itself, over the chain’s RPCs, right before
+the burn; the bridge server’s figures alone are not enough, and when they disagree with the vault nothing is
+burnt and the wallet says so.</p>
 </li>
 <li>
 <p>The address must be one the vault would pay. Ethereum USDT keeps a blacklist; BSC-USD keeps none. The bridge

@@ -86,10 +86,28 @@ output is recorded as a possible burn. A real burn can never be spent, so a reco
 is dropped. Without that, someone moving a few units through their own script left a record per move for good,
 for network fees alone, until the state could no longer be saved. Now the records an outsider can keep are
 bounded by the KAS their unspent outputs hold. A burn dropped by mistake, or one from before the checkpoint a
-rebuilt monitor started at, is looked for in the UTXO set when its release shows up. “No burn” is then only the
-node’s own answer, given in that round by a node that is synced: a look that failed is made again next round, and
-none is made in a round that did not read Kaspa. A look that keeps failing still fails closed: after two minutes
-for a queued payout (five for a paid one) it is <code dir="auto">unverifiable</code>.</li>
+rebuilt monitor started at that its checkpoint’s list did not name, is looked for in the UTXO set when its release
+shows up. “No burn” is then only the node’s own answer, given in that round by a node that is synced: a look that
+failed is made again next round, and none is made in a round that did not read Kaspa or whose view of Kaspa is
+behind (such a round judges no payout, and an answer given in it would only be thrown away). A look that keeps
+failing still fails closed: after two minutes for a queued payout (five for a paid one) it is <code dir="auto">unverifiable</code>.</li>
+<li><strong>A checkpoint carries the unpaid burns.</strong> <code dir="auto">GET /api/v1/checkpoint</code>, asked with the operator bearer, lists every
+burn the monitor knows that no vault has paid (<code dir="auto">initialBurns</code>), read up to the block the checkpoint names, each
+with the chain block that accepted it. (Without the bearer the answer is the small one it always was: the list
+can be megabytes, and the public answers come from the process that judges and pauses.) A monitor started from that checkpoint takes the list in, so it need not find such a burn at its
+address, which anyone can fill with coins (<a href="/kusdt-docs/security/known-limits/#an-address-that-holds-too-many-coins-cannot-be-listed">Known limits</a>).
+A listed burn is still asked for in the UTXO set while its release waits: found, its depth is the node’s; “not
+there” ends it; a look that fails leaves it standing, and the release is judged by owner, amount and depth. A
+reorg that drops the block a listed burn names drops the burn. The list holds at most 20,000 burns, the largest
+first, and <code dir="auto">burnsLeftOut</code> says how many it is short of. A burn paid in the last half hour is still listed: a
+payment near the head can leave its chain and come again later. That answer is built once in 30 seconds.</li>
+<li><strong>What it saves is of one moment.</strong> The position it has read Kaspa up to and everything it took from the
+transactions up to there (the minter, the burns, the skips) go to the disk together. An alarm raised while a
+batch of transactions is being applied is saved once the whole batch is, a moment later.</li>
+<li><strong>After a gap longer than its node keeps</strong> it goes on from a checkpoint in its config. A reorg just below its old
+position went by unread, so of the burns it had read it keeps only those that were already deeper than the
+deepest finality tier when it stopped, and asks the UTXO set about them while a release waits. The others come
+back with the checkpoint’s list.</li>
 <li><strong>It follows the pool</strong> from its genesis (<code dir="auto">initialPool</code>), verifying each successor the same way.</li>
 <li><strong>It can only stop things.</strong> On any alarm it pauses every vault, the minter and the pool. It never unpauses: that takes 4
 of 5 signers on Kaspa and the vault owner on each chain.</li>
@@ -331,8 +349,12 @@ RPC. A pause that could not be sent is tried again the next round, on Kaspa as w
 <p>On Kaspa the minter’s and the pool’s pauses are built at the tip: the moves the node’s mempool and the blocks not yet
 read show ahead of the state the monitor has read, newest first, so a steady stream of spends cannot keep them out. A
 pause that goes out and is not followed within 30 seconds is sent again at a higher feerate, multiplied by 4 each try
-up to 1 024 sompi per gram, replacing its earlier copy. None of this is ever taken as the followed state: a spend
-ahead of it that later drops costs one rejected submit, and the tries go on until a pause is followed.</p>
+up to 6 400 sompi per gram, replacing its earlier copy. Since round 12 the next pause does not wait for those 30
+seconds when the coin the last one was built on is seen spent by another transaction (a mint that was already on its
+way, a swap): such a pause can never be accepted, and the next goes out in the same round. The monitor sees that in
+the blocks not yet read, in the state it has read, and in its node’s mempool, which it asks once a round for that one
+coin, with a deadline. None of this is ever taken as the followed state: a spend ahead of it that later drops costs
+one rejected submit, and the tries go on until a pause is followed.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="a-monitor-that-keeps-dying">A monitor that keeps dying</h3><a class="sl-anchor-link" href="#a-monitor-that-keeps-dying"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “A monitor that keeps dying”</span></a></div>
 <p>The failure clocks above live in the monitor’s memory and its state. A monitor that dies in every round (an RPC
 answer that exhausts its memory, a state it can no longer save) starts each time with fresh clocks, so none of
@@ -469,13 +491,19 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 <td>The last check, the alarms, the warnings, <code dir="auto">parked</code> (the mempool spends of the minter or pool coin that no block will take: <code dir="auto">{txid, what, spends, why, since, lastSeen, feerate}</code>), the pauses, the cancels, the minter state, and <code dir="auto">pool</code>: <code dir="auto">{utxo, paused, kasReserve, windowOut}</code> (<code dir="auto">null</code> when no pool is configured). The lists hold the newest entries (up to 200 open alarms, 50 acknowledged ones, 100 flagged payouts and 100 cancels); <code dir="auto">counts</code> says how many there are in all, with the mint, burn and skip records as counted at the end of the last round</td>
 </tr>
 <tr>
+<td><code dir="auto">GET /api/v1/checkpoint</code></td>
+<td>Where another follower can start: <code dir="auto">scanFrom</code>, <code dir="auto">initialMinter</code>, <code dir="auto">initialPool</code>, <code dir="auto">judgeFromBlock</code> and <code dir="auto">initialSkipped</code> (when the list is whole). With the operator bearer token (<code dir="auto">Authorization: Bearer ...</code>) also <code dir="auto">initialBurns</code> and <code dir="auto">burnsLeftOut</code> (the unpaid burns, at most 20,000): that is the answer a monitor starts from. All of one moment: copy them into a monitor’s config together, from one answer</td>
+</tr>
+<tr>
 <td><code dir="auto">POST /api/v1/alarms/:id/acknowledge</code></td>
 <td>With the operator bearer token: clears one alarm. Nothing unpauses</td>
 </tr>
 </tbody>
 </table>
 <p>The four <code dir="auto">GET</code> answers are public. Each is built at most once a second, however many ask, so an answer can be up to a
-second old (an acknowledgement shows at once). With <code dir="auto">apiClientIp</code> set, one client address gets 240 requests a minute
+second old (an acknowledgement shows at once). The checkpoint alone can be older: it lists every skipped deposit, so
+it is kept for twenty times the time building it took, up to a minute. The checkpoint with the burns, which only the operator bearer gets, is built once in 30 seconds. The one <code dir="auto">POST</code> is refused without the
+operator bearer before its body is read, and its body is 4 kB at the most. With <code dir="auto">apiClientIp</code> set, one client address gets 240 requests a minute
 (HTTP 429 with <code dir="auto">retryAt</code> past that). The requests are answered by the same process that judges and pauses: keep the limit on.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="configuration">Configuration</h3><a class="sl-anchor-link" href="#configuration"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Configuration”</span></a></div>
 <table>
@@ -561,6 +589,10 @@ second old (an acknowledgement shows at once). With <code dir="auto">apiClientIp
 <tr>
 <td><code dir="auto">judgeFromBlock</code></td>
 <td>Optional, per chain: for a monitor rebuilt with no state, the block events are judged from. Take it from a healthy monitor’s <code dir="auto">/api/v1/checkpoint</code></td>
+</tr>
+<tr>
+<td><code dir="auto">initialBurns</code></td>
+<td>The unpaid burns from the same checkpoint answer (asked with that monitor’s operator bearer), copied as they are. With them, a monitor that starts from the checkpoint does not have to find a burn from before it at its address when its release is queued. Taken in only with its own checkpoint: on an empty state, or when the monitor goes on from that checkpoint after a gap; a monitor with a state of its own logs that it left the list alone. It is the operators’ word: take it from a monitor you run. <code dir="auto">kusdt check</code> fails a list with an entry that is not a burn record, and warns when a monitor that starts after deposits were made has none</td>
 </tr>
 <tr>
 <td><code dir="auto">initialSkipped</code></td>

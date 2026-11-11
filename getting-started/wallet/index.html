@@ -122,6 +122,11 @@ shows you what it does, signs and submits it. A page never sees a key.</li>
 wallet checks its fields, recomputes its locking script, and finds that exact outpoint on the Kaspa node with
 the same script and the pinned covenant ID. A token state that fails is dropped; a pool state that fails is
 refused. See <a href="/kusdt-docs/architecture/following-states/">Following covenant states</a>.</li>
+<li><strong>It says what it could not check.</strong> A node lists the coins at an address all at once or not at all, and anyone
+can send an address coins. kUSDT at an address the node cannot list is shown apart from your balance, as not
+checked, and the rest of your kUSDT is unaffected. Send can spend it when you tick its box: the node then
+decides, and nothing is sent unless that kUSDT is there exactly as the wallet recorded it. See
+<a href="/kusdt-docs/security/known-limits/#an-address-that-holds-too-many-coins-cannot-be-listed">An address that holds too many coins</a>.</li>
 <li><strong>It refuses burns the vault cannot pay now</strong>: an amount, fee included, above the named vault’s release capacity, its current
 <code dir="auto">releaseAvailable</code> or its backing, a paused vault, or an amount at or below the release fee.</li>
 <li><strong>It refuses a recipient the vault would not pay.</strong> Before every burn it asks the coordinator
