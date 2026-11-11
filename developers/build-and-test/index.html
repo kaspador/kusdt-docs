@@ -108,74 +108,79 @@ blacklist. Nothing touches a real chain.</p>
 </thead>
 <tbody>
 <tr>
+<td>All Rust tests (the rows below, the pool’s attack and slot tests, and the rest)</td>
+<td>175</td>
+<td><code dir="auto">bridge/kaspa</code></td>
+</tr>
+<tr>
 <td>BridgeMint VM tests</td>
-<td>22</td>
+<td></td>
 <td><code dir="auto">bridge/kaspa/tests/bridge_mint.rs</code></td>
 </tr>
 <tr>
 <td>KasPool VM tests</td>
-<td>31</td>
+<td></td>
 <td><code dir="auto">bridge/kaspa/tests/pool.rs</code></td>
 </tr>
 <tr>
 <td>Covenant attacks</td>
-<td>8</td>
+<td></td>
 <td><code dir="auto">bridge/kaspa/tests/adversarial.rs</code></td>
 </tr>
 <tr>
 <td>KCC20 template</td>
-<td>1</td>
+<td></td>
 <td><code dir="auto">bridge/kaspa/tests/template.rs</code></td>
 </tr>
 <tr>
 <td>Checked-in artifacts (kUSDT and KasPool)</td>
-<td>2</td>
+<td></td>
 <td><code dir="auto">bridge/kaspa/tests/artifacts.rs</code></td>
 </tr>
 <tr>
 <td>Relay standardness of the real builders at their largest shapes</td>
-<td>4</td>
+<td></td>
 <td><code dir="auto">bridge/kaspa/tests/standard.rs</code></td>
 </tr>
 <tr>
 <td>Followers ignore decoy outputs</td>
-<td>3</td>
+<td></td>
 <td><code dir="auto">bridge/kaspa/tests/decoy_outputs.rs</code> (and <code dir="auto">bridge/packages/protocol/src/decoys.test.ts</code>)</td>
 </tr>
 <tr>
+<td>Protocol and request-parsing unit tests</td>
+<td></td>
+<td><code dir="auto">bridge/kaspa/src/protocol.rs</code>, <code dir="auto">src/model.rs</code></td>
+</tr>
+<tr>
 <td>Web app</td>
-<td>133 unit, 160 + 25 end to end</td>
+<td>249 unit, plus the end-to-end suites</td>
 <td><code dir="auto">bridge/web</code> (<code dir="auto">npm test</code>, <code dir="auto">npm run e2e</code>, <code dir="auto">npm run e2e:wallet</code>)</td>
 </tr>
 <tr>
 <td>Wallet extension</td>
-<td>123 unit, plus 6 simnet, 7 stack and the smoke suite</td>
+<td>227 unit, plus the simnet, stack and smoke suites</td>
 <td><code dir="auto">wallet/extension</code></td>
 </tr>
 <tr>
-<td>Protocol and request-parsing unit tests</td>
-<td>6</td>
-<td><code dir="auto">bridge/kaspa/src/protocol.rs</code>, <code dir="auto">src/model.rs</code></td>
-</tr>
-<tr>
 <td>Vault (Hardhat)</td>
-<td>121</td>
+<td>209</td>
 <td><code dir="auto">bridge/evm/test/</code></td>
 </tr>
 <tr>
 <td>Services</td>
-<td>119</td>
+<td>672, one of them an expected failure</td>
 <td><code dir="auto">bridge/services/src/**/*.test.ts</code></td>
 </tr>
 <tr>
-<td>Kaspa client, protocol, core</td>
-<td>59, 28, 4</td>
+<td>Kaspa client, protocol</td>
+<td>60, 57</td>
 <td><code dir="auto">bridge/packages/*</code></td>
 </tr>
 <tr>
-<td>Mainnet deployer</td>
-<td>16</td>
-<td><code dir="auto">bridge/devnet/src/mainnet-deploy.test.ts</code></td>
+<td>Deployer and test tools</td>
+<td>118</td>
+<td><code dir="auto">bridge/devnet/src/*.test.ts</code></td>
 </tr>
 <tr>
 <td>Mainnet rehearsal</td>

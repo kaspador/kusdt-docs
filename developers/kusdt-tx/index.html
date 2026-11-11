@@ -112,23 +112,31 @@ Kaspa’s script engine, checks relay standardness, and prices the fee from Kasp
 </tr>
 <tr>
 <td><code dir="auto">pool-init</code></td>
-<td>The first deposit: <code dir="auto">pool</code>, <code dir="auto">provider</code>, <code dir="auto">kasIn</code>, <code dir="auto">tokensIn</code>, <code dir="auto">positionOwner</code>, <code dir="auto">tokenValue</code>, <code dir="auto">positionValue</code></td>
+<td>The first deposit: <code dir="auto">pool</code>, <code dir="auto">provider</code>, <code dir="auto">kasIn</code>, <code dir="auto">tokensIn</code>, <code dir="auto">positionOwner</code>, <code dir="auto">tokenValue</code>, <code dir="auto">positionValue</code>, <code dir="auto">adminSecretKey</code> (the pool admin’s key: the first deposit takes its signature)</td>
 </tr>
 <tr>
 <td><code dir="auto">pool-buy</code></td>
-<td>KAS in: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">kasIn</code>, <code dir="auto">tokensOut</code>, <code dir="auto">buyer</code>, <code dir="auto">tokenValue</code></td>
+<td>KAS in: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">kasIn</code>, <code dir="auto">tokensOut</code>, <code dir="auto">buyer</code>, <code dir="auto">tokenValue</code>, <code dir="auto">nowDaa</code> (optional while at most half of the cap is in use; it claims the <code dir="auto">pool</code> UTXO’s age as <code dir="auto">pool-sell</code> does)</td>
 </tr>
 <tr>
 <td><code dir="auto">pool-sell</code></td>
-<td>kUSDT in: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">payer</code>, <code dir="auto">tokensIn</code>, <code dir="auto">kasOut</code>, <code dir="auto">tokenValue</code>, <code dir="auto">nowDaa</code> (required: a DAA score the DAG has reached; the builder claims the age of the <code dir="auto">pool</code> UTXO, <code dir="auto">nowDaa</code> less its <code dir="auto">blockDaaScore</code> capped at two windows, as the input’s relative lock). A sell over the circuit breaker is refused</td>
+<td>kUSDT in: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">payer</code>, <code dir="auto">tokensIn</code>, <code dir="auto">kasOut</code>, <code dir="auto">tokenValue</code>, <code dir="auto">nowDaa</code> (required: a DAA score the DAG has reached; the builder claims the age of the <code dir="auto">pool</code> UTXO, <code dir="auto">nowDaa</code> less its <code dir="auto">blockDaaScore</code> capped at two windows, as the input’s relative lock). A sell over the circuit breaker is refused. While more than half of the cap is in use (<code dir="auto">windowOut</code> above half of <code dir="auto">maxOutBps</code> of <code dir="auto">windowRef</code>) every buy, sell, add and remove must claim at least <code dir="auto">windowLen ÷ 720</code> (50 DAA), except a remove while the pool is paused: on a younger pool UTXO, or one with no <code dir="auto">blockDaaScore</code> (only in the mempool), the builder refuses and says from which DAA score it can be built. Build at that DAA score: it claims exactly the minimum</td>
 </tr>
 <tr>
 <td><code dir="auto">pool-add</code></td>
-<td>Add liquidity: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">provider</code>, <code dir="auto">kasIn</code>, <code dir="auto">tokensIn</code>, <code dir="auto">shares</code>, <code dir="auto">positionOwner</code>, <code dir="auto">tokenValue</code>, <code dir="auto">positionValue</code></td>
+<td>Add liquidity: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">provider</code>, <code dir="auto">kasIn</code>, <code dir="auto">tokensIn</code>, <code dir="auto">shares</code>, <code dir="auto">positionOwner</code>, <code dir="auto">tokenValue</code>, <code dir="auto">positionValue</code>, <code dir="auto">nowDaa</code> (it claims the pool UTXO’s age, as a swap does), and <code dir="auto">adminSecretKey</code> for the first deposit into an emptied pool (only the 1000 unowned shares left), which starts the reference again at the new reserve</td>
 </tr>
 <tr>
 <td><code dir="auto">pool-remove</code></td>
-<td>Burn a Position: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">position</code>, <code dir="auto">positionSecretKey</code>, <code dir="auto">kasOut</code>, <code dir="auto">tokensOut</code>, <code dir="auto">receiver</code>, <code dir="auto">tokenValue</code></td>
+<td>Burn a Position: <code dir="auto">pool</code>, <code dir="auto">reserve</code>, <code dir="auto">position</code>, <code dir="auto">positionSecretKey</code>, <code dir="auto">kasOut</code>, <code dir="auto">tokensOut</code>, <code dir="auto">receiver</code>, <code dir="auto">tokenValue</code>, <code dir="auto">nowDaa</code> (as <code dir="auto">pool-add</code>; while the pool is paused it claims 0 whatever <code dir="auto">nowDaa</code> says)</td>
+</tr>
+<tr>
+<td><code dir="auto">pool-tick</code></td>
+<td>Anyone settles the breaker and nothing else: <code dir="auto">pool</code> (with its <code dir="auto">blockDaaScore</code>), <code dir="auto">nowDaa</code>; it claims the pool UTXO’s age, at least <code dir="auto">windowLen ÷ 720</code>; refused while the pool is paused</td>
+</tr>
+<tr>
+<td><code dir="auto">split</code></td>
+<td>Plain coins into <code dir="auto">count</code> (1 to 16) coins of <code dir="auto">value</code> sompi each, all to <code dir="auto">changeAddress</code>, the rest as change, or added to the last coin when under 0.2 KAS (the pool keeper’s coins): <code dir="auto">funding</code>, <code dir="auto">count</code>, <code dir="auto">value</code>; <code dir="auto">feerate</code> at most 1 000</td>
 </tr>
 <tr>
 <td><code dir="auto">pool-collect</code></td>
@@ -204,8 +212,8 @@ anywhere.</p></div></aside>
 </tr>
 <tr>
 <td><code dir="auto">govern-digest</code></td>
-<td><code dir="auto">{covenantId, adminNonce, action}</code></td>
-<td><code dir="auto">{digest, quorum, params}</code></td>
+<td><code dir="auto">{covenantId, adminNonce, ageDaa, action, outpoint?}</code>; <code dir="auto">ageDaa</code> is the age the governance transaction will claim (signed; 0 if absent, at most 2³² − 1); <code dir="auto">outpoint</code> is <code dir="auto">{transactionId, index}</code> of the minter UTXO the action spends, required for <code dir="auto">unpause</code> (which signs it) and ignored otherwise</td>
+<td><code dir="auto">{digest, quorum, params, ageDaa}</code></td>
 </tr>
 <tr>
 <td><code dir="auto">burn-owner</code></td>

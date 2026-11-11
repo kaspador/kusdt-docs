@@ -93,7 +93,7 @@ way new kUSDT comes into existence. There is exactly one BridgeMint UTXO; every 
 </tr>
 <tr>
 <td>Pause</td>
-<td>The guardian key can pause minting. Only 4 of the 5 signers can resume it, so a bad minting quorum of 3 cannot undo a pause</td>
+<td>The guardian key can pause minting. Only 4 of the 5 signers can resume it, so a bad minting quorum of 3 cannot undo a pause. A pause also voids every governance signature made before it</td>
 </tr>
 <tr>
 <td>Governance</td>
@@ -129,6 +129,14 @@ way new kUSDT comes into existence. There is exactly one BridgeMint UTXO; every 
 <tr>
 <td><code dir="auto">MAX_MINTS</code></td>
 <td>3 recipients per mint</td>
+</tr>
+<tr>
+<td><code dir="auto">MAX_LIMIT</code></td>
+<td>10¹⁵ base units: the highest allowance ceiling and refill rate <code dir="auto">set_limits</code> accepts (the lifetime cap)</td>
+</tr>
+<tr>
+<td><code dir="auto">MIN_MINTED_VALUE</code></td>
+<td>100 000 000 sompi (1 KAS): the least KAS every minted output carries</td>
 </tr>
 <tr>
 <td><code dir="auto">CHAIN_ETHEREUM</code>, <code dir="auto">CHAIN_BSC</code></td>
@@ -217,17 +225,32 @@ commitment equal to the minter’s (zero);</li>
 each signature verifies over the mint digest with the indexed key;</li>
 <li>the successor BridgeMint has exactly: <code dir="auto">remaining − total</code>, <code dir="auto">bucket = available − total</code>,
 the advanced nonce, everything else unchanged, and the same KAS value;</li>
-<li>each minted output is a <code dir="auto">KCC20</code> state equal to its recipient. Its KAS value is unrestricted: the submitter
-funds it (in kUSDT, the coordinator, out of the deposit fee).</li>
+<li>each minted output is a <code dir="auto">KCC20</code> state equal to its recipient, and carries at least <code dir="auto">MIN_MINTED_VALUE</code> (1 KAS).
+The submitter funds it (in kUSDT, the coordinator, out of the deposit fee, with 1.5 KAS each).</li>
 </ol>
+<p>The floor in rule 8 is new in rc.16. The signers sign who gets how much kUSDT, not the KAS each output carries. So
+anyone who sees a signed mint before it is accepted can send a copy of it with their own funding, and before the
+floor that copy could give a recipient almost no KAS: the kUSDT arrived, but a recipient holding no KAS could not
+move it until they got some. Now a copy carries at least 1 KAS per output, which is enough to send all of that kUSDT or to redeem all of it
+with no other coin. Sending or redeeming only a part of it leaves change, and that usually needs more KAS. It can
+still carry less than the coordinator’s 1.5 KAS. The floor applies to every minted output, also one whose owner is a
+burn owner (a deposit can name one, and the mint is then the burn): the coordinator funds that output like any other.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="pause"><code dir="auto">pause</code></h3><a class="sl-anchor-link" href="#pause"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “pause”</span></a></div>
 <div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">pause(guardian_signature)    emits minter: BridgeMint</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pause(guardian_signature)    emits minter: BridgeMint"><div></div></button></div></figure></div>
-<p>A transaction signature by the <code dir="auto">guardian</code> key. The successor is identical except <code dir="auto">paused = true</code>, with the same
-KAS value.</p>
+<p>A transaction signature by the <code dir="auto">guardian</code> key, on a minter that is not paused. The successor is identical except
+<code dir="auto">paused = true</code> and <code dir="auto">admin_nonce + 1</code>, with the same KAS value. Moving the nonce voids every 4-of-5 message signed for
+the nonce the minter held. It does not void a message signed for the nonce it moves to (which is why an unpause signs
+the paused coin itself, below), a mint signed earlier (good again once unpaused, until its nonce is minted or skipped
+or its signers are replaced), or a recovery proposal or veto.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="govern"><code dir="auto">govern</code></h3><a class="sl-anchor-link" href="#govern"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “govern”</span></a></div>
 <div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">govern(action, params, age_daa, signer_keys, signer_indices, signatures)    emits minter: BridgeMint</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="govern(action, params, age_daa, signer_keys, signer_indices, signatures)    emits minter: BridgeMint"><div></div></button></div></figure></div>
 <p>One entry for every governance action. The quorum is 4 for every action, <code dir="auto">unpause</code> and <code dir="auto">set_value</code> included, because each one moves the shared <code dir="auto">admin_nonce</code>. The
-signatures cover the govern digest at the current <code dir="auto">admin_nonce</code>; the successor has <code dir="auto">admin_nonce + 1</code>.</p>
+signatures cover the govern digest at the current <code dir="auto">admin_nonce</code> (for <code dir="auto">unpause</code>, the unpause digest, which also names the
+minter coin being spent); the successor has <code dir="auto">admin_nonce + 1</code>.</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">govern digest:   BLAKE3("kUSDT/govern/v2"  ‖ covenant_id[32] ‖ nonce[8] ‖ age_daa[8] ‖ action[1] ‖ params)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">unpause digest:  BLAKE3("kUSDT/unpause/v2" ‖ covenant_id[32] ‖ admin_nonce[8] ‖ age_daa[8] ‖ outpoint_txid[32] ‖ outpoint_index[8])</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="govern digest:   BLAKE3(&quot;kUSDT/govern/v2&quot;  ‖ covenant_id[32] ‖ nonce[8] ‖ age_daa[8] ‖ action[1] ‖ params)unpause digest:  BLAKE3(&quot;kUSDT/unpause/v2&quot; ‖ covenant_id[32] ‖ admin_nonce[8] ‖ age_daa[8] ‖ outpoint_txid[32] ‖ outpoint_index[8])"><div></div></button></div></figure></div>
+<p>Integers are 8 bytes, little-endian. <code dir="auto">nonce</code> is <code dir="auto">admin_nonce</code>, or <code dir="auto">recovery_nonce</code> for a recovery proposal or veto.
+<code dir="auto">age_daa</code> is the <code dir="auto">age_daa</code> argument of the spend: the script puts the argument itself into the digest it checks, so the
+signatures are good for that one age.</p>
 <table>
 <thead>
 <tr>
@@ -238,11 +261,11 @@ signatures cover the govern digest at the current <code dir="auto">admin_nonce</
 <tbody>
 <tr>
 <td><code dir="auto">unpause</code></td>
-<td><code dir="auto">paused = false</code>. Params must be empty. Needs 4, so that 3 bad signers cannot undo the guardian’s pause</td>
+<td><code dir="auto">paused = false</code>, only on a paused minter. Params must be empty. Needs 4, so that 3 bad signers cannot undo the guardian’s pause. Signed over the unpause digest, the outpoint being the paused minter UTXO it spends. So it cannot be signed before the pause exists, and any other spend of the paused minter voids it</td>
 </tr>
 <tr>
 <td><code dir="auto">set_limits</code></td>
-<td>New <code dir="auto">capacity</code> and <code dir="auto">refill_per_daa</code>, both non-negative. The allowance, already settled at the old rate (every action settles it), is lowered to the new ceiling if above it</td>
+<td>New <code dir="auto">capacity</code> and <code dir="auto">refill_per_daa</code>, both from 0 to <code dir="auto">MAX_LIMIT</code> (10¹⁵; the ceiling is new in rc.16). Without it, four signers could set limits so large that every later step overflowed: no mint, no change of limits, no recovery, for good. The allowance, already settled at the old rate (every action settles it), is lowered to the new ceiling if above it</td>
 </tr>
 <tr>
 <td><code dir="auto">set_signers</code></td>
@@ -259,7 +282,56 @@ signatures cover the govern digest at the current <code dir="auto">admin_nonce</
 </tbody>
 </table>
 <p>Every governance message is single-use, because it names <code dir="auto">admin_nonce</code> and each one advances it.</p>
-<p>A spend restarts the minter UTXO’s age, so every <code dir="auto">govern</code> action settles the allowance first, with the <code dir="auto">age_daa</code> it claims. A mint’s <code dir="auto">age_daa</code> is part of the mint digest, so nobody can resubmit a signed mint claiming less and throw the refill away. A governance action’s is not signed (its signatures are gathered over hours, and a mint in between restarts the age): resubmitted with less, it only refills less. <code dir="auto">pause</code> and <code dir="auto">execute_recovery</code> claim no age: time since the last spend is not credited to the allowance.</p>
+<p>A spend restarts the minter UTXO’s age, so every <code dir="auto">govern</code> action settles the allowance first, with the <code dir="auto">age_daa</code> it claims. A mint’s <code dir="auto">age_daa</code> is part of the mint digest, so nobody can resubmit a signed mint claiming less and throw the refill away. Since rc.16 the same holds for governance: <code dir="auto">age_daa</code> is part of the govern digest and of the unpause digest. <code dir="auto">pause</code> and <code dir="auto">execute_recovery</code> claim no age: time since the last spend is not credited to the allowance.</p>
+<p><strong>What each entry does about the age</strong></p>
+<table>
+<thead>
+<tr>
+<th>Entry</th>
+<th>Age it claims</th>
+<th>Who fixes it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">mint</code></td>
+<td><code dir="auto">age_daa</code>, at most the UTXO’s real age</td>
+<td>The 3 signers: it is in the mint digest</td>
+</tr>
+<tr>
+<td><code dir="auto">govern</code>, every action but <code dir="auto">unpause</code></td>
+<td><code dir="auto">age_daa</code>, at most the UTXO’s real age</td>
+<td>The signers of the action (4, 3 for a proposal, 1 for a veto): it is in the govern digest</td>
+</tr>
+<tr>
+<td><code dir="auto">govern</code>, <code dir="auto">unpause</code></td>
+<td><code dir="auto">age_daa</code>, at most the paused UTXO’s real age</td>
+<td>The 4 signers: it is in the unpause digest, next to the coin</td>
+</tr>
+<tr>
+<td><code dir="auto">pause</code></td>
+<td>None. The allowance stays as the UTXO held it</td>
+<td>Nobody: there is no age to choose. The guardian signs the whole transaction</td>
+</tr>
+<tr>
+<td><code dir="auto">execute_recovery</code></td>
+<td>None. The allowance stays as the UTXO held it</td>
+<td>Nobody: there is no age to choose, and no signature. The input’s sequence must be <code dir="auto">recovery_delay</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>A signed age is also a wait.</strong> Consensus holds a spend back until the minter UTXO is as old as the age it claims.
+Governance signatures name no coin (an unpause aside) and are gathered over minutes or hours. If anything spends the
+minter in between, the new UTXO starts at age zero, and an action signed for age N can be sent only once that UTXO is
+N DAA old. Others can make that happen: a deposit leads to a mint, a holder of three signer keys can mint or propose
+a recovery, the guardian can pause. An age of 0 is always valid on any UTXO and credits no refill. So the tools sign
+a rotation of the signers, a recovery proposal and a veto for age 0 unless told otherwise, and for the other actions
+default to the UTXO’s age less a margin, and refuse more than a full refill needs.
+See <a href="/kusdt-docs/developers/operations/#the-age-every-signer-signs">Operations</a>.</p>
+<p><strong>What is still not credited.</strong> The time between the age the signers signed and the moment the action lands (the
+margin, plus the time it takes to gather and send the signatures). The whole refill, when the signers choose age 0.
+The time before a <code dir="auto">pause</code>, and the whole wait before an <code dir="auto">execute_recovery</code>, because those two entries claim no age.
+Each of these delays mints until the allowance has refilled. None can mint, move or lose anything.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-allowance-without-overflow">The allowance, without overflow</h2><a class="sl-anchor-link" href="#the-allowance-without-overflow"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The allowance, without overflow”</span></a></div>
 <div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#e3eae9;--1:#1b2f2c">refilled(bucket, age_daa, capacity, refill):</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#e3eae9;--1:#1b2f2c">    </span></span><span style="--0:#e3eae9;--1:#1b2f2c">if refill &gt; 0 and bucket &lt; capacity:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#e3eae9;--1:#1b2f2c">        </span></span><span style="--0:#e3eae9;--1:#1b2f2c">needed = ceil((capacity − bucket) / refill)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#e3eae9;--1:#1b2f2c">        </span></span><span style="--0:#e3eae9;--1:#1b2f2c">filled = capacity                        if age_daa ≥ needed</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#e3eae9;--1:#1b2f2c">               </span></span><span style="--0:#e3eae9;--1:#1b2f2c">= bucket + age_daa × refill       otherwise</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#e3eae9;--1:#1b2f2c">    </span></span><span style="--0:#e3eae9;--1:#1b2f2c">return min(filled, capacity)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="refilled(bucket, age_daa, capacity, refill):    if refill > 0 and bucket < capacity:        needed = ceil((capacity − bucket) / refill)        filled = capacity                        if age_daa ≥ needed               = bucket + age_daa × refill       otherwise    return min(filled, capacity)"><div></div></button></div></figure></div>
 <p>The product <code dir="auto">age_daa × refill</code> is formed only when it stays below <code dir="auto">capacity − bucket + refill</code>, so it never
@@ -296,7 +368,7 @@ they run. BridgeMint’s quorum loop is unrolled to 4, so:</p>
 <p>Five separate governance entries would have needed 20 on their own, 25 in the whole script, above the limit. That is why governance is a single entry with one
 quorum check. See <a href="/kusdt-docs/kaspa/signature-operations/">Signature operations</a>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="tests">Tests</h2><a class="sl-anchor-link" href="#tests"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Tests”</span></a></div>
-<p>21 tests run BridgeMint in Kaspa’s script engine (<code dir="auto">bridge/kaspa/tests/bridge_mint.rs</code>). Every test transaction
+<p>Tests run BridgeMint in Kaspa’s script engine (<code dir="auto">bridge/kaspa/tests/bridge_mint.rs</code>). Every test transaction
 is also checked for relay standardness (at most 15 signature operations per input). They cover:</p>
 <table>
 <thead>
@@ -337,6 +409,10 @@ is also checked for relay standardness (at most 15 signature operations per inpu
 <tr>
 <td>Pause and governance</td>
 <td>Only the guardian pauses; a minting quorum of 3 cannot unpause, 4 can; governance messages are single-use; limits and signer rotation need 4; rotation takes effect at once; a nonce can be skipped by 4; the KAS deposit changes only by quorum</td>
+</tr>
+<tr>
+<td>Since rc.16</td>
+<td>A pause voids every admin signature made before it; only a paused minter is unpaused; limits above the lifetime cap are refused, and at the ceiling itself the minter still works</td>
 </tr>
 </tbody>
 </table>

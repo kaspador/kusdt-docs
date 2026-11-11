@@ -87,6 +87,10 @@
 </tr>
 </tbody>
 </table>
+<p>A node’s <code dir="auto">finalized</code> block is that node’s word, so a signer believes it only up to 32 blocks below the same node’s
+head, on every node it asks. On Ethereum that is one epoch and changes nothing: the finalized block is two epochs or
+more behind. On BNB Chain the finalized block is 2 blocks behind the head, so a deposit waits these 32 blocks, about 15
+seconds. A node that answers <code dir="auto">finalized</code> with its head can then not have a deposit signed at no depth.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="larger-burns-wait-longer">Larger burns wait longer</h2><a class="sl-anchor-link" href="#larger-burns-wait-longer"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Larger burns wait longer”</span></a></div>
 <p>A release on Ethereum or BNB Chain cannot be undone, so the bigger the payout, the deeper a Kaspa reorganization would
 have to reach before the bridge pays it. On mainnet a burn output waits:</p>

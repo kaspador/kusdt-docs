@@ -112,7 +112,7 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <tr>
 <td>Vault owner</td>
 <td>Nothing</td>
-<td>After its 48-hour delay, unless a canceller cancels it: replace the signers and raise limits within the hard bounds</td>
+<td>After its 48-hour delay, unless a canceller cancels it: replace the signers and raise limits within the hard bounds. To act without the cancellers it must first remove them all: about 96 hours</td>
 </tr>
 <tr>
 <td>Pool admin</td>
@@ -159,6 +159,51 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <td>A compromised vault owner queues new signers or limits</td>
 <td>Every owner change waits 48 hours in the AccessManager; the monitor alarms when it is queued, and a canceller (or the monitor itself) cancels it</td>
 <td>Bounded (5 November 2026)</td>
+</tr>
+<tr>
+<td>A compromised vault owner gives itself power through the manager (a new GOVERNOR with no delay, a function remapped)</td>
+<td>Until rc.16 no canceller could cancel such a call: it could be seen for 48 hours and not stopped. Now the cancellers can cancel the manager’s power-adding calls too. Removing a canceller can’t be cancelled (or a rogue one could never be removed), so a stolen Safe must first remove every canceller, 48 hours in plain sight, and then add power, 48 hours more</td>
+<td>Bounded, with tests (10 November 2026): about 96 hours instead of 48. Not prevented: if nobody acts in that time, the Safe’s holder wins</td>
+</tr>
+<tr>
+<td>A cancelled payout queued again with the signatures it was first queued with</td>
+<td>The vault keeps a cancelled payout cancelled: <code dir="auto">release</code> and <code dir="auto">refund</code> refuse it until the owner reinstates it, a 48-hour call the cancellers can cancel</td>
+<td>Fixed 10 November 2026 (from an outside review), with tests</td>
+</tr>
+<tr>
+<td>A governance signature from before a pause used after it (an unpause signed in a drill and never sent, plus three stolen keys)</td>
+<td>A pause moves the admin nonce, so every 4-of-5 signature made before it is void; an unpause works on a paused minter only</td>
+<td>Fixed 10 November 2026 in the minter covenant, with tests</td>
+</tr>
+<tr>
+<td>Four signers setting limits so large that the minter’s arithmetic overflows and it stops for good</td>
+<td><code dir="auto">set_limits</code> refuses a ceiling or refill rate above the lifetime cap</td>
+<td>Fixed 10 November 2026 in the minter covenant, with tests</td>
+</tr>
+<tr>
+<td>A copy of a governance transaction sent with a smaller age</td>
+<td>Refused: the signers sign the age the transaction claims (since rc.16), so the copy fails the signature check</td>
+<td>Closed. What the signers themselves leave uncredited is a delay only (<a href="/kusdt-docs/security/known-limits/#a-governance-action-credits-the-mint-allowance-only-up-to-the-age-its-signers-signed">known limits</a>)</td>
+</tr>
+<tr>
+<td>A forged refund kept unjudged until it is paid, by making one of the monitor’s Kaspa rounds fail every two minutes</td>
+<td>A failed round stops a queued refund’s grace, it never restarts it; a refund with no skip is judged in the second up-to-date round; any queued payout still unjudged at two thirds of its wait fails closed</td>
+<td>Fixed 10 November 2026, with a test of the reported attack</td>
+</tr>
+<tr>
+<td>A monitor made to die in every round (a huge or compressed RPC answer, a state grown too large to save), so that it never judges or pauses</td>
+<td>RPC answers are capped and never unpacked; outputs that only looked like burns are dropped once spent; a monitor that keeps starting without finishing a round pauses everything and raises <code dir="auto">crash-loop</code></td>
+<td>Fixed 10 November 2026, with tests</td>
+</tr>
+<tr>
+<td>Unfinished request bodies filling the coordinator’s memory</td>
+<td>Bodies are limited in size, in number and per client, and must arrive within 10 seconds</td>
+<td>Fixed 10 November 2026, with tests on real sockets</td>
+</tr>
+<tr>
+<td>Records grown on purpose until the coordinator runs out of memory</td>
+<td>Burns that could never be paid are no longer recorded, and dust burns no longer take real burns’ places in the queue. Real burns still leave a record for good, and the coordinator holds its records and its kUSDT index in memory</td>
+<td>Open: a stall, no funds at risk (<a href="/kusdt-docs/security/known-limits/#the-coordinator-keeps-everything-in-memory">known limits</a>)</td>
 </tr>
 <tr>
 <td>3 of 5 signer keys try to replace the signers</td>
@@ -225,6 +270,11 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <td>Liveness only: the bridge waits for the refill. It costs the attacker 0.5 % each way</td>
 <td>Bounded</td>
 </tr>
+<tr>
+<td>One party using up the signers’ daily limit</td>
+<td>Liveness only. Deposits: the deposit fee rises with the day’s deposits, to 2.50 % at a full meter, so filling the limit costs about twice the flat fee and more while it stays full. Bridging back: still the flat 0.50 %, because a release’s fee is set after the burn</td>
+<td>Deposits: bounded (10 November 2026). Bridging back: open (<a href="/kusdt-docs/security/known-limits/#the-daily-limit-can-be-used-up-by-one-party">known limits</a>)</td>
+</tr>
 </tbody>
 </table>
 <div class="sl-heading-wrapper level-h3"><h3 id="swap">Swap</h3><a class="sl-anchor-link" href="#swap"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Swap”</span></a></div>
@@ -288,9 +338,19 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <td>Fixed 8 November 2026</td>
 </tr>
 <tr>
+<td>Opening the pool with dust</td>
+<td>A first deposit of dust leaves a reference so small that sells stay shut for about a day, and under about 720 sompi a 50 DAA claim refills nothing</td>
+<td>Fixed on 10 November 2026 in the pool covenant: the first deposit, and the first after every provider has left, take the pool admin’s signature, and the latter starts the cap again at the new reserve. Left: a dust position kept by someone else when the last provider leaves (<a href="/kusdt-docs/security/known-limits/">known limits</a>)</td>
+</tr>
+<tr>
+<td>A long pause handing sells a fresh cap</td>
+<td>Ticks and withdrawals during a pause counted its time, so the unpause opened a full cap</td>
+<td>Fixed on 10 November 2026: while paused the breaker stands still (no tick; a withdrawal claims nothing), and the unpause starts its clock again</td>
+</tr>
+<tr>
 <td>Holding a used-up breaker shut with empty pool spends</td>
-<td>A pool spend that claims no age wastes the refill earned so far. It costs a network fee per spend, moves no KAS, and leaves buys and withdrawals open</td>
-<td>Open by design: bounds the attack’s cost at fees per spend</td>
+<td>A pool spend that claims less than its UTXO’s age wastes the refill earned so far. It costs a network fee per spend, moves no KAS, and leaves buys and withdrawals open</td>
+<td>Fixed on 10 November 2026 in the pool covenant: while more than half of the cap is in use every pool spend claims at least 50 DAA (below half sells have at least half a cap, and dust can’t bring the minimum back), and the <a href="/kusdt-docs/contracts/kaspool/#the-keeper">keeper</a> ticks a moment after each slot opens once it has seen a late claim, so a late spend no longer lands. A bot first to every slot can still keep other pool transactions out while the count is above half: with dust for at most half a window after a full-cap sell (1.5 windows if half the pool was also withdrawn), longer only by selling about the whole refill</td>
 </tr>
 <tr>
 <td>Price manipulation</td>
@@ -382,7 +442,9 @@ accepts (INV-4).</p>
 guardian pauses the vaults and the minter. A bad quorum of 3 cannot undo that pause on either side: unpausing
 BridgeMint takes 4 signers, and unpausing a vault takes the owner. The owner then replaces the vault signers with
 <code dir="auto">setSigners</code> and cancels every bad queued payout (<code dir="auto">cancelRelease</code>, <code dir="auto">cancelRefund</code>) <strong>before unpausing</strong>: a pause only
-holds a queued payout, and it would be paid once the vault runs again.</p>
+holds a queued payout, and it would be paid once the vault runs again. A cancelled payout stays cancelled: the vault
+refuses to queue it again, even with the signatures it was first queued with, until the owner reinstates it. So the
+cancel no longer depends on the signers having been replaced first.</p>
 <p><strong>What the wait does not solve: forged kUSDT already minted.</strong> Three stolen keys can mint up to the allowance, and
 kUSDT burns can’t be paused. A burn of forged kUSDT is a real burn, and it looks like any other: signers can’t tell it
 apart, the monitor raises nothing about it, and after the vault runs again the honest signers would pay it. So while
@@ -492,15 +554,21 @@ A compromised Safe can, after the delay and unless a canceller cancels it:</p>
 <li>replace a vault’s signers with its own keys (<code dir="auto">setSigners</code>);</li>
 <li>raise the release allowance to the hard bounds: a capacity of up to 1 billion USDT, refilling fully in no less
 than a day;</li>
-<li>set fees up to 1 % and minimum fees up to 50 USDT;</li>
+<li>set fees up to 1 %, the deposit fee at a full meter up to 3 %, and minimum fees up to 50 USDT;</li>
+<li>reinstate a payout that was cancelled (it then still needs 3 signers’ signatures and the wait);</li>
 <li>withdraw accrued fees.</li>
 </ul>
 <p>It cannot withdraw backing directly or give up its roles at once (<code dir="auto">renounceRole</code> is closed: a role ends through a
 48-hour admin call), and every change becomes public 48 hours before it takes effect (<code dir="auto">setGuardian</code>
 and <code dir="auto">unpause</code>: about 6 hours). The monitor alarms the moment a change it was not told about is queued, pauses the
 vaults, and can cancel it with a canceller key; the cancellers are parties other than the Safe’s holders. A rogue
-canceller can only cancel, and the Safe can revoke it (that too waits 48 hours, and cancellers cannot cancel it).
-The owner is the one party whose compromise is not capped by the release allowance, which is why it sits behind a
+canceller can only cancel, and the Safe can revoke it (that too waits 48 hours, and cancellers cannot cancel it).</p>
+<p>A compromised Safe can also try to change the manager itself, for example grant GOVERNOR to a key of its own with
+no delay. Since rc.16 any one canceller can cancel that as well. To get past the cancellers the Safe must revoke
+each of them first, which waits 48 hours and cannot be cancelled, and only then schedule the change, which waits 48
+hours more: about 96 hours in all, with every step public and alarmed. If nobody acts in that time, nothing else
+stops it.</p>
+<p>The owner is the one party whose compromise is not capped by the release allowance, which is why it sits behind a
 multisig, a delay and independent cancellers.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="chains-and-nodes">Chains and nodes</h2><a class="sl-anchor-link" href="#chains-and-nodes"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Chains and nodes”</span></a></div>
 <table>

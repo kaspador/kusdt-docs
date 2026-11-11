@@ -86,12 +86,12 @@ digest, which includes the current <code dir="auto">admin_nonce</code>, so every
 <tr>
 <td><code dir="auto">unpause</code></td>
 <td>4 of 5</td>
-<td>Resume minting. It takes 4 so that a bad minting quorum of 3 cannot undo the guardian’s pause</td>
+<td>Resume minting, on a paused minter only. It takes 4 so that a bad minting quorum of 3 cannot undo the guardian’s pause</td>
 </tr>
 <tr>
 <td><code dir="auto">set_limits</code></td>
 <td>4 of 5</td>
-<td>New allowance ceiling and refill rate. The allowance is settled at the old rate first, then lowered to the new ceiling if above it</td>
+<td>New allowance ceiling and refill rate, each at most 10¹⁵ units (the lifetime cap). The allowance is settled at the old rate first, then lowered to the new ceiling if above it</td>
 </tr>
 <tr>
 <td><code dir="auto">set_signers</code></td>
@@ -116,6 +116,16 @@ digest, which includes the current <code dir="auto">admin_nonce</code>, so every
 </tbody>
 </table>
 <p>Nothing can raise the hard cap. <code dir="auto">pause</code> needs only the guardian.</p>
+<p><strong>A pause voids what was signed before it.</strong> A pause moves <code dir="auto">admin_nonce</code> forward by one, so every 4-of-5 signature
+made before it stops counting. A governance signature has no expiry of its own: without this rule, an <code dir="auto">unpause</code>
+that four signers signed once and never sent could be used after a later pause by anyone holding it and three keys.
+After a pause the signers sign again, with the new nonce, and the monitors are told the new line.</p>
+<p><strong>A governance action signs its age.</strong> Each one claims an age of the minter’s UTXO, and the mint allowance refills
+by that age. The signers sign the age (since rc.16), so a copy of the action sent with another age is not valid.
+The other side of that: the action can be sent only once the UTXO is that old, and a mint that lands first makes a
+new UTXO at age zero. So the signers agree the age before they sign, and sign an urgent action for age 0, which is
+always valid and credits no refill. What is then not credited is a delay only, and a
+<a href="/kusdt-docs/security/known-limits/#a-governance-action-credits-the-mint-allowance-only-up-to-the-age-its-signers-signed">known limit</a>.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="recovery-when-two-keys-are-lost">Recovery when two keys are lost</h3><a class="sl-anchor-link" href="#recovery-when-two-keys-are-lost"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Recovery when two keys are lost”</span></a></div>
 <p>Every action above but the recovery needs 4 of 5. Two signers losing their keys for good would mean a minter pause could never
 be lifted and the lost signers never replaced, and the covenant can’t be upgraded. So three signers can propose a new signer set
@@ -148,7 +158,7 @@ schedules it, waits its delay, then executes it within a week. Calling the vault
 <td>GOVERNOR</td>
 <td>The Safe</td>
 <td>48 hours</td>
-<td><code dir="auto">setFees</code>, <code dir="auto">setDepositLimits</code>, <code dir="auto">setReleaseLimits</code>, <code dir="auto">setPayoutDelay</code>, <code dir="auto">setSigners</code>, <code dir="auto">withdrawFees</code>, <code dir="auto">transferOwnership</code></td>
+<td><code dir="auto">setFees</code>, <code dir="auto">setDepositSurge</code>, <code dir="auto">setDepositLimits</code>, <code dir="auto">setReleaseLimits</code>, <code dir="auto">reinstateRelease</code>, <code dir="auto">reinstateRefund</code>, <code dir="auto">setPayoutDelay</code>, <code dir="auto">setSigners</code>, <code dir="auto">withdrawFees</code>, <code dir="auto">transferOwnership</code></td>
 </tr>
 <tr>
 <td>EMERGENCY</td>
@@ -166,7 +176,13 @@ schedules it, waits its delay, then executes it within a week. Calling the vault
 <td>CANCELLER</td>
 <td>Independent cancellers</td>
 <td></td>
-<td>Cancel any scheduled GOVERNOR or EMERGENCY call</td>
+<td>Cancel any scheduled GOVERNOR or EMERGENCY call, and the Safe’s scheduled power-adding calls on the manager itself</td>
+</tr>
+<tr>
+<td>GUARDED</td>
+<td>Nobody</td>
+<td></td>
+<td>Nothing. The manager’s own power-adding functions are mapped to it, so that the cancellers can cancel them</td>
 </tr>
 </tbody>
 </table>
@@ -174,14 +190,25 @@ schedules it, waits its delay, then executes it within a week. Calling the vault
 monitor can hold a canceller key too, cancelling every queued call nobody announced. A canceller can only cancel:
 a rogue one can hold up vault calls, an emergency unpause included, until the Safe revokes it, which takes 48 hours
 and which no canceller can cancel.</p>
-<p><strong>The Safe’s admin calls can be seen, not cancelled.</strong> A compromised Safe could schedule a change to the manager
-itself, for example a new GOVERNOR with no delay, and use it 48 hours later. Every monitor alarms the moment such a
-call is queued (<code dir="auto">owner-op-unannounced</code>) and pauses everything; those 48 hours are for the people behind the Safe to
-act. Revoking a role and granting it again with a lower delay takes effect as soon as the 48-hour admin delay has
-passed: taking GOVERNOR from 48 hours to none takes 48 hours, not longer, and no canceller can stop it.</p>
+<p><strong>The cancellers can also cancel the Safe’s power-adding calls on the manager</strong> (since rc.16). A compromised Safe
+could schedule a change to the manager itself, for example a new GOVERNOR with no delay, and use it 48 hours later.
+Before, such a call could be seen but not cancelled. Now the manager’s functions that add power (<code dir="auto">grantRole</code>,
+<code dir="auto">setRoleAdmin</code>, <code dir="auto">setRoleGuardian</code>, <code dir="auto">setGrantDelay</code>, <code dir="auto">setTargetAdminDelay</code>, <code dir="auto">setTargetFunctionRole</code>,
+<code dir="auto">setTargetClosed</code>, <code dir="auto">updateAuthority</code>) are mapped to GUARDED, a role nobody holds, whose guardian is CANCELLER. That
+changes who may cancel them, not who may call them: only the Safe calls them, with its 48 hours, and any one
+canceller can cancel one while it waits.</p>
+<p><strong>Revoking a canceller is deliberately not cancellable.</strong> If it were, one rogue canceller could cancel its own
+removal for ever. So <code dir="auto">revokeRole</code> stays outside GUARDED. The result: whoever holds the Safe must first remove every
+canceller, which takes 48 hours in plain sight, and only then can schedule a power-adding call, which takes 48
+hours more. <strong>A stolen Safe needs about 96 hours, not 48.</strong> Every monitor alarms the moment such a call is queued
+(<code dir="auto">owner-op-unannounced</code>) and pauses everything. The revocations come first, and they are the signal for the people
+behind the Safe to act: no canceller can stop a revocation.</p>
+<p>What a canceller still cannot do: call anything, schedule anything, or stop its own removal. What a rogue
+canceller can do is delay, as above.</p>
 <p>The deployer builds the manager, gives it its roles and gives up every role of its own in the launch
 (<code dir="auto">npm run mainnet:execute</code>), and <code dir="auto">npm run mainnet:verify</code> checks all of it on-chain against the reviewed plan: the
-manager’s code is the build’s byte for byte, the Safe is a genuine one with no modules or guard, every role’s members and delays, every function’s role, and that no
+manager’s code is the build’s byte for byte, the Safe is a genuine one with no modules or guard, every role’s members and delays, every function’s role, that the
+manager’s eight power-adding functions are mapped to GUARDED and <code dir="auto">revokeRole</code> is not, and that no
 one else holds a role. Testnet vaults are owned by the deployer’s plain key.</p>
 <table>
 <thead>
@@ -194,6 +221,10 @@ one else holds a role. Testnet vaults are owned by the deployer’s plain key.</
 <tr>
 <td><code dir="auto">setFees(feeBps, minDepositFee, minReleaseFee)</code></td>
 <td><code dir="auto">feeBps ≤ 100</code>; each minimum ≤ 50 USDT</td>
+</tr>
+<tr>
+<td><code dir="auto">setDepositSurge(surgeFeeBps, capacity)</code></td>
+<td>The <a href="/kusdt-docs/protocol/fees/#the-rising-deposit-fee">rising deposit fee</a>: <code dir="auto">surgeFeeBps ≤ 300</code> (3 %); a meter of 0 (off) or 2 units to 10¹⁵</td>
 </tr>
 <tr>
 <td><code dir="auto">setDepositLimits(min, max)</code></td>
@@ -209,7 +240,11 @@ one else holds a role. Testnet vaults are owned by the deployer’s plain key.</
 </tr>
 <tr>
 <td><code dir="auto">cancelRelease(redeemId)</code>, <code dir="auto">cancelRefund(nonce)</code></td>
-<td>A payout still queued. Its allowance comes back and it can be queued again, so replace the signers first</td>
+<td>A payout still queued. Its allowance comes back, and it stays cancelled: the vault refuses to queue it again, whatever signatures come with it, until the owner reinstates it</td>
+</tr>
+<tr>
+<td><code dir="auto">reinstateRelease(redeemId)</code>, <code dir="auto">reinstateRefund(nonce)</code></td>
+<td>A cancelled payout. It can then be queued again with signatures of the current signers. A GOVERNOR call, so it waits 48 hours and the cancellers can cancel it</td>
 </tr>
 <tr>
 <td><code dir="auto">setSigners(address[5])</code></td>
@@ -244,8 +279,9 @@ one else holds a role. Testnet vaults are owned by the deployer’s plain key.</
 <p>The owner cannot move backing. Only <code dir="auto">release</code> and <code dir="auto">refund</code>, with 3 signer signatures, reduce it.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="kaspool-the-admin-key">KasPool: the admin key</h2><a class="sl-anchor-link" href="#kaspool-the-admin-key"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “KasPool: the admin key”</span></a></div>
 <p>The pool’s <code dir="auto">admin</code> key can collect the protocol’s accrued fees (<code dir="auto">collect</code>), resume a pool the guardian paused
-(<code dir="auto">unpause</code>), and hand the admin key, the guardian key or both to other keys (<code dir="auto">set_keys</code>). It cannot touch the
-reserves or any position. The circuit breaker’s values are fixed at genesis, so no key can change them. Before
+(<code dir="auto">unpause</code>), and hand the admin key, the guardian key or both to other keys (<code dir="auto">set_keys</code>). Only its signature opens
+the pool: the first deposit (<code dir="auto">init</code>), and the first deposit into a pool that every provider has left, need it, so
+nobody can open or reopen the pool with dust. It cannot touch the reserves or any position. The circuit breaker’s values are fixed at genesis, so no key can change them. Before
 mainnet, the operator holds the admin key offline.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="keeping-the-signer-sets-in-step">Keeping the signer sets in step</h2><a class="sl-anchor-link" href="#keeping-the-signer-sets-in-step"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Keeping the signer sets in step”</span></a></div>
 <p>The same five signers act on three contracts, and each contract has its own copy of the signer set:</p>

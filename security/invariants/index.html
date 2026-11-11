@@ -120,7 +120,15 @@ part after every step.</p>
 </tr>
 <tr>
 <td>Signers</td>
-<td>A mint is signed only while the vault’s live <code dir="auto">depositMinted(nonce)</code>, read on every RPC, is non-zero: a refunded nonce is never minted, even after a Kaspa reorg deeper than <code dir="auto">finalityDaa</code> (tested)</td>
+<td>A mint is signed only while the vault’s live <code dir="auto">depositMinted(nonce)</code>, read on every RPC, is non-zero, and never for a nonce the signer’s own minter follower shows skipped: no mint is signed after its refund (tested)</td>
+</tr>
+<tr>
+<td>Finality depth</td>
+<td>A mint signed before the skip stays valid: a mint signature does not expire. A Kaspa reorg deep enough to undo the skip frees the nonce, and that mint could then land after the refund was paid. So “never both” rests on the depth the skip has before any signer signs the refund: at least <code dir="auto">finalityDaa</code>, deeper for a larger refund, and the deepest finality tier, whatever the size, for a signer that signed a mint for that deposit (tested). It is the same assumption every release rests on</td>
+</tr>
+<tr>
+<td>Monitor</td>
+<td>A mint that names a deposit a vault refunded, or queued a refund for, is the alarm <code dir="auto">mint-of-refunded-deposit</code>: from the refunds the monitor has seen, which a Kaspa reorg does not make it forget, and from <code dir="auto">isRefunded(nonce)</code> read on every RPC (tested). It comes after the fact and pauses everything; it does not undo the mint</td>
 </tr>
 </tbody>
 </table>

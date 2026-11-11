@@ -125,7 +125,11 @@ The vault cannot see the Kaspa ceiling, so this is checked by whoever changes ei
 </tr>
 <tr>
 <td>Vault release allowance</td>
-<td>25 000 USDT per vault, refills fully in 24 h</td>
+<td>A ceiling of 25 000 USDT per vault, which refills fully in 24 h</td>
+</tr>
+<tr>
+<td>Deposit meter, for the <a href="/kusdt-docs/protocol/fees/#the-rising-deposit-fee">rising deposit fee</a></td>
+<td>12 500 USDT per vault, half the signers’ limit; 2.50 % at a full meter</td>
 </tr>
 <tr>
 <td>Kaspa mint allowance and hard cap</td>
@@ -133,14 +137,26 @@ The vault cannot see the Kaspa ceiling, so this is checked by whoever changes ei
 </tr>
 </tbody>
 </table>
+<p><strong>The vault’s allowance is not a cap on a day.</strong> It is a bucket that holds at most 25 000 USDT and refills at
+25 000 a day. After a quiet time the bucket is full: 25 000 can be queued at once, and it keeps refilling, so about
+twice 25 000 can be queued in the 24 hours that follow. Counting payouts already waiting in the queue from before,
+just under three times 25 000 can leave a vault in 24 hours (see
+<a href="#most-that-can-move-in-a-window">Most that can move in a window</a>). That is all the vault itself enforces, and it
+is the bound that counts if three signer keys are stolen.</p>
+<p><strong>The signers’ own limit does hold per 24 hours.</strong> Each signer counts what it signed in the last 24 hours and signs
+nothing that would take it past 25 000 kUSDT of releases and refunds, both chains together (and the same for
+mints). A payout needs 3 signers, so with honest signers no more than 25 000 USDT of payouts is signed in any 24
+hours, whatever the vaults’ buckets hold.</p>
 <p><strong>Why they go together.</strong> A signer signs nothing that would take it past its daily limit, so:</p>
 <ul>
 <li>a mint carries up to 3 deposits, and must fit: the largest deposit is at most a third of the signers’ limit. A
 deposit no signer would mint would also hold up every later deposit on its chain;</li>
 <li>the web app and the wallets refuse a burn above the vault’s release allowance, so the allowance is at most the
-signers’ limit: a larger one would let someone burn kUSDT that no signer would pay out.</li>
+signers’ limit: a larger one would let someone burn kUSDT that no signer would pay out;</li>
+<li>the two vaults’ deposit meters together are at most the signers’ limit, or the limit would be used up before the
+deposit fee reached its top rate.</li>
 </ul>
-<p>The deployer refuses a plan that breaks either rule. Deposits and burns over a day’s limit are not lost: they wait
+<p>The deployer refuses a plan that breaks any of these rules. Deposits and burns over a day’s limit are not lost: they wait
 until the signers’ 24 hours allow them, and a batch of deposits too large for the limit is split. Each signer’s limit is
 one budget for both chains, so the coordinator keeps what frees for the oldest deposit or payout that only the limit is
 holding up: the chain whose next deposit has waited longest goes first, and younger deposits and payouts wait. That
@@ -282,7 +298,12 @@ governance. It also keeps every Kaspa sum far below the 64-bit integer limit.</p
 <tr>
 <td>Kaspa allowance (<code dir="auto">capacity</code>, <code dir="auto">refill_per_daa</code>)</td>
 <td>4 of 5 signers (<code dir="auto">set_limits</code>)</td>
-<td>Non-negative. The allowance is settled at the old rate first, then lowered to the new ceiling if it is above it</td>
+<td>From 0 to 10¹⁵ each (the lifetime cap). The allowance is settled at the old rate first, then lowered to the new ceiling if it is above it</td>
+</tr>
+<tr>
+<td>Rising deposit fee (<code dir="auto">surgeFeeBps</code>, <code dir="auto">surgeCapacity</code>)</td>
+<td>Vault owner (<code dir="auto">setDepositSurge</code>)</td>
+<td><code dir="auto">surgeFeeBps ≤ 300</code> (3 %); a meter size of 0 (off) or 2 units to 10¹⁵. The meter keeps what it holds, up to the new size</td>
 </tr>
 <tr>
 <td>Vault release allowance</td>
