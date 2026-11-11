@@ -368,7 +368,9 @@ from slower wallets; later, a griefer landing just before it wastes more of each
 starts. A tick costs about 0.04 KAS at the network’s floor and 0.4 KAS at the keeper’s fee ceiling: at most 480 an
 hour (19 or 196 KAS), and only while more than half of the cap is in use. Without sells that lasts at most half an
 hour of claimed time after a full cap was sold, and an hour and a half if half the pool was also withdrawn (about 830
-ticks). Anyone may run a keeper; the operators run one.</p>
+ticks). Anyone may run a keeper; the operators run one. It keeps its own coins and the pool’s age from the
+transactions the chain accepts, so coins anyone sends to its address or to the pool’s do not stop it (since round 13),
+and its health check fails, with the reason, when a tick it owes could not go out for a minute.</p>
 <p>Wallets and the web app build a pool transaction only on a pool UTXO their node shows accepted and at least 50 DAA
 old while more than half of the cap is in use, and send it at that DAA. A node refuses a transaction whose relative
 lock is not met yet instead of keeping it, so they send again for a moment if their node is a little behind.</p>

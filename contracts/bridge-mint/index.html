@@ -261,7 +261,7 @@ signatures are good for that one age.</p>
 <tbody>
 <tr>
 <td><code dir="auto">unpause</code></td>
-<td><code dir="auto">paused = false</code>, only on a paused minter. Params must be empty. Needs 4, so that 3 bad signers cannot undo the guardian’s pause. Signed over the unpause digest, the outpoint being the paused minter UTXO it spends. So it cannot be signed before the pause exists, and any other spend of the paused minter voids it</td>
+<td><code dir="auto">paused = false</code>, only on a paused minter. Params must be empty. Needs 4, so that 3 bad signers cannot undo the guardian’s pause. Signed over the unpause digest, the outpoint being the paused minter UTXO it spends. So it cannot be signed before the pause exists, and any other spend of the paused minter voids it: a recovery proposal (3 signers), and, while a proposal stands, a veto by any one signer. With a proposal standing, veto it or let it be carried out first, then sign the unpause</td>
 </tr>
 <tr>
 <td><code dir="auto">set_limits</code></td>

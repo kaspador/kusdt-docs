@@ -97,9 +97,19 @@
 <td>A host of its own; its keys pay network costs (KAS and gas) and can’t move bridge funds</td>
 </tr>
 <tr>
+<td>Its public API (<code dir="auto">kusdt api</code>)</td>
+<td>A container beside it</td>
+<td>A container beside it on its host; no key, the coordinator’s files read-only</td>
+</tr>
+<tr>
 <td>Monitor (guardian)</td>
 <td>Next to the signers</td>
 <td>Its own host and nodes, alerting a human</td>
+</tr>
+<tr>
+<td>Its public status (<code dir="auto">kusdt status</code>)</td>
+<td>A container beside it</td>
+<td>A container beside it on its host; no key, the monitor’s status files read-only</td>
 </tr>
 </tbody>
 </table>
@@ -114,7 +124,8 @@ genesis and the pool on testnet-10, then <code dir="auto">deployments/testnet.js
 re-run: finished steps are skipped.</li>
 <li>Run the services in one place only:
 <ul>
-<li>on this machine: <code dir="auto">npm run testnet:services</code> (coordinator 9300, monitor 9310, signers 9301 to 9305);</li>
+<li>on this machine: <code dir="auto">npm run testnet:services</code> (the API 9300, the monitor’s status 9310, signers 9301 to 9305; the
+coordinator’s health on 127.0.0.1:9309, the claims channel 9306, the monitor’s operator listener 9311);</li>
 <li>or on a host, from the repository root: build the image
 (<code dir="auto">docker build -f deploy/services.Dockerfile -t kusdt-services:&lt;tag&gt; .</code>, with <code dir="auto">KUSDT_TAG=&lt;tag&gt;</code> in <code dir="auto">.env</code>),
 put each service’s config and keys from the server bundle in <code dir="auto">/opt/kusdt/secrets/&lt;service&gt;</code> (files mode
@@ -141,13 +152,21 @@ same key for their mints and pauses, see “A parked state coin” in the runboo
 again as soon as that tick is neither in the node’s mempool nor accepted; on startup it splits its largest coin into
 the <code dir="auto">coins</code> it keeps (it refuses to start with <code dir="auto">coins</code> and <code dir="auto">coinValue</code> whose split no node would take, such as 8 coins
 of 0.2 KAS; a split refused later shows as a <code dir="auto">warning</code> in <code dir="auto">/health</code>). It asks its node’s mempool once a round, for the
-pool’s address and its own. Fund its address (in its log at the start, and in <code dir="auto">GET /api/v1/keeper</code>) with about 300 KAS:
+pool’s address and its own. Since round 13 it reads no address in its rounds: it keeps its own coins from the
+transactions the chain accepts (its state’s <code dir="auto">coins</code>, learned by one read of its address at the first start or a start
+from a checkpoint, and read again at most every 10 minutes when its node refuses a tick for a coin it does not have or
+none is free), and it takes the pool output’s age from its follower (the DAA score of the chain block that accepted it,
+which is the score the node gives the output), reading the pool’s address only when a checkpoint did not say, at most
+once a minute. Its <code dir="auto">/health</code> answers 503 with the reason when a due tick has not gone out for a minute (no coins,
+refused by every node, the age unknown) or its rounds have failed for that long, besides a lost pool or a reading far
+behind. <code dir="auto">GET /api/v1/keeper</code> shows the pool output and state it follows (<code dir="auto">pool.output</code>, <code dir="auto">pool.state</code>), which is what a
+<code dir="auto">pool-tick</code> built by hand takes. Fund its address (in its log at the start, and in <code dir="auto">GET /api/v1/keeper</code>) with about 300 KAS:
 a tick costs about 0.04 KAS at the floor and 0.4 KAS at <code dir="auto">maxFeerate</code>, at most 480 an hour (19 or 196 KAS), only while
 armed and above half of the cap. On the testnet host it runs as <code dir="auto">kusdt-keeper</code> (<code dir="auto">deploy/keeper.testnet.json</code>, its key in the
 bundle as <code dir="auto">keeper.kaspa</code>).</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-mainnet-packages">The mainnet packages</h2><a class="sl-anchor-link" href="#the-mainnet-packages"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The mainnet packages”</span></a></div>
 <p>Every server these need, on one page: <a href="/kusdt-docs/developers/mainnet-servers/">Mainnet servers</a>.</p>
-<p>Each mainnet operator gets a package from the repository, also attached to each mainnet release. The signer, coordinator and monitor packages each hold a compose file (a pruned Kaspa node, the service and Caddy), a config template and a step-by-step guide. The deployer’s holds its guide and an inputs template, and the web package holds its own compose file, Caddy, a config template and a guide.</p>
+<p>Each mainnet operator gets a package from the repository, also attached to each mainnet release. The signer, coordinator and monitor packages each hold a compose file (a pruned Kaspa node, the service and Caddy; for the coordinator and the monitor also the process that answers their public, in a container of its own), config templates and a step-by-step guide. The deployer’s holds its guide and an inputs template, and the web package holds its own compose file, Caddy, a config template and a guide.</p>
 <table>
 <thead>
 <tr>
@@ -165,12 +184,12 @@ bundle as <code dir="auto">keeper.kaspa</code>).</p>
 <tr>
 <td><code dir="auto">deploy/mainnet-coordinator</code></td>
 <td>The coordinator’s operator</td>
-<td>The public API (<code dir="auto">/api/v1/</code>)</td>
+<td>The public API (<code dir="auto">/api/v1/</code>), from the API process</td>
 </tr>
 <tr>
 <td><code dir="auto">deploy/mainnet-monitor</code></td>
 <td>The monitor’s operator (the guardian), and a second monitor in watch-only mode</td>
-<td><code dir="auto">GET /health</code>, <code dir="auto">/api/v1/signal</code> and <code dir="auto">/api/v1/monitor</code>; acknowledging alarms from the operator’s addresses only</td>
+<td><code dir="auto">GET /health</code>, <code dir="auto">/api/v1/signal</code>, <code dir="auto">/api/v1/monitor</code> and the public <code dir="auto">/api/v1/checkpoint</code>, from the status process; acknowledging alarms and the checkpoint with the burns, from the operator’s addresses only, on the monitor’s own listener</td>
 </tr>
 <tr>
 <td><code dir="auto">deploy/mainnet-deployer</code></td>
@@ -199,7 +218,7 @@ bundle as <code dir="auto">keeper.kaspa</code>).</p>
 </tr>
 <tr>
 <td><code dir="auto">kusdt check &lt;config&gt;</code></td>
-<td>A preflight for a signer, the coordinator or the monitor that signs and sends nothing. It checks: <ul><li>the files and their modes;</li><li>the mainnet USDT pins;</li><li>the launch checkpoint, whose signer set must hash from the deployment’s five keys, and whose DAA score for the minter must not be below the node’s (since round 12);</li><li>the pair: each vault is this kUSDT’s own (it has taken every deposit the minter is past, queued no payout while nothing was minted, and was made before the genesis), and a saved state that shares only the covenant or only a vault with the deployment is told not to start (since round 12);</li><li>a synced mainnet node with a UTXO index;</li><li>RPCs that agree.</li></ul> Then, by role: a signer is in both vaults at its index; the coordinator reaches each signer as the deployment names it, and holds KAS and gas; the monitor’s keys are the guardian everywhere. It also reads the settings that stop or blind a service in silence: a coordinator’s <code dir="auto">holdMints</code> (it must be <code dir="auto">true</code> or <code dir="auto">false</code>, and <code dir="auto">true</code> is a warning that nothing is minted), a monitor’s <code dir="auto">judgeFromBlock</code> (block numbers per chain code, not above an RPC’s head; a warning when the monitor already has a state), and the extra Kaspa nodes of <code dir="auto">kaspaSubmitRpcs</code> (over <code dir="auto">wss://</code> or on your own network; each is asked for its network and whether it is synced). Every line names an RPC or a node by its scheme and host only, so the output can be shown to others: a path, a query or a user part, where a provider’s key sits, is never printed</td>
+<td>A preflight for a signer, the coordinator, the monitor, the API process or the status process that signs and sends nothing. It checks: <ul><li>the files and their modes;</li><li>the mainnet USDT pins;</li><li>the launch checkpoint, whose signer set must hash from the deployment’s five keys, and whose DAA score for the minter must not be below the node’s (since round 12);</li><li>the pair: each vault is this kUSDT’s own (it has taken every deposit the minter is past, queued no payout while nothing was minted, and was made before the genesis), and a saved state that shares only the covenant or only a vault with the deployment is told not to start (since round 12);</li><li>a synced mainnet node with a UTXO index;</li><li>RPCs that agree.</li></ul> Then, by role: a signer is in both vaults at its index; the coordinator reaches each signer as the deployment names it, and holds KAS and gas; the monitor’s keys are the guardian everywhere; the API and status processes name no key file, see the files they answer from read-only and fresh, and count requests per client (<code dir="auto">apiClientIp</code>). It also reads the settings that stop or blind a service in silence: a coordinator’s <code dir="auto">holdMints</code> (it must be <code dir="auto">true</code> or <code dir="auto">false</code>, and <code dir="auto">true</code> is a warning that nothing is minted), a monitor’s <code dir="auto">judgeFromBlock</code> (block numbers per chain code, not above an RPC’s head; a warning when the monitor already has a state), and the extra Kaspa nodes of <code dir="auto">kaspaSubmitRpcs</code> (over <code dir="auto">wss://</code> or on your own network; each is asked for its network and whether it is synced). Every line names an RPC or a node by its scheme and host only, so the output can be shown to others: a path, a query or a user part, where a provider’s key sits, is never printed</td>
 </tr>
 </tbody>
 </table>
@@ -345,16 +364,18 @@ sompi” with 940 KAS.</li>
 </tbody>
 </table>
 <p>The services run on one public test host, in isolated containers (<code dir="auto">deploy/compose.testnet.yml</code>): a Kaspa TN10
-node, five signer containers each mounting only its own keys, the coordinator, the monitor, the pool keeper, the testnet kUSDT faucet and a static web container. All run as unprivileged users, with a read-only root filesystem and no capabilities (the web container
-keeps only <code dir="auto">NET_BIND_SERVICE</code>, which its Caddy binary needs to start). No container publishes a port. Only the coordinator, the monitor, the faucet and the web app are reachable through the host’s reverse proxy; the node and the signers
-are not on its network.</p>
+node, five signer containers each mounting only its own keys, the coordinator and its API process, the monitor and its status process, the pool keeper, the testnet kUSDT faucet and a static web container. All run as unprivileged users, with a read-only root filesystem and no capabilities (the web container
+keeps only <code dir="auto">NET_BIND_SERVICE</code>, which its Caddy binary needs to start). No container publishes a port. Only the API process, the status process, the faucet and the web app are reachable through the host’s reverse proxy; the node, the signers,
+the coordinator and the monitor are not on its network.</p>
 <p>This is a testnet convenience. On mainnet each signer is a different operator on its own machine with its own
 nodes (SPEC §12).</p>
 <p>The public web app is built with <code dir="auto">bridge/web/config/testnet.public.json</code>; <code dir="auto">bridge/web/config/testnet.local.json</code>
 points a local build at services on <code dir="auto">127.0.0.1</code>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="publishing">Publishing</h2><a class="sl-anchor-link" href="#publishing"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Publishing”</span></a></div>
-<p>The coordinator API and the monitor’s status are public, read-only JSON. On the public testnet the host’s Caddy
-serves <code dir="auto">testnet.trestly.io</code> (<code dir="auto">deploy/kusdt.caddy</code>) with TLS, and routes by path. Until mainnet, <code dir="auto">trestly.io</code> and the
+<p>The coordinator API and the monitor’s status are public, read-only JSON. Since the work after round 12 they are
+answered by processes of their own, <code dir="auto">kusdt api</code> and <code dir="auto">kusdt status</code>, from the files the coordinator and the monitor
+write (each mounted read-only); the coordinator and the monitor answer nobody from outside. On the public testnet
+the host’s Caddy serves <code dir="auto">testnet.trestly.io</code> (<code dir="auto">deploy/kusdt.caddy</code>) with TLS, and routes by path. Until mainnet, <code dir="auto">trestly.io</code> and the
 old names, <code dir="auto">kastools.com</code> and <code dir="auto">kusdt.pearlchain.live</code>, redirect to it, so wallets already installed keep working:</p>
 <table>
 <thead>
@@ -370,15 +391,15 @@ old names, <code dir="auto">kastools.com</code> and <code dir="auto">kusdt.pearl
 </tr>
 <tr>
 <td>Any other <code dir="auto">/api/v1/*</code></td>
-<td>The coordinator (<code dir="auto">kusdt-coordinator:9300</code>)</td>
+<td>The API process (<code dir="auto">kusdt-api:9300</code>)</td>
 </tr>
 <tr>
 <td><code dir="auto">GET</code> or <code dir="auto">HEAD</code> <code dir="auto">/monitor/health</code>, <code dir="auto">/monitor/api/v1/signal</code> and <code dir="auto">/monitor/api/v1/monitor</code></td>
-<td>The monitor (<code dir="auto">kusdt-monitor:9310</code>), with <code dir="auto">/monitor</code> stripped</td>
+<td>The status process (<code dir="auto">kusdt-status:9310</code>), with <code dir="auto">/monitor</code> stripped</td>
 </tr>
 <tr>
 <td>Any other <code dir="auto">/monitor/*</code></td>
-<td>404, so the acknowledge route stays private</td>
+<td>404: acknowledging is on the monitor’s own listener, which nothing here reaches</td>
 </tr>
 <tr>
 <td>Everything else</td>
@@ -387,12 +408,18 @@ old names, <code dir="auto">kastools.com</code> and <code dir="auto">kusdt.pearl
 </tbody>
 </table>
 <p>The web container is Caddy serving static files only (<code dir="auto">deploy/web.Caddyfile</code>): the built web app, these docs under <code dir="auto">/docs/</code>, and the wallet download under <code dir="auto">/downloads/</code>.</p>
-<aside aria-label="Danger" class="starlight-aside starlight-aside--danger"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 7a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V8a1 1 0 0 0-1-1Zm0 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm9.71-7.44-5.27-5.27a1.05 1.05 0 0 0-.71-.29H8.27a1.05 1.05 0 0 0-.71.29L2.29 7.56a1.05 1.05 0 0 0-.29.71v7.46c.004.265.107.518.29.71l5.27 5.27c.192.183.445.286.71.29h7.46a1.05 1.05 0 0 0 .71-.29l5.27-5.27a1.05 1.05 0 0 0 .29-.71V8.27a1.05 1.05 0 0 0-.29-.71ZM20 15.31 15.31 20H8.69L4 15.31V8.69L8.69 4h6.62L20 8.69v6.62Z"/></svg>Danger</p><div class="starlight-aside__content"><p>Never publish the signers’ ports or the monitor’s acknowledge route.</p></div></aside>
+<aside aria-label="Danger" class="starlight-aside starlight-aside--danger"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 7a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V8a1 1 0 0 0-1-1Zm0 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm9.71-7.44-5.27-5.27a1.05 1.05 0 0 0-.71-.29H8.27a1.05 1.05 0 0 0-.71.29L2.29 7.56a1.05 1.05 0 0 0-.29.71v7.46c.004.265.107.518.29.71l5.27 5.27c.192.183.445.286.71.29h7.46a1.05 1.05 0 0 0 .71-.29l5.27-5.27a1.05 1.05 0 0 0 .29-.71V8.27a1.05 1.05 0 0 0-.29-.71ZM20 15.31 15.31 20H8.69L4 15.31V8.69L8.69 4h6.62L20 8.69v6.62Z"/></svg>Danger</p><div class="starlight-aside__content"><p>Never publish the signers’ ports, the monitor’s operator listener (acknowledging) or the API process’s claims
+listener (the coordinator fetches the burn claims there).</p></div></aside>
 <p>The web app (<code dir="auto">bridge/web</code>, with <code dir="auto">testnet.public.json</code> for the public testnet) and these docs (<code dir="auto">docs/</code>) are static sites. For the web app, <code dir="auto">npm run build</code>, then copy the config to <code dir="auto">dist/config.json</code>. For the docs at <code dir="auto">/docs</code>, <code dir="auto">npm run build:pages</code> with <code dir="auto">SITE_URL</code> and <code dir="auto">BASE_PATH=/docs</code>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="watching-it">Watching it</h2><a class="sl-anchor-link" href="#watching-it"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Watching it”</span></a></div>
 <ul>
-<li><code dir="auto">GET /health</code> on the monitor answers 200 only while it is healthy, its last check is fresh, and its Kaspa view
-does not lag. Point an uptime alert at it.</li>
+<li><code dir="auto">GET /health</code> of the monitor’s status answers 200 only while it is healthy, its last check is fresh, its Kaspa
+view does not lag, and its status file is less than a minute old. Point an uptime alert at it, and alert as well
+when it does not answer at all: that is the status process down, while the monitor may still be judging.</li>
+<li><code dir="auto">GET /api/v1/health</code> of the API answers 503 when the coordinator’s public copy is more than 15 seconds old; the
+coordinator’s own health (warning when the API process has not been reached for a minute) is on 127.0.0.1:9309 in
+its container. What to do: <code dir="auto">deploy/RUNBOOK.md</code>, “The API process is down or stale” and “The status process is down
+or stale”.</li>
 <li><code dir="auto">GET /api/v1/monitor</code> gives the numbers behind INV-1 (minted, released, owed, backing per chain), every alarm
 and every pause it made.</li>
 <li><code dir="auto">GET /api/v1/signal</code> is the integrators’ answer: <code dir="auto">ok</code> false means stop taking new kUSDT. Pools, exchanges and
@@ -432,7 +459,7 @@ and would be paid. See the <a href="/kusdt-docs/security/threat-model/#a-bad-quo
 </ol>
 </li>
 <li><strong>If it is a false alarm:</strong> fix the cause, acknowledge it (<code dir="auto">POST /api/v1/alarms/:id/acknowledge</code> with the
-operator bearer), then resume: the vault owner unpauses each vault, 4 of 5 signers sign <code dir="auto">unpause</code> for the
+operator bearer, on the monitor’s operator listener), then resume: the vault owner unpauses each vault, 4 of 5 signers sign <code dir="auto">unpause</code> for the
 minter, and the pool admin unpauses the pool (<code dir="auto">pool-unpause</code>). The minter’s <code dir="auto">unpause</code> must be signed after
 the pause, at the admin nonce the minter has now: the pause moved the nonce, so a signature made before it no
 longer counts.</li>

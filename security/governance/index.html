@@ -133,6 +133,9 @@ and guardian. Anyone can carry it out once the minter has stood untouched for 72
 signer can veto it until then. A mint restarts the wait.</p>
 <p>This is a trade-off: three stolen keys can attempt to replace the signers, and an honest signer has 72 hours to stop them. Every
 monitor raises an alarm on a proposal the operators didn’t announce.</p>
+<p>A proposal and a veto spend the minter coin, and an unpause is signed for one coin (the paused one). So while a proposal
+stands, any one signer’s veto voids an unpause the four have signed, and they sign it again: a delay of one round of
+signing, nothing minted or lost. With a proposal standing, veto it or let it be carried out first, then sign the unpause.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="kusdtvault-evm-the-owner">KusdtVault (EVM): the owner</h2><a class="sl-anchor-link" href="#kusdtvault-evm-the-owner"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “KusdtVault (EVM): the owner”</span></a></div>
 <p>Each vault has an <strong>owner</strong>. On mainnet the owner is <code dir="auto">KusdtAccessManager</code>, OpenZeppelin’s <code dir="auto">AccessManager</code> (5.1.0) with
 <code dir="auto">renounceRole</code> closed, so nobody can give up a role at once, and <code dir="auto">revokeCanceller</code> added (below). Its only
@@ -311,7 +314,8 @@ one else holds a role. Testnet vaults are owned by the deployer’s plain key.</
 (<code dir="auto">unpause</code>), and hand the admin key, the guardian key or both to other keys (<code dir="auto">set_keys</code>). Only its signature opens
 the pool: the first deposit (<code dir="auto">init</code>), and the first deposit into a pool that every provider has left, need it, so
 nobody can open or reopen the pool with dust. It cannot touch the reserves or any position. The circuit breaker’s values are fixed at genesis, so no key can change them. Before
-mainnet, the operator holds the admin key offline.</p>
+mainnet, the operator holds the admin key offline. Stolen, it can still hold every pool transaction up, withdrawals
+included, for a fee a spend (<a href="/kusdt-docs/security/known-limits/#a-stolen-pool-admin-key-can-hold-the-pool-up">known limits</a>).</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="keeping-the-signer-sets-in-step">Keeping the signer sets in step</h2><a class="sl-anchor-link" href="#keeping-the-signer-sets-in-step"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Keeping the signer sets in step”</span></a></div>
 <p>The same five signers act on three contracts, and each contract has its own copy of the signer set:</p>
 <table>

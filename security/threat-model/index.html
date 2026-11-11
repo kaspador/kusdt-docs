@@ -359,8 +359,8 @@ in that window as well, so just under three times its ceiling can leave a vault.
 </tr>
 <tr>
 <td>A stolen pool admin key</td>
-<td>It can take the accrued fees, unpause and hand the keys over. It cannot touch the reserves or a position</td>
-<td>Bounded</td>
+<td>It can take the accrued fees, unpause and hand the keys over (the guardian key too: then no monitor can pause the pool, and every monitor raises <code dir="auto">pool-keys-changed</code>). It cannot touch the reserves or a position. It can also hold up every pool transaction, the withdrawals from a paused pool included, for as long as its holder pays a fee a spend: each admin spend (<code dir="auto">set_keys</code> to the same keys, <code dir="auto">unpause</code> and a pause after it, <code dir="auto">collect</code>) moves the pool’s outpoint from under whatever was built on it, and the admin entries do not read their input’s sequence, so one spend no block can take parks the pool coin in ordinary nodes for a day. Round 11’s COV-2 closed this for the guardian’s key (a paused pool takes no second pause); the admin’s entries are as they were (found in round 13, R13-COV-L1). The operators’ answer is a race to hand the admin key over, or a new pool (<a href="/kusdt-docs/security/known-limits/#a-stolen-pool-admin-key-can-hold-the-pool-up">known limits</a>)</td>
+<td>Bounded for funds: nothing can be taken. Withdrawals can be delayed while the key is held</td>
 </tr>
 </tbody>
 </table>

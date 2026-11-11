@@ -91,10 +91,11 @@ shows up. “No burn” is then only the node’s own answer, given in that roun
 failed is made again next round, and none is made in a round that did not read Kaspa or whose view of Kaspa is
 behind (such a round judges no payout, and an answer given in it would only be thrown away). A look that keeps
 failing still fails closed: after two minutes for a queued payout (five for a paid one) it is <code dir="auto">unverifiable</code>.</li>
-<li><strong>A checkpoint carries the unpaid burns.</strong> <code dir="auto">GET /api/v1/checkpoint</code>, asked with the operator bearer, lists every
-burn the monitor knows that no vault has paid (<code dir="auto">initialBurns</code>), read up to the block the checkpoint names, each
-with the chain block that accepted it. (Without the bearer the answer is the small one it always was: the list
-can be megabytes, and the public answers come from the process that judges and pauses.) A monitor started from that checkpoint takes the list in, so it need not find such a burn at its
+<li><strong>A checkpoint carries the unpaid burns.</strong> <code dir="auto">GET /api/v1/checkpoint</code>, asked of the monitor’s operator listener with
+the operator bearer, lists every burn the monitor knows that no vault has paid (<code dir="auto">initialBurns</code>), read up to the
+block the checkpoint names, each with the chain block that accepted it. (The public checkpoint, which the status
+process serves, is the small one it always was: the list can be megabytes, and it is built by the process that
+judges and pauses.) A monitor started from that checkpoint takes the list in, so it need not find such a burn at its
 address, which anyone can fill with coins (<a href="/kusdt-docs/security/known-limits/#an-address-that-holds-too-many-coins-cannot-be-listed">Known limits</a>).
 A listed burn is still asked for in the UTXO set while its release waits: found, its depth is the node’s; “not
 there” ends it; a look that fails leaves it standing, and the release is judged by owner, amount and depth. A
@@ -185,6 +186,10 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 <tr>
 <td><code dir="auto">refund-of-minted-deposit</code>, <code dir="auto">refund-without-skip</code></td>
 <td>A vault queued or paid the refund of a deposit that was minted, or one Kaspa never skipped (INV-2)</td>
+</tr>
+<tr>
+<td><code dir="auto">refund-before-finality</code></td>
+<td>A vault queued or paid a refund whose skip is not yet final for the refund’s amount: shallower than the depth the signers wait for by more than the monitor’s margin of 650 DAA. A queued refund stays judged every round until it leaves the queue, so a skip a reorg drops while it waits is <code dir="auto">refund-without-skip</code> (since round 13)</td>
 </tr>
 <tr>
 <td><code dir="auto">mint-of-refunded-deposit</code></td>
@@ -380,7 +385,7 @@ round before you restart it again.</p>
 and an input the monitor cannot decode is skipped without an alarm: a burn that was not indexed backs no release, so a
 release naming it is still <code dir="auto">release-without-burn</code>. Each accepted transaction is read on its own, so one bad
 transaction never costs the rest of its batch. Deposits, however small, raise nothing unless a mint disagrees with
-them, and one that names a burn owner is indexed as the burn it is. The public endpoints only read, and acknowledging takes the operator bearer token.</p>
+them, and one that names a burn owner is indexed as the burn it is. The public endpoints only read, and are answered by another process from the monitor’s files; acknowledging takes the operator bearer token.</p>
 <p>A burn that a reorg deeper than the scan depth drops is taken out of the index. It counts again only if the new chain
 accepts it.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-vault-owner">The vault owner</h2><a class="sl-anchor-link" href="#the-vault-owner"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The vault owner”</span></a></div>
@@ -469,18 +474,29 @@ vault, and <code dir="auto">unpause</code> by the pool admin. An unpause while a
 monitor is what turns that into a pause before any USDT can leave. A sell can land in the same block as the mint,
 before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="operating-it">Operating it</h2><a class="sl-anchor-link" href="#operating-it"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Operating it”</span></a></div>
-<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="sh"><code><div class="ec-line"><div class="code"><span style="--0:#F4F8F7;--1:#0B1F1B">npm</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">run</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">monitor</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#F5C77E;--1:#8C5817">--</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">&lt;config.json&gt;</span><span style="--0:#E3EAE9;--1:#1B2F2C">        </span><span style="--0:#909F9F;--0fs:italic;--1:#54666A;--1fs:italic"># in bridge/services</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="npm run monitor -- <config.json>        # in bridge/services"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="sh"><code><div class="ec-line"><div class="code"><span style="--0:#F4F8F7;--1:#0B1F1B">npm</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">run</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">monitor</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#F5C77E;--1:#8C5817">--</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">&lt;config.json&gt;</span><span style="--0:#E3EAE9;--1:#1B2F2C">        </span><span style="--0:#909F9F;--0fs:italic;--1:#54666A;--1fs:italic"># in bridge/services</span></div></div><div class="ec-line"><div class="code"><span style="--0:#F4F8F7;--1:#0B1F1B">npm</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">run</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">status</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#F5C77E;--1:#8C5817">--</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#A6E8D8;--1:#0A5C4D">&lt;status.json&gt;</span><span style="--0:#E3EAE9;--1:#1B2F2C">         </span><span style="--0:#909F9F;--0fs:italic;--1:#54666A;--1fs:italic"># its public status, a process of its own</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="npm run monitor -- <config.json>        # in bridge/servicesnpm run status -- <status.json>         # its public status, a process of its own"><div></div></button></div></figure></div>
+<p>The monitor answers nobody from outside. It writes its public answers to two files on a volume of its own
+(<code dir="auto">statusPath</code>, and the checkpoint beside it), at the end of every round, at once when an alarm opens or is
+acknowledged, and every five seconds in between; each file is written whole and swapped in, so it is never read
+half written. A separate process, <code dir="auto">kusdt status</code>, serves them under the same paths, with that volume mounted
+read-only and no key, no bearer and no connection to any node. A flood of status requests costs the monitor nothing:
+the rounds and the pauses never wait for one.</p>
+<p>The status process applies the monitor’s own rules again when it answers, so a monitor that is not running is never
+shown as healthy: a status file more than a minute old makes <code dir="auto">/health</code> answer 503 with its age, the signal
+<code dir="auto">ok: false</code> with that reason first, and the status <code dir="auto">healthy: false</code> with a warning. Point outside uptime checks at
+the status process’s <code dir="auto">/health</code>, as before, and also alert when it does not answer at all (the status process or
+the machine is down while the monitor may still be judging).</p>
 <table>
 <thead>
 <tr>
-<th>HTTP</th>
+<th>HTTP (the status process)</th>
 <th>Answer</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code dir="auto">GET /health</code></td>
-<td>200 when healthy and the last check is fresh (under 5 minutes old), otherwise 503. It also answers 503 while its Kaspa view lags (600 DAA scores by default), so an operator learns about a stalled node before alarms would come late. Its <code dir="auto">warnings</code> list a guardian short of gas (under 0.001) or of spendable KAS (under 1 KAS in its four largest coins), and a chain whose releases exceed what its deposits minted by more than its <code dir="auto">releaseCapacity</code> (or <code dir="auto">releaseImbalanceWarnUnits</code>), by name, all read every 5 minutes: a warning is never an alarm and pauses nothing. Moving value across chains is a normal use, and the warning shows when it has gone far. Since round 11 the warnings also name a transaction in the monitor’s node’s mempool that spends the minter or the pool coin and that no block will take (looked for every 10 seconds): anyone can place one on the pool for a fee, so it is never an alarm and pauses nothing. Wire it to uptime alerts</td>
+<td>200 when healthy, the last check is fresh (under 5 minutes old) and the status file is (under a minute), otherwise 503. It also answers 503 while its Kaspa view lags (600 DAA scores by default), so an operator learns about a stalled node before alarms would come late. Its <code dir="auto">warnings</code> list a guardian short of gas (under 0.001) or of spendable KAS (under 1 KAS in its four largest coins), and a chain whose releases exceed what its deposits minted by more than its <code dir="auto">releaseCapacity</code> (or <code dir="auto">releaseImbalanceWarnUnits</code>), by name, all read every 5 minutes: a warning is never an alarm and pauses nothing. Moving value across chains is a normal use, and the warning shows when it has gone far. Since round 11 the warnings also name a transaction in the monitor’s node’s mempool that spends the minter or the pool coin and that no block will take (looked for every 10 seconds): anyone can place one on the pool for a fee, so it is never an alarm and pauses nothing. Wire it to uptime alerts</td>
 </tr>
 <tr>
 <td><code dir="auto">GET /api/v1/signal</code></td>
@@ -492,7 +508,21 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 </tr>
 <tr>
 <td><code dir="auto">GET /api/v1/checkpoint</code></td>
-<td>Where another follower can start: <code dir="auto">scanFrom</code>, <code dir="auto">initialMinter</code>, <code dir="auto">initialPool</code>, <code dir="auto">judgeFromBlock</code> and <code dir="auto">initialSkipped</code> (when the list is whole). With the operator bearer token (<code dir="auto">Authorization: Bearer ...</code>) also <code dir="auto">initialBurns</code> and <code dir="auto">burnsLeftOut</code> (the unpaid burns, at most 20,000): that is the answer a monitor starts from. All of one moment: copy them into a monitor’s config together, from one answer</td>
+<td>Where another follower can start: <code dir="auto">scanFrom</code>, <code dir="auto">initialMinter</code>, <code dir="auto">initialPool</code>, <code dir="auto">judgeFromBlock</code> and <code dir="auto">initialSkipped</code> (when the list is whole). All of one moment: copy them into a monitor’s config together, from one answer</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>HTTP (the monitor’s operator listener)</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">GET /api/v1/checkpoint</code></td>
+<td>With the operator bearer token (<code dir="auto">Authorization: Bearer ...</code>): the checkpoint above with <code dir="auto">initialBurns</code> and <code dir="auto">burnsLeftOut</code> (the unpaid burns, at most 20,000): that is the answer a monitor starts from</td>
 </tr>
 <tr>
 <td><code dir="auto">POST /api/v1/alarms/:id/acknowledge</code></td>
@@ -500,11 +530,17 @@ before the monitor sees it; the pool’s circuit breaker bounds that.</p>
 </tr>
 </tbody>
 </table>
-<p>The four <code dir="auto">GET</code> answers are public. Each is built at most once a second, however many ask, so an answer can be up to a
-second old (an acknowledgement shows at once). The checkpoint alone can be older: it lists every skipped deposit, so
-it is kept for twenty times the time building it took, up to a minute. The checkpoint with the burns, which only the operator bearer gets, is built once in 30 seconds. The one <code dir="auto">POST</code> is refused without the
-operator bearer before its body is read, and its body is 4 kB at the most. With <code dir="auto">apiClientIp</code> set, one client address gets 240 requests a minute
-(HTTP 429 with <code dir="auto">retryAt</code> past that). The requests are answered by the same process that judges and pauses: keep the limit on.</p>
+<p>The operator listener refuses every request without the operator bearer before anything is read, and serves
+nothing else. Keep it on a private address: the mainnet package’s Caddy lets only the operators’ own addresses
+(<code dir="auto">OPERATOR_IPS</code>) through to it, and only for those two paths with a bearer.</p>
+<p>The four public answers are made by the status process at most once a second from the files it last read (it looks at
+them every quarter second, and reads one only when it changed), so an answer can be a few seconds old, and an
+acknowledgement shows within a second. The checkpoint alone can be older: it lists every skipped deposit, so the
+monitor builds it for its file at most every ten seconds, and no sooner than twenty times the time building it took,
+up to a minute. The checkpoint
+with the burns, which only the operator bearer gets, is built once in 30 seconds. The one <code dir="auto">POST</code> is refused without
+the operator bearer before its body is read, and its body is 4 kB at the most. With <code dir="auto">apiClientIp</code> set in the status
+process’s config, one client address gets 240 requests a minute (HTTP 429 with <code dir="auto">retryAt</code> past that).</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="configuration">Configuration</h3><a class="sl-anchor-link" href="#configuration"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Configuration”</span></a></div>
 <table>
 <thead>
@@ -529,6 +565,10 @@ operator bearer before its body is read, and its body is 4 kB at the most. With 
 <tr>
 <td><code dir="auto">guardianKaspaSecretPath</code>, <code dir="auto">guardianEvmSecretPath</code></td>
 <td>The guardian keys. Without them the monitor can alarm but not pause</td>
+</tr>
+<tr>
+<td><code dir="auto">statusPath</code></td>
+<td>Optional: where it writes its public status for the status process (<code dir="auto">&lt;statePath&gt;.status</code> unless set), and the public checkpoint beside it (<code dir="auto">&lt;statusPath&gt;.checkpoint</code>). Put it on a volume of its own, mounted read-only in the status process. <code dir="auto">kusdt check</code> fails a folder it cannot write</td>
 </tr>
 <tr>
 <td><code dir="auto">statePath</code></td>
@@ -623,16 +663,39 @@ operator bearer before its body is read, and its body is 4 kB at the most. With 
 <td>The operator bearer token for acknowledging alarms</td>
 </tr>
 <tr>
+<td><code dir="auto">apiClientIp</code>, <code dir="auto">apiRequestsPerMinute</code></td>
+<td>Optional: a count per client address on the operator listener, read as the status process reads them (below)</td>
+</tr>
+<tr>
+<td><code dir="auto">listen</code></td>
+<td><code dir="auto">{host, port}</code> for the operator listener: a private address (9311 in the shipped packages)</td>
+</tr>
+</tbody>
+</table>
+<p>The status process’s config (<code dir="auto">status.json</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">monitorStatusPath</code></td>
+<td>The monitor’s <code dir="auto">statusPath</code>, as this process sees it (a read-only mount)</td>
+</tr>
+<tr>
+<td><code dir="auto">listen</code></td>
+<td><code dir="auto">{host, port}</code> for the public status (9310 in the shipped packages)</td>
+</tr>
+<tr>
 <td><code dir="auto">apiClientIp</code></td>
 <td>Turns on the limit of status requests per client address, and says where that address is: <code dir="auto">x-forwarded-for</code> behind the Caddy the mainnet package ships, <code dir="auto">cf-connecting-ip</code> only where nothing but Cloudflare reaches the proxy, <code dir="auto">socket</code> with nothing in front. The preflight check fails a mainnet config without it</td>
 </tr>
 <tr>
 <td><code dir="auto">apiRequestsPerMinute</code></td>
-<td>Optional: how many requests one client address may make a minute; 240 by default. Acknowledging is counted apart from the status requests</td>
-</tr>
-<tr>
-<td><code dir="auto">listen</code></td>
-<td><code dir="auto">{host, port}</code> for the HTTP API</td>
+<td>Optional: how many requests one client address may make a minute; 240 by default</td>
 </tr>
 </tbody>
 </table>

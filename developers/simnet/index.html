@@ -294,7 +294,7 @@ default ports, for the wallet extension and the web app. Ctrl+C stops it.</p>
 <td><code dir="auto">http://127.0.0.1:8545</code>, <code dir="auto">http://127.0.0.1:8546</code></td>
 </tr>
 <tr>
-<td>Coordinator API</td>
+<td>Coordinator API (its API process)</td>
 <td><code dir="auto">http://127.0.0.1:9100/api/v1</code></td>
 </tr>
 <tr>
@@ -302,8 +302,12 @@ default ports, for the wallet extension and the web app. Ctrl+C stops it.</p>
 <td>ports 9101 to 9105</td>
 </tr>
 <tr>
-<td>Monitor</td>
+<td>Monitor’s status (its status process)</td>
 <td>port 9200</td>
+</tr>
+<tr>
+<td>The coordinator’s health, the claims channel, the monitor’s operator listener</td>
+<td>ports 9110, 9111 and 9210 (not for the wallet or the web app)</td>
 </tr>
 <tr>
 <td>Dev faucet</td>
