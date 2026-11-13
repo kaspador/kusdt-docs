@@ -168,7 +168,7 @@ no pause.</p>
 </tr>
 <tr>
 <td>Vault</td>
-<td><code dir="auto">setGuardian</code>, by the owner; on mainnet through the AccessManager’s emergency delay, about 6 hours. Queue it with <code dir="auto">unpause</code>, or a thief with the old key pauses again</td>
+<td><code dir="auto">setGuardian</code>, by the owner; on mainnet through the AccessManager’s emergency delay, about 6 hours. Queue it with <code dir="auto">unpause</code>, and execute <code dir="auto">setGuardian</code> first (best: both executes in one <code dir="auto">multicall</code>, <code dir="auto">setGuardian</code> first): an <code dir="auto">unpause</code> executed while the old key is still the guardian lets a thief pause again at once, and the next <code dir="auto">unpause</code> waits another 6 hours</td>
 </tr>
 <tr>
 <td>KasPool</td>

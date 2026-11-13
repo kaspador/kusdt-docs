@@ -88,19 +88,29 @@ RPC frozen or far behind holds the reads back to it, and <code dir="auto">/healt
 for five minutes (the lowest finalized block for 20 minutes on Ethereum, 10 on BNB Chain), or one RPC has trailed
 the best one by over two minutes for five, naming the chain and the RPC by its place in the coordinator’s list. The
 Kaspa follower counts only while its node calls itself synced and its virtual DAA keeps a tenth of the network’s
-pace (since round 16). Since rc.22 it also answers 503 when no payout has had three signatures for five minutes
+pace (since round 16). When the node answers and the follower’s reads of the chain do not come back, the 503 says
+so, where it used to say the node was down (since run 20). Since rc.22 it also answers 503 when no payout has had three signatures for five minutes
 because signers did not answer or answered that they cannot sign, naming those signers by their place in the
 coordinator’s list (signers that refuse a payout, a burn not deep enough for them yet, are judging it and do not
-count). It says what each did in fixed words, “no answer” or the HTTP status it answered, never the signer’s own
-error text, which can name the signer’s Kaspa node; the signer’s own <code dir="auto">/health</code> and logs give the reason.
+count; since run 20 one that refuses because it holds itself, its daily limits counted as spent for up to a day after
+a lost journal or a restore, does count). It says what each did in fixed words, “no answer”, the HTTP status it
+answered or “holds itself” with the time the hold ends, never the signer’s own error text, which can name the
+signer’s Kaspa node; the signer’s own <code dir="auto">/health</code> and logs give the reason.
 <code dir="auto">HEAD /health</code> is answered as <code dir="auto">GET</code>, without the body.</li>
 <li><strong><code dir="auto">GET /pool</code></strong> answers 503 with <code dir="auto">retryAt</code> once the copy is more than 15 seconds old, once the Kaspa follower has
 not seen its node move on for 60 seconds, and while the follower lags its node by more than 600 DAA (catching up
-after a start), rather than hand a wallet a pool state the coordinator is not updating. Within those bounds it is
-the coordinator’s newest state, as before.</li>
+after a start, or its reads of the chain failing), rather than hand a wallet a pool state the coordinator is not updating. Within those bounds it is
+the coordinator’s newest state, as before. Since the deep round of the second outside review of rc.22 (D4-3) it
+also answers 503 once the pool coin the coordinator follows has been missing from its node’s UTXO set for two
+minutes while its follower is caught up (a transaction it could not follow spent it, or a reorg undid a pool move it
+could not undo): every trade built on that coin would be refused, and <code dir="auto">/health</code> is 503 naming the coin.</li>
 <li><strong>The records</strong> (deposits, redemptions, positions, the reserves’ figures, the minter in <code dir="auto">/status</code>) are as of the
 coordinator’s last save, a few seconds behind what it knows. Every output <code dir="auto">/tokens</code> and <code dir="auto">/positions</code> list is still
-looked up on the node when it is answered.</li>
+looked up on the node when it is answered. Since the deep round of the second outside review of rc.22 (D4-1) a
+reorg that drops a block undoes what that block changed in the token index: the outputs its transactions spent are
+listed again, and those they made are not. The journal behind it keeps the blocks of the last <code dir="auto">finalityDaa</code> (1,000
+DAA at least) and at most 2,000 spent outputs, the newest block always; until then only the minter’s own mints were
+undone, and a transfer a reorg dropped for good left its sender’s kUSDT out of <code dir="auto">/tokens</code>.</li>
 <li>Before the coordinator has written anything, the routes that need its files answer 503 with <code dir="auto">retryAt</code>.</li>
 </ul>
 <p>The coordinator learns the minter, the pool and the positions the way the monitor does: from accepted
@@ -134,7 +144,7 @@ transactions, checking every successor against the outputs (see
 </tr>
 <tr>
 <td><code dir="auto">GET /deposits/:chain/:nonce</code></td>
-<td><code dir="auto">{chain, nonce, txHash, blockNumber, logIndex, sender, ownerScheme, owner, units, fee, minted, status, kaspaTxid?, refund?}</code>. A nonce the coordinator has not read yet answers only <code dir="auto">{chain, nonce, status: "pending"}</code>. <code dir="auto">refund</code> appears once Kaspa skipped the nonce: <code dir="auto">{chain, nonce, status, skipTxid, since, evmTxHash?, attempts?, nextTry?, lastError?}</code>, with status <code dir="auto">skipped</code> → <code dir="auto">refunded</code>, or <code dir="auto">blocked</code> while the token blocks the depositor (see <a href="/kusdt-docs/protocol/refunds/">Refunds</a>). <code dir="auto">:chain</code> is the code (<code dir="auto">1</code>, <code dir="auto">2</code>), <code dir="auto">ethereum</code>, <code dir="auto">bsc</code> or <code dir="auto">bnb</code>, or the deployment’s chain name; an unknown chain answers 404, and a nonce that is not a decimal integer 400</td>
+<td><code dir="auto">{chain, nonce, txHash, blockNumber, logIndex, sender, ownerScheme, owner, units, fee, minted, status, kaspaTxid?, refund?}</code>. A nonce the coordinator has not read yet answers only <code dir="auto">{chain, nonce, status: "pending"}</code>. <code dir="auto">refund</code> appears once Kaspa skipped the nonce: <code dir="auto">{chain, nonce, status, skipTxid, since, evmTxHash?, attempts?, nextTry?, lastError?}</code>, with status <code dir="auto">skipped</code> → <code dir="auto">refunded</code>, or <code dir="auto">blocked</code> while the token blocks the depositor (see <a href="/kusdt-docs/protocol/refunds/">Refunds</a>). <code dir="auto">:chain</code> is the code (<code dir="auto">1</code>, <code dir="auto">2</code>), <code dir="auto">ethereum</code>, <code dir="auto">bsc</code> or <code dir="auto">bnb</code>, or the deployment’s chain name; an unknown chain answers 404, and a nonce that is not a decimal integer from 0 to 2⁵³ - 1 written with no leading zero (<code dir="auto">5</code>, not <code dir="auto">005</code>) 400</td>
 </tr>
 <tr>
 <td><code dir="auto">GET /recipients/:chain/:address</code></td>
@@ -150,7 +160,7 @@ transactions, checking every successor against the outputs (see
 </tr>
 <tr>
 <td><code dir="auto">GET /redeems/:txid/:outputIndex</code></td>
-<td><code dir="auto">{redeemId, txid, outputIndex, chain, address, units, state, status, firstSeen, fee?, payout?, evmTxHash?, readyAt?, queuedTx?, attempts?, nextTry?, lastError?, note?, unverified?, checkedAt?, candidates?}</code>, or 404 if no such redemption was seen. <code dir="auto">unverified</code> marks a claim only a client has made so far, and <code dir="auto">candidates</code> holds other claims waiting for the same outpoint. <code dir="auto">status</code> <code dir="auto">queued</code> means the payout is waiting in the vault: <code dir="auto">readyAt</code> says until when (unix seconds) and <code dir="auto">queuedTx</code> is the transaction that queued it. <code dir="auto">fee</code> and <code dir="auto">payout</code> come from the vault’s <code dir="auto">Released</code> event; <code dir="auto">attempts</code>, <code dir="auto">nextTry</code> and <code dir="auto">lastError</code> show the relayer’s retries, or why a payout is held</td>
+<td><code dir="auto">{redeemId, txid, outputIndex, chain, address, units, state, status, firstSeen, fee?, payout?, evmTxHash?, readyAt?, queuedTx?, attempts?, nextTry?, lastError?, note?, unverified?, checkedAt?, candidates?}</code>, or 404 if no such redemption was seen. A <code dir="auto">txid</code> that is not 64 hex digits, or an <code dir="auto">outputIndex</code> that is not a decimal integer from 0 to 65535, answers 400 (an index that was not a number used to be read as 0, and answered output 0’s record). <code dir="auto">unverified</code> marks a claim only a client has made so far, and <code dir="auto">candidates</code> holds other claims waiting for the same outpoint. <code dir="auto">status</code> <code dir="auto">queued</code> means the payout is waiting in the vault: <code dir="auto">readyAt</code> says until when (unix seconds) and <code dir="auto">queuedTx</code> is the transaction that queued it. <code dir="auto">fee</code> and <code dir="auto">payout</code> come from the vault’s <code dir="auto">Released</code> event; <code dir="auto">attempts</code>, <code dir="auto">nextTry</code> and <code dir="auto">lastError</code> show the relayer’s retries, or why a payout is held</td>
 </tr>
 <tr>
 <td><code dir="auto">GET /reserves</code></td>

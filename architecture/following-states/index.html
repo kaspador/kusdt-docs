@@ -97,7 +97,12 @@ contents could count the loser.</p>
 <p>So followers read <strong>acceptance</strong>, not block contents:</p>
 <ul>
 <li>the node’s virtual chain (<code dir="auto">getVirtualChainFromBlock</code> with <code dir="auto">includeAcceptedTransactionIds</code>) lists, for each chain
-block, the transactions it accepted; the block bodies come from <code dir="auto">getBlocks</code>;</li>
+block, the transactions it accepted; the block bodies come from <code dir="auto">getBlocks</code>, about 250 blocks an answer. When a
+node does not get such a batch to the follower in time (20 s), the follower reads the same blocks one at a time
+for the next ten minutes: the batch’s hashes from <code dir="auto">getBlocks</code> without blocks, then <code dir="auto">getBlock</code> for each, in the
+batch’s order, a few at a time. The node answers a block alone as it answers it in a batch, so what is read is the
+same, and each pass keeps what it read. The batch that did not come is not asked for again, and its connection is
+dropped at its deadline so its answer does not arrive for nobody (since run 20);</li>
 <li>a chain block is processed only once it is a few DAA scores below the virtual (<code dir="auto">minDepthDaa</code>), which keeps
 ordinary reorganisations from undoing what was read. The default is 20 DAA scores for the coordinator and the
 signers (2 on simnet) and 10 for the monitor.</li>

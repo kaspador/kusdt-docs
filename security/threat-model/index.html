@@ -289,7 +289,7 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <tbody>
 <tr>
 <td>Forged kUSDT dumped into the pool</td>
-<td>The biggest one. A forged mint and a sell can land in the same block, so no monitor can stop it. The pool’s <strong>circuit breaker</strong> stops it on-chain: sells take at most 10 % of the KAS reserve at once, refilling at that much per hour, net of buys (<a href="/kusdt-docs/contracts/kaspool/#the-circuit-breaker">KasPool</a>). Idle time can’t pile up past one cap and the clock can’t be set back: it is the pool UTXO’s own age, which consensus proves. The monitor then pauses the pool with everything else: swaps and new liquidity stop, withdrawals stay open, and only the pool admin resumes</td>
+<td>The biggest one. A forged mint and a sell can land in the same block, so no monitor can stop it. The pool’s <strong>circuit breaker</strong> stops it on-chain: sells take at most 10 % of the KAS reserve at once, refilling at that much per hour, net of buys (right after buys, a sell claiming no time can also take the KAS they brought in, up to one more cap: <a href="/kusdt-docs/security/known-limits/#the-pool-caps-sells">Known limits</a>) (<a href="/kusdt-docs/contracts/kaspool/#the-circuit-breaker">KasPool</a>). Idle time can’t pile up past one cap and the clock can’t be set back: it is the pool UTXO’s own age, which consensus proves. The monitor then pauses the pool with everything else: swaps and new liquidity stop, withdrawals stay open, and only the pool admin resumes</td>
 <td>Fixed 4 November 2026. Tested: in <code dir="auto">local:e2e</code>, 400 000 forged kUSDT get under 10 % of the pool’s KAS</td>
 </tr>
 <tr>
@@ -404,7 +404,7 @@ in that window as well, so just under three times its ceiling can leave a vault.
 <li>Five independent signer operators. Five are lined up; nothing runs on mainnet yet.</li>
 <li>External audits of the covenants, their compiler and the vault, and allowances sized to what can be lost.
 With 3 stolen keys and a pause within the wait, no forged payout leaves the vaults. Without one, today’s limits
-risk about 500 000 USDT from them. Forged kUSDT can still take at most about 10 % of the pool’s KAS, and it stays
+risk about 500 000 USDT from them. Forged kUSDT can still take at most about 10 % of the pool’s KAS (up to about twice that right after buys), and it stays
 a claim on the vaults: see below.</li>
 </ol>
 <p>See also the <a href="/kusdt-docs/security/mainnet-checklist/">mainnet checklist</a>.</p>

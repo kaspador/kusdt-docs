@@ -74,8 +74,8 @@ the wallet always use it.</p>
 <ol>
 <li>requires <code dir="auto">ownerScheme ≤ 4</code> and <code dir="auto">owner ≠ 0</code>, and <code dir="auto">minDeposit ≤ units ≤ maxDeposit</code>;</li>
 <li>computes the fee and requires <code dir="auto">minted = units − fee &gt; 0</code> (and <code dir="auto">minted ≥ minMinted</code>). The fee is
-<code dir="auto">max(minDepositFee, ceil(units × feeBps / 10⁴))</code> on a quiet day, and more while many deposits were made on that
-vault in the last 24 hours, up to <code dir="auto">surgeFeeBps</code> (see <a href="/kusdt-docs/protocol/fees/#the-rising-deposit-fee">the rising deposit fee</a>);</li>
+<code dir="auto">max(minDepositFee, ceil(units × feeBps / 10⁴))</code> while the whole deposit fits under half of the vault’s deposit meter, and more for the part above it
+(the meter counts the deposits of the last 24 hours), up to <code dir="auto">surgeFeeBps</code> (see <a href="/kusdt-docs/protocol/fees/#the-rising-deposit-fee">the rising deposit fee</a>);</li>
 <li>pulls <code dir="auto">units × scale</code> of the token and requires that its balance grew by exactly that amount (this refuses
 tokens that charge a transfer fee);</li>
 <li>assigns the next nonce: deposits are numbered 0, 1, 2, … per vault;</li>

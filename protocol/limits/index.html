@@ -118,7 +118,7 @@ Three deposits may add up to more than the ceiling: the coordinator then mints a
 <tbody>
 <tr>
 <td>Each signer’s daily limit (its fuse)</td>
-<td>25 000 kUSDT per 24 hours, for mints and for releases each</td>
+<td>50 000 kUSDT per 24 hours, for mints and for releases each</td>
 </tr>
 <tr>
 <td>Deposit size</td>
@@ -126,11 +126,11 @@ Three deposits may add up to more than the ceiling: the coordinator then mints a
 </tr>
 <tr>
 <td>Vault release allowance</td>
-<td>A ceiling of 25 000 USDT per vault, which refills fully in 24 h</td>
+<td>A ceiling of 50 000 USDT per vault, which refills fully in 24 h</td>
 </tr>
 <tr>
 <td>Deposit meter, for the <a href="/kusdt-docs/protocol/fees/#the-rising-deposit-fee">rising deposit fee</a></td>
-<td>12 500 USDT per vault, half the signers’ limit; 2.50 % at a full meter</td>
+<td>25 000 USDT per vault, half the signers’ limit; 2.50 % at a full meter</td>
 </tr>
 <tr>
 <td>Kaspa mint allowance and hard cap</td>
@@ -138,15 +138,15 @@ Three deposits may add up to more than the ceiling: the coordinator then mints a
 </tr>
 </tbody>
 </table>
-<p><strong>The vault’s allowance is not a cap on a day.</strong> It is a bucket that holds at most 25 000 USDT and refills at
-25 000 a day. After a quiet time the bucket is full: 25 000 can be queued at once, and it keeps refilling, so about
-twice 25 000 can be queued in the 24 hours that follow. Counting payouts already waiting in the queue from before,
-just under three times 25 000 can leave a vault in 24 hours (see
+<p><strong>The vault’s allowance is not a cap on a day.</strong> It is a bucket that holds at most 50 000 USDT and refills at
+50 000 a day. After a quiet time the bucket is full: 50 000 can be queued at once, and it keeps refilling, so about
+twice 50 000 can be queued in the 24 hours that follow. Counting payouts already waiting in the queue from before,
+just under three times 50 000 can leave a vault in 24 hours (see
 <a href="#most-that-can-move-in-a-window">Most that can move in a window</a>). That is all the vault itself enforces, and it
 is the bound that counts if three signer keys are stolen.</p>
 <p><strong>The signers’ own limit does hold per 24 hours.</strong> Each signer counts what it signed in the last 24 hours and signs
-nothing that would take it past 25 000 kUSDT of releases and refunds, both chains together (and the same for
-mints). A payout needs 3 signers, so with honest signers no more than 25 000 USDT of payouts is signed in any 24
+nothing that would take it past 50 000 kUSDT of releases and refunds, both chains together (and the same for
+mints). A payout needs 3 signers, so with honest signers no more than 50 000 USDT of payouts is signed in any 24
 hours, whatever the vaults’ buckets hold.</p>
 <p><strong>Why they go together.</strong> A signer signs nothing that would take it past its daily limit, so:</p>
 <ul>

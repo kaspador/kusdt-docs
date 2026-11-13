@@ -192,7 +192,10 @@ schedules it, waits its delay, then executes it within a week. Calling the vault
 <p><strong>One honest canceller stops a bad proposal.</strong> The cancellers are parties other than the Safe’s holders, and the
 monitor can hold a canceller key too, cancelling every queued call nobody announced. A canceller can only cancel:
 a rogue one can hold up vault calls, an emergency unpause included, until the Safe removes it, which takes 48 hours
-and which no canceller can cancel.</p>
+and which no canceller can cancel. A canceller who acts by hand needs the queued call’s caller, target and whole
+calldata for <code dir="auto">cancel</code>: <code dir="auto">kusdt cancel-op</code> reads them from the transaction that queued it (through every RPC given)
+or takes them as a block explorer shows the event, and prints the cancel for the canceller’s own wallet, with the
+operation’s ID to compare with the alarm’s (since run 20).</p>
 <p><strong>The cancellers can also cancel the Safe’s power-adding calls on the manager</strong> (since rc.16). A compromised Safe
 could schedule a change to the manager itself, for example a new GOVERNOR with no delay, and use it 48 hours later.
 Before, such a call could be seen but not cancelled. Now the manager’s functions that add power (<code dir="auto">grantRole</code>,
@@ -231,7 +234,8 @@ canceller key (<code dir="auto">cancellerEvmSecretPath</code>) and cancels by it
 <p>It is a delay, not a stop. If nobody acts in that time, stolen Safe keys still win, and the pause they can set at
 any moment gives users no way out in the meantime. No service watches the Safe’s own owner list yet (the Safe’s
 <code dir="auto">AddedOwner</code>, <code dir="auto">RemovedOwner</code> and <code dir="auto">ChangedThreshold</code> events): <code dir="auto">mainnet:verify</code> compares the owners and the
-threshold with the plan’s when it is run, and the Safe’s holders watch their Safe. A freeze by the Safe could only
+threshold with the plan’s when it is run, and fails a mainnet Safe whose threshold is below 2, which the plan
+refuses too (since run 20), and the Safe’s holders watch their Safe. A freeze by the Safe could only
 be made slower by giving PAUSER or EMERGENCY to other keys than ADMIN’s, which v1 does not do.</p>
 <p>One delay grew with the cancellers’ say: when a rogue canceller and a role that has to be revoked come together,
 the Safe needs 48 hours to remove the canceller and 48 more for the revocation.</p>
