@@ -94,13 +94,13 @@ Service. It also opens without the notice over it, and there is nothing to accep
 <td>Deposits</td>
 </tr>
 <tr>
-<td>A Kaspa wallet on a computer: KasWare, or <a href="/kusdt-docs/getting-started/wallet/">kUSDT Wallet</a> (the browser extension). With KasWare the page builds each kUSDT transaction and KasWare signs it; kUSDT Wallet builds, shows and signs its own</td>
+<td><a href="/kusdt-docs/getting-started/wallet/">kUSDT Wallet</a>, the browser extension, on a computer: it builds, shows and signs its own transactions. Other Kaspa wallets (KasWare, Kastle) are not supported</td>
 <td>Kaspa transactions</td>
-<td>Bridging back, swaps, liquidity (adding to the pool needs kUSDT Wallet for now)</td>
+<td>Bridging back, swaps, liquidity</td>
 </tr>
 </tbody>
 </table>
-<p>Without a Kaspa wallet, every Kaspa-side action says where to get KasWare or kUSDT Wallet. On a phone, where neither can run, the page says so: swapping, bridging back and the pool need a computer, and you can still bridge USDT to your Kaspa address (a normal one, <code dir="auto">kaspa:q…</code>).</p>
+<p>Without kUSDT Wallet, every Kaspa-side action says where to get it. On a phone, where it can’t run, the page says so: swapping, bridging back and the pool need a computer, and you can still bridge USDT to your Kaspa address (a normal one, <code dir="auto">kaspa:q…</code>).</p>
 <p>The header has one wallet button for both wallets: <strong>Connect Wallet</strong> until one is connected, then the marks of the networks in use and the portfolio’s total. Its panel groups the wallets by what they are for (USDT on Ethereum and BNB Chain; KAS and kUSDT on Kaspa): each connected wallet with <strong>Disconnect</strong> beside its name, its address, to copy, its balances and, for the EVM wallet, the network it is on, then the portfolio’s total and any wallet still to connect. The pages show one <strong>Connect Wallet</strong> button where an action needs a wallet; the wallets found are named only in this menu. A switch changes between day and night.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="sections">Sections</h2><a class="sl-anchor-link" href="#sections"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Sections”</span></a></div>
 <table>
@@ -121,7 +121,7 @@ Service. It also opens without the notice over it, and there is nothing to accep
 </tr>
 <tr>
 <td><strong>Swap</strong></td>
-<td>Buy or sell kUSDT for KAS: what you pay, what you receive (quoted with the same core the covenant checks against), the max price change (0.1 %, 0.5 %, 1 % or your own) and the least you receive, the price, the 0.50 % swap fee, the KAS kept with your kUSDT and the network fee. With KasWare, whose own window shows no fee, the page shows about what the network fee is (read from the Kaspa node every 30 seconds, and the swap waits until it is shown), warns when it is more than a tenth of the KAS the swap moves, and the transaction is not sent if the node then asks more than half as much again; the same for Remove on the Pool page (since round 16). kUSDT Wallet shows the fee in its own window. The price impact, the fee split and the pool’s checks are in its Details. See <a href="/kusdt-docs/getting-started/swap/">Swap</a></td>
+<td>Buy or sell kUSDT for KAS: what you pay, what you receive (quoted with the same core the covenant checks against), the max price change (0.1 %, 0.5 %, 1 % or your own) and the least you receive, the price, the 0.50 % swap fee, the KAS kept with your kUSDT and the network fee. kUSDT Wallet shows the network fee in its own window. The price impact, the fee split and the pool’s checks are in its Details. See <a href="/kusdt-docs/getting-started/swap/">Swap</a></td>
 </tr>
 <tr>
 <td><strong>Pool</strong></td>
@@ -153,8 +153,11 @@ agree. Released amounts are summed from each vault’s own <code dir="auto">Rele
 reserve must be the kUSDT state that pool state implies. A pool answer that fails a check is shown, explained,
 and not offered for swaps.</li>
 <li><strong>The covenant states</strong>: on the public testnet the page also asks a public Kaspa node whether the pool, reserve and minter states are unspent, instead of taking the coordinator’s word.</li>
-<li><strong>The deployment</strong>: the coordinator must name the pinned covenant ID, pool ID and vaults, or the page says
-plainly that it serves another deployment.</li>
+<li><strong>The deployment</strong>: the coordinator must name the page’s covenant ID, pool ID, vaults, chains, tokens, decimals
+and KAS values, or the page says plainly that it serves another deployment and sends nothing: every action is off
+until they agree, and one already on its way asks your wallet for nothing more. On mainnet the page also starts only
+on the deployment its build pins, the one kUSDT Wallet pins: a <code dir="auto">config.json</code> or <code dir="auto">deployment.json</code> on the host that
+names another vault, token or kUSDT stops it at its start, with each difference named (since run 21, Daybreak [12]).</li>
 <li><strong>The recipient</strong> of a redemption: the page asks the coordinator (<code dir="auto">GET /recipients/:chain/:address</code>) before every
 burn and shows the reason inline under the address. It refuses an address the token blocks, the zero address and
 the vault’s own, and it refuses too while the coordinator can’t answer, asking again every 30 seconds. It never
@@ -171,8 +174,7 @@ approve now. Nothing the other end of a stored session sends changes that.</li>
 that the form still shows what you clicked and that its page is still on screen. If you leave the page while an
 action runs (another page, Back, the same page opened again), your wallet is asked for nothing more for it, and a
 notice on every page says where it stopped: for a bridge to Kaspa, whether its approval was already sent (it stays
-in place for your next bridge; no USDT moved); for a sale with KasWare, whether the kUSDT for it was already set
-aside (it is still yours). The page cannot close a request your wallet is already showing: the notice tells you to
+in place for your next bridge; no USDT moved). The page cannot close a request your wallet is already showing: the notice tells you to
 reject it, and until the wallet has answered it, no new action starts from the site. If you approve it all the
 same, it is sent with the values you entered then, and the site says so and follows it as usual.</li>
 <li><strong>Dollar figures</strong>: KAS is counted at the market price from api.kaspa.org, for display only. No transaction, quote
@@ -190,7 +192,7 @@ or minimum is computed from it.</li>
 <tbody>
 <tr>
 <td>You need two wallets</td>
-<td>Bridging to Kaspa is an EVM transaction; everything on Kaspa is signed by KasWare or kUSDT Wallet</td>
+<td>Bridging to Kaspa is an EVM transaction; everything on Kaspa is signed by kUSDT Wallet</td>
 </tr>
 <tr>
 <td>You need KAS to redeem</td>
@@ -210,7 +212,7 @@ or minimum is computed from it.</li>
 </tr>
 <tr>
 <td>A swap or a pool action asks you to merge your KAS first</td>
-<td>Since rc.22 a pool transaction takes at most 8 inputs, the pool’s own coins among them, so a buy is paid from at most 6 of your KAS coins and a sale, a deposit or a withdrawal from at most 5 (the largest first). When those are not enough and all of your coins would be, the page says so before your wallet is asked for anything: in your wallet, send all of your KAS to your own address, and once it is back as one coin, try again. kUSDT Wallet offers that send itself (<strong>Merge my KAS</strong>). The same when those coins would leave change too small for the network to keep, which would go to the network fee (since round 17): the page says how much, and a swap that would still give the network more than 0.05 KAS of change is not sent unless that fee was shown (a buy of all you can pay shows “Up to 0.30 KAS”). With KasWare the page builds the transaction, and what KasWare signs has exactly the inputs the builder chose, in number and order</td>
+<td>Since rc.22 a pool transaction takes at most 8 inputs, the pool’s own coins among them, so a buy is paid from at most 6 of your KAS coins and a sale, a deposit or a withdrawal from at most 5 (the largest first). When those are not enough and all of your coins would be, kUSDT Wallet says so in its window before anything is signed: send all of your KAS to your own address (Send, KAS, Max; its Swap and Pool screens offer <strong>Merge my KAS</strong>), and once it is back as one coin, try again. The same when those coins would leave change too small for the network to keep, which would go to the network fee (since round 17): the wallet says how much, and a pool transaction that would give the network more than 0.05 KAS of change is not sent unless that fee was shown (its own Swap screen shows “up to” the fee its Max keeps); change the amount a little</td>
 </tr>
 <tr>
 <td>A withdrawal says the deposit is not in a block yet</td>

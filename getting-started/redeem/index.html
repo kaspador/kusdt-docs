@@ -89,19 +89,26 @@ allowed.</p>
 </li>
 <li>
 <p>One burn output is paid in one release, and a vault pays only from its own backing. The wallet and the web app
-refuse a burn the named vault cannot pay now: an amount, fee included, above its release capacity (250 000 USDT by
+refuse a burn the named vault cannot pay now: an amount, fee included, above what one burn may take of its release
+capacity (the capacity less what is queued and 1 % kept free, since run 21 round 2; the capacity is 250 000 USDT by
 default), its current <code dir="auto">releaseAvailable</code> or its backing, or a vault that is paused. They offer the other
 chain when that one can pay. They read all of this from the vault itself, over the chain’s RPCs, right before
-the burn; the bridge server’s figures alone are not enough, and when they disagree with the vault nothing is
-burnt and the wallet says so.</p>
+the burn (in kUSDT Wallet after any merge the burn needs first); the bridge server’s figures alone are not enough,
+and when they disagree with the vault nothing is burnt and the wallet says so.</p>
+</li>
+<li>
+<p>The release fee the review shows is the most the burn goes out at: should the vault ask more by the time it is
+sent, kUSDT Wallet burns nothing and says so (a lower fee goes ahead). The vault charges the fee of the moment it
+queues the payout, after the burn, so a fee raised after that is still charged.</p>
 </li>
 <li>
 <p>The address must be one the vault would pay. Ethereum USDT keeps a blacklist; BSC-USD keeps none. The bridge
 never pays an address the token blocks (see <a href="/kusdt-docs/security/known-limits/#blocked-recipients">Blocked recipients</a>).
 Before every burn, the wallet and the web app ask the coordinator (<code dir="auto">GET /recipients/:chain/:address</code>) and refuse
-an address it would not pay, with the reason. If they cannot ask, they refuse too, and offer to check again: a
-burn cannot be undone. The wallet asks once more right before it sends. It offers the other chain only when that
-vault would pay the address.</p>
+an address it would not pay, with the reason. kUSDT Wallet also asks the token itself, over the chain’s RPCs,
+and burns nothing to an address it blocks. If they cannot ask, they refuse too, and offer to check again: a
+burn cannot be undone. The wallet asks once more right before it sends, after any merge. It offers the other chain
+only when that vault would pay the address.</p>
 </li>
 <li>
 <p><strong>The payout address on the web app.</strong> When your EVM wallet is connected, the page fills in its address, and the

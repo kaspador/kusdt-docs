@@ -336,7 +336,7 @@ specification said it “fades over a window”). A buy that leaves the count be
 and only claimed time brings a negative count back to zero. With no spend in between, a sell hours later that claims
 age 0 still has the whole credit and a whole cap: two caps of the reference at once, about 18 % of the KAS reserve
 right after net buying of one cap (17.4 % in the reviewer’s case). A sell that claims the pool UTXO’s age settles the
-credit away first and has one cap, about 10 %. The wallet and the web app build every sell claiming the age, so an
+credit away first and has one cap, about 10 %. kUSDT Wallet builds every sell claiming the age, the web app’s too, so an
 honest seller is offered the one cap; a dumper builds its own sell at age 0 and gets the two. The bound above holds
 with the credit in it: what leaves is what buyers brought in plus one cap.</p>
 <p>Time a spend does not claim is lost. Before 10 November 2026 any pool spend could claim none, so a bot sending a
@@ -374,10 +374,14 @@ without a keeper and 84 % with one; a bot that stays just under the 5 seconds is
 while nobody else spends (76 % with a seller about). The keeper’s 2.5 seconds are a trade-off: sooner, it took slots
 from slower wallets; later, a griefer landing just before it wastes more of each slot.</p>
 <p>The keeper pays one coin per tick, free again as soon as that tick is gone, and splits a coin into four when it
-starts. A tick costs about 0.04 KAS at the network’s floor and 0.4 KAS at the keeper’s fee ceiling: at most 480 an
-hour (19 or 196 KAS), and only while more than half of the cap is in use. Without sells that lasts at most half an
-hour of claimed time after a full cap was sold, and an hour and a half if half the pool was also withdrawn (about 830
-ticks). Anyone may run a keeper; the operators run one. It keeps its own coins and the pool’s age from the
+starts. A tick costs about 0.057 KAS at the network’s floor and 0.57 KAS at the keeper’s fee ceiling: at most 480 an
+hour (27 or 271 KAS), never more than 30 KAS of fees in an hour (its <code dir="auto">maxFeesPerHour</code>), and only while more than half
+of the cap is in use and the tick would change the breaker. A pool every provider has left keeps a cap of a few
+sompi, nobody can trade in it, and the keeper does not tick it at all (nor any pool whose reserve would allow a cap
+under 0.1 KAS); up to rc.24 it paid for a tick every 75 DAA there that changed nothing, and its own late ticks kept it
+armed (run 21). Without
+sells the ticking lasts at most half an hour of claimed time after a full cap was sold, and an hour and a half if half
+the pool was also withdrawn (about 830 ticks). Anyone may run a keeper; the operators run one. It keeps its own coins and the pool’s age from the
 transactions the chain accepts, so coins anyone sends to its address or to the pool’s do not stop it (since round 13),
 and its health check fails, with the reason, when a tick it owes could not go out for a minute.</p>
 <p>Wallets and the web app build a pool transaction only on a pool UTXO their node shows accepted and at least 50 DAA

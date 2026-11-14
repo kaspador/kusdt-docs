@@ -96,7 +96,7 @@ Kaspa’s script engine, checks relay standardness, and prices the fee from Kasp
 </tr>
 <tr>
 <td><code dir="auto">transfer</code></td>
-<td>A KCC-20 transfer of 1 to 3 token inputs to 1 to 3 outputs. With <code dir="auto">redeem</code> entries it is a redemption, and the payload is added</td>
+<td>A KCC-20 transfer of 1 to 3 token inputs to 1 to 3 outputs. With <code dir="auto">redeem</code> entries it is a redemption, and the payload is added. Only a redemption of the shape the signers pay is built (since run 21, Daybreak [27]): each entry names chain 1 or 2, an address other than zero, and an output to that burn owner; every output to a burn owner it names is a plain burn (borrow scheme 0, zero borrow guard and extension commitment) of an amount above zero. What the core cannot know it does not check: whether the deployment has that chain, whether the address is the chain’s vault or token contract (lost for good), whether the token blocks it, and the release fee (a burn at or below it is never paid). An output to a burn owner that no <code dir="auto">redeem</code> entry names is not checked at all</td>
 </tr>
 <tr>
 <td><code dir="auto">pause</code></td>
@@ -179,7 +179,7 @@ Kaspa’s script engine, checks relay standardness, and prices the fee from Kasp
 </tr>
 <tr>
 <td><code dir="auto">changeAddress</code></td>
-<td>Where change goes</td>
+<td>Where change goes. Its key must be a point on secp256k1 (any script hash will do), and its payload its version’s length: anything else is refused, as <code dir="auto">prepare</code> refuses such a <code dir="auto">genesisAddress</code></td>
 </tr>
 <tr>
 <td><code dir="auto">feerate</code></td>
@@ -243,7 +243,7 @@ first.</li>
 <tr>
 <td><code dir="auto">quote</code></td>
 <td><code dir="auto">{kind: "buy", pool, kasIn}</code>, <code dir="auto">{kind: "sell", pool, tokensIn, nowDaa?, poolDaa?}</code>, <code dir="auto">{kind: "add", pool, kasIn, tokensIn}</code> or <code dir="auto">{kind: "remove", pool, shares}</code></td>
-<td><code dir="auto">{tokensOut}</code>, <code dir="auto">{kasOut, paused}</code>, <code dir="auto">{shares}</code> or <code dir="auto">{kasOut, tokensOut}</code>. With <code dir="auto">nowDaa</code>, a sell also answers <code dir="auto">breaker: {maxKasOut, windowEndsDaa, allowed}</code></td>
+<td><code dir="auto">{tokensOut}</code>, <code dir="auto">{kasOut, paused}</code>, <code dir="auto">{shares}</code> or <code dir="auto">{kasOut, tokensOut}</code>. With <code dir="auto">nowDaa</code>, a sell also answers <code dir="auto">breaker: {maxKasOut, windowEndsDaa, allowed}</code>. An error for an amount below zero, and for a pool with no liquidity (<code dir="auto">totalShares</code>, <code dir="auto">kasReserve</code> or <code dir="auto">tokenReserve</code> 0, as before its first deposit) or a <code dir="auto">windowLen</code> outside 1 to 1 000 000 000; <code dir="auto">pool-buy</code>, <code dir="auto">pool-sell</code>, <code dir="auto">pool-add</code>, <code dir="auto">pool-remove</code> and <code dir="auto">pool-tick</code> refuse such a pool too</td>
 </tr>
 <tr>
 <td><code dir="auto">script</code></td>

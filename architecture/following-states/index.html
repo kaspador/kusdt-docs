@@ -113,6 +113,12 @@ transaction into a block of its own: the block is valid, the body is simply neve
 node’s acceptance data names only the ID. So the follower keeps every body it sees under an ID and takes the one that
 proves itself (step 4 above). A rewritten body can never be adopted. It could only hide the real one, and that is
 what the next rules prevent.</p>
+<p>The ID covers everything else of a body, with one exception: a version-0 transaction’s ID leaves out its outputs’
+covenant bindings, and consensus refuses a version-0 transaction that carries one. So since run 21 (R21-IDENT-3) the
+followers keep each body’s version, and a binding on a version-0 body counts for nothing: kUSDT’s own transactions
+are version 1. And an ID whose bodies differ in anything but their signature scripts is not one transaction: the
+burn records the signers and the coordinator keep take no burn from it, and their logs say so. Neither can come from
+a valid block today; the followers do not rest on that.</p>
 <p>What a follower keeps is bounded. A miner can fill blocks with transactions that are never accepted, so bodies that
 no chain block accepted are dropped after two hours, and all of them together stay within a memory budget (64 MB).
 Two rules keep a dropped body from costing a move:</p>
@@ -172,7 +178,7 @@ transactions out again.</p>
 <tr>
 <td>Wallet</td>
 <td>Its own kUSDT states and the pool, as listed by the API</td>
-<td>Before a state is shown or spent, the wallet recomputes its locking script and finds that exact outpoint on the node, with the pinned covenant ID; a state that fails is dropped (tokens) or refused (the pool)</td>
+<td>Before a state is shown or spent, the wallet recomputes its locking script and finds that exact outpoint on the node, with the pinned covenant ID; a state that fails is dropped (tokens) or refused (the pool). The pool’s kUSDT reserve made by the transaction that made the pool coin is proven instead from that transaction, checked against its id, and the pool coin found on the node (since run 21: its address, which anyone can fill, is then not listed); one made before it is listed, and its body taken only when its address cannot be</td>
 </tr>
 </tbody>
 </table>
@@ -186,7 +192,9 @@ released = the vaults’ <code dir="auto">Released</code> events.</p>
 <li><code dir="auto">confirmed</code>: the newest <strong>accepted</strong> state.</li>
 </ul>
 <p>Anyone can check either against a node: recompute the locking script of the state (<code dir="auto">kusdt-tx script</code>) and look
-for that UTXO.</p>
+for that UTXO. The reserve can also be checked without listing its address, from the body of the transaction that
+made it: <code dir="auto">reserve.made</code> names that transaction, and <code dir="auto">GET /pool/made/:txid</code> serves its body, which never changes
+(<a href="/kusdt-docs/protocol/coordinator-api/#verifying-answers">Verifying answers</a>).</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="code">Code</h2><a class="sl-anchor-link" href="#code"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Code”</span></a></div>
 <table>
 <thead>

@@ -81,7 +81,7 @@ directly from a chain or carries signatures that a contract checks.</p>
 <td>Vault</td>
 <td>Each signer</td>
 <td><code dir="auto">Deposit</code> events</td>
-<td>Read from every one of the signer’s own EVM RPCs, which must agree on every field; counted only once the block is finalized</td>
+<td>Read from every one of the signer’s own EVM RPCs, which must agree on every field, asked all at once at the deposit’s own blocks for each mint and refund; counted only once the block is finalized</td>
 </tr>
 <tr>
 <td>Kaspa</td>

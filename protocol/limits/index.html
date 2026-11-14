@@ -78,7 +78,7 @@ and they are enforced by the contracts themselves.</p>
 <tbody>
 <tr>
 <td>Kaspa mint allowance</td>
-<td>500 000 USDT ceiling, refills fully in 24 h</td>
+<td>A ceiling of twice the signers’ daily limit, refills fully in 24 h</td>
 <td>BridgeMint</td>
 </tr>
 <tr>
@@ -130,11 +130,15 @@ Three deposits may add up to more than the ceiling: the coordinator then mints a
 </tr>
 <tr>
 <td>Deposit meter, for the <a href="/kusdt-docs/protocol/fees/#the-rising-deposit-fee">rising deposit fee</a></td>
-<td>25 000 USDT per vault, half the signers’ limit; 2.50 % at a full meter</td>
+<td>12 500 USDT per vault, a quarter of the signers’ limit; 2.50 % at a full meter</td>
 </tr>
 <tr>
-<td>Kaspa mint allowance and hard cap</td>
-<td>As the defaults</td>
+<td>Kaspa mint allowance</td>
+<td>A ceiling of 100 000 kUSDT, twice the signers’ limit, which refills fully in 24 h</td>
+</tr>
+<tr>
+<td>Kaspa hard cap</td>
+<td>As the default</td>
 </tr>
 </tbody>
 </table>
@@ -155,7 +159,12 @@ deposit no signer would mint would also hold up every later deposit on its chain
 <li>the web app and the wallets refuse a burn above the vault’s release allowance, so the allowance is at most the
 signers’ limit: a larger one would let someone burn kUSDT that no signer would pay out;</li>
 <li>the two vaults’ deposit meters together are at most the signers’ limit, or the limit would be used up before the
-deposit fee reached its top rate.</li>
+deposit fee reached its top rate. On mainnet each meter is at most a quarter of it (decided on 14 November 2026):
+with larger meters, deposits spread over the day kept the whole limit in use at the plain fee;</li>
+<li>on mainnet the mint allowance’s ceiling is at most twice the signers’ limit (decided on 14 November 2026). The
+ceiling is what three stolen signer keys could mint at once, and twice it in any 24 hours. Honest deposits never
+need more than the signers’ limit in a day, and a ceiling of twice it was measured never to slow them. The first
+plan kept 500 000, ten times the launch’s daily limit.</li>
 </ul>
 <p>The deployer refuses a plan that breaks any of these rules. Deposits and burns over a day’s limit are not lost: they wait
 until the signers’ 24 hours allow them, and a batch of deposits too large for the limit is split. Each signer’s limit is
@@ -183,12 +192,12 @@ so the bridge’s limit is the third highest). The vaults’ limits change throu
 <tr>
 <td><code dir="auto">capacity</code></td>
 <td>BridgeMint</td>
-<td>500 000 000 000</td>
+<td>twice the signers’ daily limit: 100 000 000 000 at the launch</td>
 </tr>
 <tr>
 <td><code dir="auto">refill_per_daa</code></td>
 <td>BridgeMint</td>
-<td><code dir="auto">capacity / 864 000</code> = 578 703 per DAA score</td>
+<td><code dir="auto">capacity / 864 000</code> = 115 740 per DAA score at the launch</td>
 </tr>
 <tr>
 <td><code dir="auto">minDeposit</code> / <code dir="auto">maxDeposit</code></td>
@@ -257,6 +266,7 @@ then a day of refill.</p>
 window can be paid inside it, so a queue adds to the bound: <strong>at most <code dir="auto">capacity + refill_rate × t + one queue</code> can
 leave a vault in a window of length <em>t</em></strong>. The queue is capped at one ceiling, so that is <strong>just under three times
 the ceiling in any 24 hours</strong>: the queue held from before, a full bucket, and a day of refill less the last wait.</p>
+<p>At the mainnet launch values:</p>
 <table>
 <thead>
 <tr>
@@ -268,18 +278,18 @@ the ceiling in any 24 hours</strong>: the queue held from before, a full bucket,
 <tbody>
 <tr>
 <td>At once</td>
-<td>500 000 USDT</td>
-<td>250 000 USDT</td>
+<td>100 000 USDT</td>
+<td>50 000 USDT</td>
 </tr>
 <tr>
 <td>Any 24 hours</td>
-<td>at most 1 000 000 USDT (2 × the ceiling)</td>
-<td>under 750 000 USDT (just under 3 × the ceiling)</td>
+<td>at most 200 000 USDT (2 × the ceiling)</td>
+<td>under 150 000 USDT (just under 3 × the ceiling)</td>
 </tr>
 <tr>
 <td>Sustained, per further 24 hours</td>
-<td>500 000 USDT (the refill)</td>
-<td>250 000 USDT (the refill)</td>
+<td>100 000 USDT (the refill)</td>
+<td>50 000 USDT (the refill)</td>
 </tr>
 </tbody>
 </table>

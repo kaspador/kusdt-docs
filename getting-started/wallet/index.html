@@ -132,14 +132,22 @@ shows you what it does, signs and submits it. A page never sees a key.</li>
 <li><strong>It takes nothing the coordinator says about a covenant state as fact.</strong> Before a state is shown or spent, the
 wallet checks its fields, recomputes its locking script, and finds that exact outpoint on the Kaspa node with
 the same script and the pinned covenant ID. A token state that fails is dropped; a pool state that fails is
-refused. See <a href="/kusdt-docs/architecture/following-states/">Following covenant states</a>.</li>
+refused. When the transaction that made the pool’s kUSDT reserve also made the pool coin, the reserve is proven from
+that transaction, checked against its id, and the pool coin found on the node. See
+<a href="/kusdt-docs/architecture/following-states/">Following covenant states</a>.</li>
 <li><strong>It says what it could not check.</strong> A node lists the coins at an address all at once or not at all, and anyone
 can send an address coins. kUSDT at an address the node cannot list is shown apart from your balance, as not
 checked, and the rest of your kUSDT is unaffected. Send can spend it when you tick its box: the node then
 decides, and nothing is sent unless that kUSDT is there exactly as the wallet recorded it. See
 <a href="/kusdt-docs/security/known-limits/#an-address-that-holds-too-many-coins-cannot-be-listed">An address that holds too many coins</a>.</li>
 <li><strong>It refuses burns the vault cannot pay now</strong>: an amount, fee included, above the named vault’s release capacity, its current
-<code dir="auto">releaseAvailable</code> or its backing, a paused vault, or an amount at or below the release fee.</li>
+<code dir="auto">releaseAvailable</code> or its backing, a paused vault, or an amount at or below the release fee. One burn takes at most
+the capacity less what is queued and less 1 % of it, kept free for payouts that may be queued first: anyone can keep
+one tiny payout always waiting in a vault, and a burn needing all of the room would wait on it (since run 21 round 2,
+R21-ECON-2). Redeem more in two burns.</li>
+<li><strong>It refuses an address that names no key.</strong> A Kaspa address carries a key (<code dir="auto">kaspa:q…</code>): its bytes must be a point of
+the curve. One made with other bytes keeps a valid checksum, but nothing could ever spend what is sent to it, so Send
+and a site’s send refuse it (since run 21 round 2, R21-CRYPTO-5).</li>
 <li><strong>One EVM RPC can’t leave a deposit unmined, or make you pay more.</strong> The wallet asks every RPC of the chain.
 It signs the highest base fee any names (and never less than the latest block’s own), as a higher fee cap
 costs nothing: only the real base fee and the tip are paid. It takes the lowest tip, held to the lowest base fee named
@@ -149,7 +157,10 @@ above what the wallet ever signs (500 gwei) stops the deposit, named, until it i
 Advanced.</li>
 <li><strong>It refuses a recipient the vault would not pay.</strong> Before every burn it asks the coordinator
 (<code dir="auto">GET /recipients/:chain/:address</code>), and it burns only when the answer, about exactly that chain and address,
-says <code dir="auto">payable</code>. See <a href="/kusdt-docs/security/known-limits/#blocked-recipients">Blocked recipients</a>.</li>
+says <code dir="auto">payable</code>. It also asks the token itself whether it blocks the address (<code dir="auto">isBlackListed</code> on Ethereum USDT;
+BSC-USD keeps no blocklist), on each of the chain’s RPCs, when it plans the burn and again right before it sends
+it, and it burns nothing if any of them says blocked or none answers. See
+<a href="/kusdt-docs/security/known-limits/#blocked-recipients">Blocked recipients</a>.</li>
 </ul>
 <div class="sl-heading-wrapper level-h2"><h2 id="checking-the-recipient">Checking the recipient</h2><a class="sl-anchor-link" href="#checking-the-recipient"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Checking the recipient”</span></a></div>
 <p>What you see on the redeem screen:</p>
@@ -185,6 +196,12 @@ says <code dir="auto">payable</code>. See <a href="/kusdt-docs/security/known-li
 </table>
 <p><strong>Activity</strong> shows a redemption or a refund the coordinator holds (<code dir="auto">blocked</code>) as held. It is paid automatically if
 the token unblocks the address.</p>
+<p><strong>A redemption that shows Sent and does not move:</strong> open kUSDT Wallet for a moment. While its window is open (Home or
+Activity), it sends the burn’s claim to the coordinator again whenever the coordinator says it has no record of the
+burn: at once, then a minute later, each wait twice the one before and at most six hours, twenty times in all. With the
+window closed, or on the web app alone, it does not. A burn the Kaspa node did not answer about (<strong>May have been
+sent</strong>) is claimed only once the node shows it accepted. See
+<a href="/kusdt-docs/security/known-limits/#a-burn-the-coordinator-missed-is-claimed-again-only-while-kusdt-wallet-is-open">A burn the coordinator missed</a>.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="holding-kusdt-in-another-wallet">Holding kUSDT in another wallet</h2><a class="sl-anchor-link" href="#holding-kusdt-in-another-wallet"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Holding kUSDT in another wallet”</span></a></div>
 <p>kUSDT’s token code is the standard KCC-20 reference, compiled to the same bytes. A wallet that supports KCC-20
 can therefore read kUSDT states without any kUSDT-specific code. See <a href="/kusdt-docs/kaspa/kcc20-template/">The KCC20 template</a>.</p>

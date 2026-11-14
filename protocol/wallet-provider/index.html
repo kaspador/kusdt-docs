@@ -128,18 +128,46 @@ submits it. <strong>The page never sees a key.</strong></p>
 </tbody>
 </table>
 <p>Amounts are decimal strings (or safe integers) of the smallest unit. <code dir="auto">params</code> may be the object itself or an
-array whose first item is the object.</p>
+array whose first item is the object. Since run 21, <code dir="auto">params</code> holding more than 4 096 characters, nested more than 4
+deep, or holding anything but JSON values is answered <code dir="auto">-32602</code> before it leaves the page.</p>
 <p>Only <code dir="auto">kaspa_getNetwork</code> answers any page. Every other method needs a site connected on the wallet’s current
-network (<code dir="auto">kaspa_requestAccounts</code>); connections are per network. Sending, redeeming, swapping and liquidity open the wallet’s own window, every time. So does switching the network, unless the wallet is already there or nothing is deployed there.</p>
+network (<code dir="auto">kaspa_requestAccounts</code>); connections are per network. Sending, redeeming, swapping and liquidity open the wallet’s own window, every time. So does switching the network, unless the wallet is already there or nothing is deployed there.
+The window acts on the network the request was asked on, which it names: a request asked before the wallet switched
+is refused, and one the window shows is built on that network’s node, coordinator and contracts even if the wallet
+switches meanwhile (since run 21).</p>
+<p>The window’s Approve button answers only a second after the window is shown, focused and in view, and that second
+starts again on every press of the pointer or of a key, on losing focus or sight, and on the pointer coming in: a
+page that keeps its visitor clicking or typing never has it clicked unread. A click the keyboard makes (Enter or
+Space on Approve) counts only once Approve has held the focus for that second with no other key pressed (since run
+21 round 2, R21-W2-1): Tab, Tab, Enter typed into a page does not approve.</p>
+<p>What a server says (the coordinator’s error, an EVM RPC’s refusal, the coordinator’s reason for not paying an address)
+is shown as that server’s, in quotes, cut to 200 characters and without the characters that reverse how text reads;
+the wallet never shows it as its own words (since run 21 round 2, R21-W2-5).</p>
 <p>Until the wallet has accepted the current <a href="/kusdt-docs/reference/terms/">Terms of Service</a> (since wallet 0.9.20), no site counts
 as connected: <code dir="auto">kaspa_requestAccounts</code> opens the wallet’s window, which shows the terms first and the request once they
 are accepted, and every other method but <code dir="auto">kaspa_getNetwork</code> is answered <code dir="auto">4100</code> with the message “kUSDT Wallet’s Terms
 of Service have not been accepted yet. Open kUSDT Wallet, read and accept them, then try again.”</p>
+<p>A locked wallet tells no site its account or balances, and reads nothing for them (since run 21):</p>
+<ul>
+<li>A connected site’s <code dir="auto">kusdt_getBalances</code> is answered <code dir="auto">4100</code> with the message “kUSDT Wallet is locked. Unlock it, then
+try again.” and <code dir="auto">data: { locked: true }</code>. The site is still connected: a page tells this from “not connected” by
+<code dir="auto">data.locked</code> (window.kusdt’s error carries <code dir="auto">data</code>), keeps its connection and says the wallet is locked.</li>
+<li>A connected site’s <code dir="auto">kaspa_requestAccounts</code> opens the wallet’s window, which asks for the password and then answers
+the account the site already has, with no new approval.</li>
+<li>When the wallet is unlocked, each connected site’s tab hears <code dir="auto">accountsChanged</code> with its account, so a page picks it up
+without a click.</li>
+</ul>
+<p>The other methods are answered as before; a signing request opens the wallet’s window, which asks for the password
+first.</p>
 <p>Each site’s requests wait in a queue of that site’s own and are answered in the order sent, so one site sending
 many requests never holds up another. A site, and a tab, has at most 8 requests waiting at a time: one more is
 answered <code dir="auto">-32002</code> at once, and so is a request that waited 45 s for the site’s earlier ones. <code dir="auto">kusdt_getBalances</code>
 asked again within a second gets the same answer as the one before, and one the wallet can’t read within 30 s is
-answered <code dir="auto">-32603</code> (try again). A request from a tab that closed is dropped.</p>
+answered <code dir="auto">-32603</code> (try again). It is read on the network the site was checked against, whatever the wallet switches
+to meanwhile (since run 21). A request from a tab that closed is dropped, and so is one from a page that navigated
+away. Since run 21 that holds for the request the wallet’s window is open for as well: the window closes and the site
+hears <code dir="auto">4001</code>. The window holds a request for at most 5 minutes: after that the next site’s request takes its place
+(the first site hears <code dir="auto">4001</code>), and the window can no longer approve it.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="switching-the-network">Switching the network</h2><a class="sl-anchor-link" href="#switching-the-network"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Switching the network”</span></a></div>
 <p>A page made for one network asks the wallet to move there:</p>
 <div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="ts"><code><div class="ec-line"><div class="code"><span style="--0:#45F8D1;--1:#06705E">const</span><span style="--0:#E3EAE9;--1:#1B2F2C"> now </span><span style="--0:#9AA9A9;--1:#54666A">=</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#45F8D1;--1:#06705E">await</span><span style="--0:#E3EAE9;--1:#1B2F2C"> window</span><span style="--0:#9AA9A9;--1:#54666A">.</span><span style="--0:#E3EAE9;--1:#1B2F2C">kusdt</span><span style="--0:#9AA9A9;--1:#54666A">.</span><span style="--0:#F4F8F7;--1:#0B1F1B">request</span><span style="--0:#9AA9A9;--1:#54666A">({</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#45F8D1;--1:#06705E">method</span><span style="--0:#9AA9A9;--1:#54666A">:</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#9AA9A9;--1:#54666A">'</span><span style="--0:#A6E8D8;--1:#0A5C4D">kaspa_switchNetwork</span><span style="--0:#9AA9A9;--1:#54666A">'</span><span style="--0:#9AA9A9;--1:#54666A">,</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#45F8D1;--1:#06705E">params</span><span style="--0:#9AA9A9;--1:#54666A">:</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#9AA9A9;--1:#54666A">{</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#45F8D1;--1:#06705E">network</span><span style="--0:#9AA9A9;--1:#54666A">:</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#9AA9A9;--1:#54666A">'</span><span style="--0:#A6E8D8;--1:#0A5C4D">simnet</span><span style="--0:#9AA9A9;--1:#54666A">'</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#9AA9A9;--1:#54666A">}</span><span style="--0:#E3EAE9;--1:#1B2F2C"> </span><span style="--0:#9AA9A9;--1:#54666A">});</span></div></div><div class="ec-line"><div class="code"><span style="--0:#909F9F;--0fs:italic;--1:#54666A;--1fs:italic">// 'simnet' once the user approved</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="const now = await window.kusdt.request({ method: &#x27;kaspa_switchNetwork&#x27;, params: { network: &#x27;simnet&#x27; } });// &#x27;simnet&#x27; once the user approved"><div></div></button></div></figure></div>
@@ -176,7 +204,7 @@ deployment from a page.</li>
 </tr>
 <tr>
 <td><code dir="auto">-32002</code></td>
-<td>Another wallet window is open, the site, or its browser tab under any of its names, was declined three times in two minutes and waits a minute (another tab is not held), or the site already has 8 requests waiting (try again)</td>
+<td>Another site’s request is open in the wallet’s window (for at most 5 minutes), the site, or its browser tab under any of its names, was declined three times in two minutes and waits a minute (another tab is not held), or the site already has 8 requests waiting (try again)</td>
 </tr>
 <tr>
 <td><code dir="auto">-32602</code></td>
@@ -196,6 +224,11 @@ reopens, and the largest sell that fits.</li>
 <li><strong>No silent worse price</strong>: if the pool moves before the transaction lands, the wallet quotes again. It goes
 ahead on its own only if the new quote is at least the one the user approved; for less it sends nothing and
 shows the new numbers for the user to approve again. <code dir="auto">minOut</code> stays the hard floor.</li>
+<li><strong>A buy shows the KAS its kUSDT keeps</strong>: the kUSDT bought sits in a token coin of its own, which carries the
+deployment’s token value (1.5 KAS) besides what is paid. The window shows it as “Kept in your token”, as the Swap
+screen does (since run 21, R21-WALLET-2): it stays the user’s, and goes with that kUSDT when it is sent on. A sale of
+a part of a kUSDT coin, and every deposit, leave a change coin that keeps the same 1.5 KAS: shown as “Kept in your
+token (change)”, with how much of it comes from your KAS when the coin spent carried less (R21-W2-3).</li>
 <li><strong>A deposit puts in at most what the window showed</strong>: the window shows the site’s <code dir="auto">kasIn</code> and <code dir="auto">tokensIn</code>
 trimmed to the pool’s ratio (only what the shares need; the rest stays in the wallet), and those shown amounts
 are what the wallet deposits. If the pool moved first, they buy fewer shares, so the wallet asks again; it never
@@ -205,8 +238,14 @@ amounts’ ratio is refused, and the site can ask again.</li>
 network, at the feerate the wallet’s Kaspa node names then (80 000 grams at that feerate, above what a swap or a
 deposit measures), and warns when that is more than a tenth of the KAS it moves. Should the node name a feerate
 more than half as much again by the time the transaction is built, nothing is sent and the request fails with
-that reason. The Swap and Pool screens show and hold the same figure. The merges a request may need first are
-not held to it.</li>
+that reason. The Swap and Pool screens show and hold the same figure. Since run 21 (Daybreak [9]) so are the
+merges a sale or a deposit may need first, when the kUSDT is spread over more states than one transaction takes:
+each is held to that feerate before it is signed, so a node naming more stops the request before any merge goes
+out.</li>
+<li><strong>What went out is said</strong>: merges go out before the request’s own transaction, and each is put in Activity. If
+the request then stops (the pool moved, or the node’s feerate rose for the last transaction), the window says how
+many merges went out and that they only joined the user’s own kUSDT, which is still theirs; it never says that
+nothing was sent. The site gets the same words in the error.</li>
 </ul>
 <div class="sl-heading-wrapper level-h2"><h2 id="events">Events</h2><a class="sl-anchor-link" href="#events"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Events”</span></a></div>
 <table>
@@ -219,7 +258,7 @@ not held to it.</li>
 <tbody>
 <tr>
 <td><code dir="auto">accountsChanged</code></td>
-<td>The wallet’s accounts change, or a switch leaves the site connected with its account on the new network</td>
+<td>The wallet’s accounts change, a switch leaves the site connected with its account on the new network, or the wallet is unlocked (each connected site hears its account)</td>
 </tr>
 <tr>
 <td><code dir="auto">networkChanged</code></td>
@@ -227,6 +266,8 @@ not held to it.</li>
 </tr>
 </tbody>
 </table>
+<p>Each event goes only to pages of the site it was meant for: a tab that has moved to another site by the time the
+event arrives does not hear it (since run 21).</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="the-evm-side">The EVM side</h2><a class="sl-anchor-link" href="#the-evm-side"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The EVM side”</span></a></div>
 <p>Deposits happen on Ethereum or BNB Chain, so a page uses the user’s EVM wallet for them (EIP-1193, EIP-6963 or
 WalletConnect). The extension also offers one.</p>

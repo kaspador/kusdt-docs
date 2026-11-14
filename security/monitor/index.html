@@ -84,8 +84,16 @@ from a mint (a deposit can name a burn owner). It reads every body seen under a 
 that names fewer states cannot hide one. It cannot tell a burn owner from any other script hash, so every such
 output is recorded as a possible burn. A real burn can never be spent, so a record whose output is later spent
 is dropped. Without that, someone moving a few units through their own script left a record per move for good,
-for network fees alone, until the state could no longer be saved. Now the records an outsider can keep are
-bounded by the KAS their unspent outputs hold. A burn dropped by mistake, or one from before the checkpoint a
+for network fees alone, until the state could no longer be saved. Held unspent, an outsider’s outputs are kept,
+and their KAS comes back to them: until run 21 (R21-ADV-1, Daybreak [26]) about 625,000 of them, some 35,000 KAS in
+fees, made a monitor’s state one it saved and could not read back under its 512 MB heap. Since then a state of
+0 units, or of no more than the least release fee any vault takes (read from the vaults every five minutes), is no
+record: no vault ever pays it out. And the book is held to 20,000 records, as the signers’ is: past 21,000 the
+paid burns go first, then the smallest that no payload names as a burn (the transaction’s own payload naming that
+output with a chain and an address whose burn owner it is); burns a payload names, burns a mint made and burns a
+checkpoint’s list brought (since run 21’s review: no outsider can make these for fees alone), and the burn of a
+release on the list, go last. A burn made by hand with no payload is the one an outsider’s larger states can still
+push out: its release is then judged at its address, and if that address is filled too, it fails closed below. A burn dropped so or by mistake, or one from before the checkpoint a
 rebuilt monitor started at that its checkpoint’s list did not name, is looked for in the UTXO set when its release
 shows up. “No burn” is then only the node’s own answer, given in that round by a node that is synced: a look that
 failed is made again next round, and none is made in a round that did not read Kaspa or whose view of Kaspa is
@@ -245,7 +253,7 @@ from the vaults’ <code dir="auto">Released</code> events.</p>
 </tr>
 <tr>
 <td><code dir="auto">minter-lost</code></td>
-<td>The minter UTXO it follows is not in the node’s UTXO set with kUSDT’s covenant ID, on three caught-up checks, and no fetched transaction spends it. If the minter’s own address holds more coins than can be listed, the check cannot be made: that is neither a miss nor an alarm, and <code dir="auto">/health</code> says so with the address (<a href="/kusdt-docs/security/known-limits/#an-address-that-holds-too-many-coins-cannot-be-listed">Known limits</a>). The same holds for <code dir="auto">pool-lost</code></td>
+<td>The minter UTXO it follows is not in the node’s UTXO set with kUSDT’s covenant ID, on three caught-up checks, and no fetched transaction spends it. If the minter’s own address holds more coins than can be listed, or so many that the node does not answer a read of it once it has read it crowded (since run 21, R21-MON2-3: a hundred thousand coins and more can take longer than a node call’s 20 seconds), the check cannot be made: that is neither a miss nor an alarm, and <code dir="auto">/health</code> says so with the address (<a href="/kusdt-docs/security/known-limits/#an-address-that-holds-too-many-coins-cannot-be-listed">Known limits</a>). A read that runs out of time at an address it has not yet read crowded (its first read after a restart, or a next state filled in advance) still counts as failed, and fails closed after <code dir="auto">failClosedMs</code>, as for a node that is down. The same holds for <code dir="auto">pool-lost</code></td>
 </tr>
 <tr>
 <td><code dir="auto">vault-blocked</code></td>
@@ -295,8 +303,10 @@ that could not pay them back. See <a href="/kusdt-docs/security/known-limits/#bl
 <p>The monitor checks a payout when it is <strong>queued</strong>, not only when it is paid: that is what the vault’s
 <a href="/kusdt-docs/protocol/redemptions-and-releases/#the-wait">wait</a> is for, since a pause within it stops the payout. A payout with no
 burn behind it is an alarm <strong>at once</strong>, as soon as the monitor’s Kaspa view has caught up (within about 50 DAA scores
-of the virtual): signers sign a release only once its burn is final, 1 000 DAA deep or more, so an honest release’s
-burn is always indexed by then. A mint may wait for its deposit, and a paid refund for its skip, for a grace period
+of the virtual), or its Kaspa node is at the network’s tip while its view catches up (since run 21,
+<a href="#when-its-own-machine-is-away-or-offline">below</a>): signers sign a release only once its burn is final, 1 000 DAA deep
+or more, so an honest release’s burn is always indexed by then, and always in the node’s UTXO set, as nothing spends
+a burn. A mint may wait for its deposit, and a paid refund for its skip, for a grace period
 (<code dir="auto">graceMs</code>, 5 minutes by default), the time a deposit takes to become final on the monitor’s own nodes.</p>
 <p>A queued refund with no skip behind it is judged like a release with no burn: in the second round that read Kaspa
 up to date (the second, so that one round’s view is never all there is). No honest quorum signs a refund before its
@@ -306,8 +316,15 @@ clock for as long as it took. It never starts it over. Before rc.16 such a round
 failed Kaspa round every two minutes could keep a forged refund unjudged until it was paid.</p>
 <p>Any queued payout that is still unjudged two thirds of the way through its wait is the <code dir="auto">unverifiable</code> alarm,
 whatever the reason: the Kaspa view behind in this round or in every other one, or a deposit that cannot be read.
-It fails closed. A monitor that has just started gets <code dir="auto">failClosedMs</code> before this rule applies, so a restart with a
-node still catching up does not pause the bridge.</p>
+It fails closed. The wait ends at the vault’s <code dir="auto">readyAt</code>, a block time, so since round 18 the two thirds are judged in
+the chains’ time: a host clock behind the newest blocks’ times makes the deadline sooner by as much (R18-PAY-3). A
+start holds this rule in its first round only, whose time away may have run a wait out before anything could be read.
+A catch-up after an outage of its own holds it no more since run 21’s decision 12 (the owner’s, 14 November 2026),
+offline only does (<a href="#when-its-own-machine-is-away-or-offline">below</a>). No other grace outlasts two thirds of the wait.
+Up to rc.24 every start gave <code dir="auto">failClosedMs</code> first: one quick restart late in a payout’s wait moved the alarm to the
+payout’s <code dir="auto">readyAt</code>, and starts less than <code dir="auto">failClosedMs</code> apart kept it off for good (R18-PAY-2). A payout already
+unjudged a minute before the monitor went away is not held even in the first round: what kept it unjudged was there
+before.</p>
 <p>The queued payouts of the last 15 minutes of each vault’s blocks are read again every round, every RPC agreeing. Since
 run 20 (D4-6) one that a reorg of the vault’s chain took away, so that no RPC shows it any more, leaves the list in the
 round that reads the reorg, once every RPC also says the vault no longer holds it (one it still holds, or that cannot
@@ -336,13 +353,23 @@ never published healthy while what is owed exceeds the backing read; and what IN
 200 and the backing healthy for those five minutes after a forged mint, with owed 4,000 times the backing. Time this monitor was not running does not count: after more
 than 90 seconds away, each open mint’s clock moves on by the time away, so the time it ran still adds up. Until rc.22
 the clock started again at each such start, and a monitor that kept restarting never counted a forged mint past the
-vault’s count (R17-DIFF-1). A reorg of the Kaspa chain that drops a mint and accepts it again does not start it over
+vault’s count (R17-DIFF-1). Since round 18 a catch-up holds only the mints first seen during it: one seen before was
+this monitor’s to judge, and its deposit is read on its vault’s chain, not through the Kaspa node the catch-up waits
+for. A start during a catch-up that had not moved since the last time away gives its time back to no clock, a mint’s
+included (<a href="#when-its-own-machine-is-away-or-offline">below</a>). Since run 21’s decision 12 (b) a mint read more than a
+minute after the chain accepted it has every grace and its clock from that acceptance, and nothing holds or moves
+them: a catch-up does not, nor a time away. A reorg of the Kaspa chain that drops a mint and accepts it again does not start it over
 either: the mint comes back with its first sighting, its clock and its verdict (R17-MINT-1). Until rc.22 a miner who
 could reorg it every few minutes kept a forged mint from any alarm. The records of dropped mints are kept for a day,
 1,024 at most, and more than that at once is the <code dir="auto">unverifiable</code> alarm (key <code dir="auto">mints-dropped-full</code>).</p>
 <p>Whether each deposit was refunded is read for the mints next in line eight at a time (R17-ST-2), so a monitor back
 from an outage judges the mints made meanwhile within a round or a few: about 2,000 mints of three deposits within
-<code dir="auto">failClosedMs</code> at 300 ms an RPC answer, where it was about 300 with one read after another. A payout of a forged mint’s
+<code dir="auto">failClosedMs</code> at 300 ms an RPC answer (282 s in the tests, with their deposits 4 or 130 blocks apart), where it was
+about 300 with one read after another. Since run 21 (R21-SIG2-1)
+each deposit is also asked of every RPC again at its own blocks, all of them at once, and judged on what they say then,
+not on the records its deposit history holds (those only say where to look): one such read, as many blocks as one
+getLogs takes, takes in the deposits after it there for the rest of the round, so a backlog costs a read per window,
+not one per deposit. A payout of a forged mint’s
 kUSDT can be queued a minute or so after the mint, so <code dir="auto">failClosedMs</code> must stay at most half the vaults’ payout wait
 (R17-PAY-2): see <code dir="auto">failClosedMs</code> <a href="#configuration">below</a>.</p>
 <p>While a chain’s deposit history is not read to its end (a new state, a long time away, an RPC that read it again),
@@ -352,9 +379,12 @@ That uses the round’s 30 seconds for mints, and the history is read on beside 
 does not use up the reads that judge. A mint of someone else’s deposit is <code dir="auto">mint-mismatch</code> in the first round.</p>
 <p>An RPC that reports a deposit under another transaction than it reported before is that chain’s deposits failing to
 be read, not progress: a note, and one round on the failure clock. Its deposit cache is dropped and it reads the
-history again, once a day at most. A second time within a day it is distrusted for a day: its history is not read
-again from the first block, and the chain stays on the failure clock, so it is <code dir="auto">unverifiable</code> after <code dir="auto">failClosedMs</code>. Take that RPC out of
-<code dir="auto">evmRpcs</code>. (The distrust is kept in memory: a restart gives that RPC its one reading again.)</p>
+history again, once a day at most. A second time within a day its cache goes too and it is distrusted for a day:
+nothing of its history is read meanwhile, and the chain stays on the failure clock, so it is <code dir="auto">unverifiable</code> after
+<code dir="auto">failClosedMs</code>; after the day its history is read again from the first block. Until run 21 the second time kept its
+records and its reading again under way, so a made-up record that reading had met failed every later scan, and the
+day of distrust lasted until a restart (R21-SIG2-3). Take that RPC out of <code dir="auto">evmRpcs</code>. (The distrust is kept in memory: a
+restart gives that RPC its one reading again at once.)</p>
 <p>The clock that the Kaspa node’s newest block is compared with is, per chain, the earliest of the newest block times
 its RPCs report, so one RPC naming a time ahead of the others cannot make the node look behind.</p>
 <p>A payout that raised an alarm stays on a list until it has left the queue. A vault that runs again with one still
@@ -365,7 +395,9 @@ caught up.</p>
 <p>Each step of a check, and each EVM chain, runs on its own. A chain whose RPCs fail or disagree does not stop the
 others from being checked, and open alarms still pause everything. INV-1 is judged only when every vault’s backing
 was read: with a chain missing it would look short, so the check reports the chain as <code dir="auto">unreadable</code> and calls itself
-not healthy (<code dir="auto">/health</code> answers 503, and the integrators’ signal says stop). If a chain, or the Kaspa node, stays
+not healthy (<code dir="auto">/health</code> answers 503, and the integrators’ signal says stop). So INV-1 is off while a chain cannot be
+read, in every mode: what bounds that is the chain’s own clock, which fails closed after <code dir="auto">failClosedMs</code> (and a chain
+that cannot be read makes no progress in a catch-up either, since round 18). If a chain, or the Kaspa node, stays
 unreadable for <code dir="auto">failClosedMs</code>, that is the <code dir="auto">unverifiable</code> alarm, and the guardian pauses everything: an outage
 never quietly switches the guardian off. A chain is read all or nothing, so a read that fails halfway counts
 nothing twice. The one exception is an outage of the monitor’s own machine, which since round 30 pauses nothing by
@@ -407,10 +439,53 @@ to catch up, so the monitor failed closed and paused everything. A machine that 
 minutes paused everything as soon as the network came back. Now the monitor is <strong>offline</strong> or <strong>catching up</strong> then,
 and behaves like a monitor that is not there, not like one that is blind. The second monitor and each payout’s
 10-minute wait in its vault cover that time. Only the rules for what it cannot verify wait: <code dir="auto">unverifiable</code> after
-<code dir="auto">failClosedMs</code>, the clock of a mint not judged yet, a queued payout still unjudged at two thirds of its wait, and a
-burn that could not be looked for. Evidence pauses at once all the same, offline and while catching up: a forged or
-unbacked mint, a payout that matches no burn or skip, governance or owner calls nobody announced, INV-1 short, a lost
-minter or pool.</p>
+<code dir="auto">failClosedMs</code>, the clock of a mint not judged yet, and a burn that could not be looked for (and offline, a queued
+payout still unjudged at two thirds of its wait). Evidence pauses at once all the same, offline and while catching up,
+as soon as the monitor can see it:</p>
+<ul>
+<li><strong>A release</strong>, queued or paid while it was away, is judged in any round in which its Kaspa node is at the network’s
+tip (its newest block within a minute of the newest EVM block’s time, and since run 21’s review within two of this
+machine’s clock), wherever its own reading of Kaspa stands: no burn in the node’s UTXO set at the burn owner and
+amount the release names is <code dir="auto">release-without-burn</code> (a release of another amount, or to another recipient than a
+real burn commits to, finds none there either: with no record of the burn, that is not <code dir="auto">release-mismatch</code>), a burn
+not deep enough <code dir="auto">release-before-finality</code>. A burn an honest quorum released is final and is never spent, so that node
+holds it. Up to rc.24 (run 21, R21-MON2-1) a monitor catching up judged no release until its reading had caught up,
+75 minutes after 11 h 14 min away on TN10, and a forged release queued as it came back was paid at minute 10 with
+nothing raised.</li>
+<li><strong>The rest of Kaspa once its reading has reached it:</strong> a forged or unbacked mint, a refund that matches no skip or
+whose deposit was minted, governance nobody announced, INV-1 short (it counts the mints read), a lost minter or
+pool. Mints, skips and governance are the minter’s history, which only the reading shows. Meanwhile a release of a
+real burn of kUSDT minted for no deposit is judged good by the UTXO set, and is paid if its wait ends before the
+reading reaches the mint.</li>
+<li><strong>Nothing on Kaspa while its node itself is behind:</strong> started again with the machine, or syncing after an upgrade
+or a resync. What the vaults show (owner calls nobody announced, their signers) is judged as soon as they are read.</li>
+</ul>
+<p>Two exceptions to the own-outage rule since run 21’s decision 12 (the owner’s, 14 November 2026, R21-MON2-1 (b) and
+(c)), both while catching up and not while offline:</p>
+<ul>
+<li><strong>A queued payout still unjudged two thirds of the way through its wait fails closed</strong> (<code dir="auto">unverifiable</code>, key
+<code dir="auto">queued-unchecked:&lt;tx&gt;</code>), as when guarding. Until then the catch-up held the rule, and what no round could judge was
+paid once its wait ended: a refund (its skip or its mint not read yet), a release while the node itself is behind, a
+forged release whose burn’s address someone filled so that no look at it answers. In the tests each of those was paid
+at its <code dir="auto">readyAt</code>; now each is paused at two thirds of its wait, about 200 s before it. The cost, which the owner accepts: an
+honest payout still unjudged then (an honest refund queued during a long catch-up, a release while the node restarts)
+pauses everything too. A release of a real burn costs nothing: the UTXO set judges it good first. A start’s first
+round still holds the rule (above).</li>
+<li><strong>A mint read late has its graces from when the chain accepted it</strong>: read more than a minute after it (by how far
+behind the node’s virtual DAA it was read), its grace for a deposit (<code dir="auto">graceMs</code>, and the hour of a deposit not final
+yet), its fail-closed clock (<code dir="auto">failClosedMs</code>) and its time out of INV-1 run from that acceptance, and no catch-up or
+time away holds them. A mint forged as it caught up, with no deposit behind it, is raised in the round that reads it:
+in the tests <code dir="auto">mint-unjudged</code> 6 s after the read, where it came 414 s later, after the catch-up had ended, and
+<code dir="auto">mint-without-deposit</code> 6 s after it, where only INV-1 came, 150 s on. It does not stop the release of that mint’s
+burnt kUSDT if the release’s wait ends before the reading reaches the mint (above), but it shortens that window to
+the reading itself. An honest mint read late whose deposit is there is judged good in that round; one whose deposit
+cannot be read then pauses at once.</li>
+</ul>
+<p>So a monitor’s time away is its outage and its catch-up together for refunds, mints and governance (at the reading
+pace measured on TN10 a catch-up takes about a ninth of the time away, and at most 6 hours), and for everything the
+time its node takes to restart or sync, except that what it cannot judge within two thirds of a payout’s wait pauses.
+The other monitor covers that time only while it guards: the two must never be away or catching up at the same time.
+Upgrade, resync or restart their Kaspa nodes one after the other, the second once the first monitor says <code dir="auto">guarding again</code>, never together (a hard fork’s upgrade too), so that no honest catch-up is long enough to pause.</p>
 <ul>
 <li><strong>Catching up after being away.</strong> A start more than 90 seconds after the last finished round is a catch-up, unless
 its first round finds everything caught up. It is caught up in a round in which its Kaspa node’s newest block is
@@ -420,7 +495,11 @@ make progress: the node’s newest block younger by a tenth of its age or by a m
 within a minute of the newest EVM block’s time: a node at the tip gains nothing, however its newest block’s age
 moves by this machine’s clock, which NTP may be slewing or stepping), its headers or
 blocks coming in at over twice the network’s 10 a second (a node syncing headers first), its reading closer to the
-node by a tenth or by <code dir="auto">kaspaLagFailDaa</code>, or a vault read further. Each part still behind has its own clock, as <code dir="auto">kaspaLagFailDaa</code>’s
+node by a tenth or by <code dir="auto">kaspaLagFailDaa</code>, or a vault read further in a round that read it whole: its head, its logs
+and every read all its RPCs must agree on. Up to rc.24 a vault’s logs moving on was enough, so one RPC that answered
+the logs and failed or disagreed on every contract call kept a catch-up “progressing” to its cap, 30 minutes after a
+short reboot and 6 hours after a first start, with every fail-closed rule held and INV-1 off (R18-MON-1); now that
+chain makes no progress, and the catch-up ends <code dir="auto">failClosedMs</code> on. Each part still behind has its own clock, as <code dir="auto">kaspaLagFailDaa</code>’s
 rule has: a part with no progress for <code dir="auto">failClosedMs</code> ends the catch-up (15 minutes for a node that has not answered
 since it began: a node at boot opens its database and its UTXO index before its RPC answers). So does the whole
 lasting longer than its cap: as long as the monitor was away, at least 30 minutes and at most 6 hours. An honest node
@@ -436,9 +515,29 @@ catch-up goes on with it, its clocks as they ran (the time away counts on them);
 progress in that catch-up and does not answer in the start’s first round, it started again with the machine, and
 has its 15 minutes once more, from its last progress. A monitor that keeps restarting gets nothing new from it: a
 node that never answers ends the catch-up 15 minutes after it began, one that answers and goes nowhere
-<code dir="auto">failClosedMs</code> after its first answer, whatever the restarts in between. A start more than 90 seconds after the
-last round is a catch-up of its own, as above, whose first round is not held: a clock that has run out on the
-monitor’s uptime (a mint’s, R17-DIFF-1) fails closed there.</li>
+<code dir="auto">failClosedMs</code> after its first answer, whatever the restarts in between.</li>
+<li><strong>Starts after a gap, and restart loops.</strong> Since round 18 a start more than 90 seconds after the last round during a
+catch-up goes on with it too: its start, its cap, its marks and its node’s allowance carry on. The time away is
+given back to the clocks and to those bounds only when every part still behind had made progress since the last
+time away, or fell behind only in the minute before it; otherwise nothing is, and the time away counts on them as a
+quick start’s does. A start after a gap while guarding is an outage of its own and a catch-up of its own, as
+above, but every fail-closed clock moves on by the time away instead of starting over; only a Kaspa node’s failure
+clock that began in the minute before the last round (a node stopped with its machine) is dropped. What had been
+failing for longer before the gap gets nothing from the catch-up: a node already failing has no 15 minutes and its
+no-progress clock runs from its failure, a chain whose RPCs were failing likewise, and a queued payout unjudged that
+long keeps its two-thirds rule. Up to rc.24 each such start emptied the failure clocks and began a catch-up of its
+own with fresh bounds, so a monitor started more than 90 seconds after its last round every few minutes, its node
+dead or one chain’s RPCs dead, never failed closed and never judged a queued payout; one such start, as the RUNBOOK
+says to make it, gave a node that was already failing 15 minutes more (R18-MON-2, R18-PAY-1). Now no restart
+pattern keeps it from guarding past these bounds: a node that never answers ends the catch-up 15 minutes after it
+began, plus one time away at most, and a node, a reading or a chain already failing fails closed <code dir="auto">failClosedMs</code>
+after it began, plus the time away of the first start.</li>
+<li><strong>A frozen machine.</strong> A VM paused, or a machine resumed from a suspend its monotonic clock counts, runs no round
+while both its clocks go on. Since round 18 more than about 3 minutes between two looks at the clock (90 seconds
+past a step’s deadline, a round’s wait on its pauses and a poll), before a round or in the middle of one, is time
+away of its own: given back to the clocks, and caught up after under the same rules and bounds as a start after a
+gap. Up to rc.24 it paused everything: its node behind by that time, or a vault’s read dated before the freeze
+(R18-MON-3).</li>
 <li><strong>Offline.</strong> Every configured EVM RPC of every chain gets no answer at all in the same rounds (the connection is
 refused or reset, the name does not resolve, nothing comes back in 15 seconds), none of them has answered since, and
 the Kaspa node does not answer or has stopped keeping pace. An HTTP error with a body, a JSON-RPC error or a wrong
@@ -454,9 +553,11 @@ closed after <code dir="auto">failClosedMs</code> as before. So does a Kaspa nod
 catch-up that ends without catching up (no progress, or its cap) gives back no time: every rule applies again at
 once with its clock as it ran through the catch-up, so whatever is still behind fails closed straight away.</li>
 <li><strong>Its clocks.</strong> While offline the clocks do not run: they move on by the time offline when it is back (a clock that
-was running before keeps what it had). A catch-up that ends caught up gives its time back the same way. A restart
-within 90 seconds during a catch-up goes on with it, as it was (a quick reboot, above, says when its node has its 15
-minutes again).</li>
+was running before keeps what it had). A catch-up that ends caught up gives its time back the same way, less what
+starts during it gave back already, and to the mints first seen during it, except one read late (run 21’s decision
+12 (b), above), whose clocks no time away moves. A start during a catch-up, within 90
+seconds or after a gap, goes on with it (a quick reboot, above, says when its node has its 15 minutes again, and the
+restart loops what a gap gives back). The Kaspa view’s lag clock is kept in the state since round 18, as the others.</li>
 <li><strong>What it says.</strong> <code dir="auto">/health</code> answers 503 with <code dir="auto">not guarding: catching up since &lt;time&gt;, after being away &lt;time&gt;; behind: ...; gives up at &lt;time&gt;</code> or <code dir="auto">not guarding: offline since &lt;time&gt;</code>, the signal gives the same reason first,
 and the status has a <code dir="auto">guarding</code> field. Each change is a note and a log line: <code dir="auto">not guarding: offline since ...</code>,
 <code dir="auto">back online after ...</code>, <code dir="auto">not guarding: catching up since ...</code>, <code dir="auto">guarding again: caught up after ...</code>, and the two
@@ -480,25 +581,97 @@ INV-1’s), the minter’s and the pool’s pause resends and their tries (<code
 landed, the guardian’s coins), and the catch-up’s and the offline clocks; the catch-up moves whole, so the time it
 gives back is the time it lasted. A time older than the step keeps what it had: it runs late by the step at most,
 never early. A start on a state whose last round is dated after now (the clock set back while it was stopped) moves
-every time in it back by as much. A step forward moves nothing. Before, a step back of an hour kept <code dir="auto">unverifiable</code> off
-for 65 minutes, and the minter’s and the pool’s pauses were not sent again for 60.7.</p>
+every time in it back by as much. Before, a step back of an hour kept <code dir="auto">unverifiable</code> off for 65 minutes, and the
+minter’s and the pool’s pauses were not sent again for 60.7. A step forward moves the clocks forward by as much of it
+as the chains’ time confirms (since round 18): this machine’s clock was measured behind the newest blocks’ times
+before it, which is NTP putting right a clock that was behind, as on a host that booted with its clock behind (whose
+saved times the start pulled back by the error). Up to rc.24 every clock then read that error as time, and the
+catch-up ended as stuck. Unconfirmed, a step forward moves nothing: nothing tells it from time that passed, and it
+errs on the early side.</p>
+<p>Since round 18 the status (and with it <code dir="auto">/health</code>‘s answer) warns while this machine’s clock is more than 30 seconds
+behind the newest blocks’ times, by the earliest of a chain’s RPCs, or more than a minute ahead of every chain’s
+newest block: <code dir="auto">this machine's clock is ... behind the newest blocks of ...</code>. Keep the host’s time synced (NTP); the
+two-thirds rule for queued payouts is judged in the chains’ time whatever the warning says, and evidence never
+depends on the clock.</p>
 <p>The pauses run side by side as well: one stuck on Ethereum holds up neither BNB Chain, nor the minter, nor the pool.
 A round waits at most 30 seconds for them and the ones still running carry on. A chain that could not be read that
 round gets its pause through every RPC at once, without waiting on <code dir="auto">paused()</code> first. Otherwise each RPC gets 5 seconds
 before the next is tried as well. The monitor does not wait for the pause to be mined: it reads <code dir="auto">paused()</code> every
 round, and a pause still unmined after 30 seconds is replaced at the same nonce with higher fees, through the next
-RPC. A pause that could not be sent is tried again the next round, on Kaspa as well as on the vaults.</p>
+RPC. The 30 seconds are counted on the monotonic clock since run 21 (R18-MON-5): on the wall clock, a clock set back
+left an unmined pause unsent for as long as the step, and <code dir="auto">pause-unlanded</code>, which a resend moved, did not come either.
+Since round 18 every round with a vault pause out moves its <code dir="auto">pause-unlanded</code> clock, not only a resend, so the alarm
+comes at its 3 minutes and not at the first resend after them. A pause that could not be sent is tried again the next
+round, on Kaspa as well as on the vaults.</p>
 <p>A vault pause’s fees follow the relayer’s rule, under a cap of their own (since run 20’s deep round, D3-6). Until
 rc.24 it bid whatever the one RPC it went through named, raised by 30 % a try with no bound: one lying RPC got a tip of
 about 0.5 ETH on the first try, and twenty unmined tries bid 6.7 times the estimate. Now the tip is at most the lowest
-base fee any RPC reports (or 2 gwei where that is lower), each try outbids the last by at least 12 % so it replaces it,
-and nothing goes over 1,000 gwei on Ethereum or 100 gwei on BNB Chain. A pause is about 47,000 gas, so at the cap it
+base fee the RPCs report (or 2 gwei where that is lower), each replacement at the same nonce outbids the pause its RPC
+holds by at least 12 % for every try since that one, and nothing goes over 1,000 gwei on Ethereum or 100 gwei on BNB
+Chain. Since run 21 the lowest base fee is every RPC’s
+(R18-MON-4): only those that had answered when the pause went out counted, so one RPC answering first set the bound
+alone. A send waits at most a second for the others (never longer than the 5 seconds between RPCs, and not at all with
+the chain unreadable), and one still silent is stood in for by the lowest base fee the RPCs showed in the last two
+minutes. Since round 18 that bound needs the base fees of two RPCs (where the chain has two or more), the stand-in
+counting as the RPC that showed it; with fewer the tip is 2 gwei. With the chain unreadable nothing waits, so a lying
+RPC whose figures came first was still the only one heard and its own copy tipped up to the cap (950 gwei in the
+test). And the pause a replacement must outbid is the one the RPC it goes through holds (R18-SURF-1), not the highest
+any RPC took: one RPC that took a pause at its own high figures and kept it to itself set every other RPC’s
+replacement above it. An RPC that refuses a bid as underpriced holds another RPC’s pause; that counts as sent, and its
+next bid outbids the highest any RPC took. The raise of 30 % a try counts the tries since a pause at that nonce first
+went out and since the RPC the send goes through last said the vault is paused (its <code dir="auto">paused()</code>, or a gas estimate that
+reverts with <code dir="auto">EnforcedPause</code>), since round 18: counted from the most any RPC’s pause at the nonce had, a lying RPC that
+never says so of a paused vault, taking a pause every try, raised the honest pause after an unpause by all its tries
+(545 gwei of max fee after 40 of them, where the honest figure was 41). The 12 % for every try since the RPC’s own last
+pause keeps pauses that alternate between two RPCs outbidding each other try by try; 12 % once fell behind from the
+ninth unmined try. A pause is about 47,000 gas, so at the cap it
 costs 0.047 ETH or 0.0047 BNB, within the 0.05 the guardian is funded with. The cap is twice the relayer’s: payouts wait
 above it, and a pause clears any base fee Ethereum has had but for minutes of NFT mints in 2021 and 2022, which a pause
 resent every 30 seconds waits out. The figures raised stay those of the RPC the try goes through, as before: the max
 fee is a ceiling, not a price, and a ceiling from the RPC that answers lowest could hold the pause below the base fee.
-One lying RPC can still cost one try, as before, and no longer more than about twice the base fee. At the cap a try
-that cannot outbid the last is taken as sent when a node says it holds it.</p>
+The bounds apply to each try; they do not limit how many tries an RPC disagreement can cause. At the cap a try that
+cannot outbid the last is taken as sent when a node says it holds it. The guardian’s gas is read from every RPC, and the
+lowest is the one warned of (round 18, R18-SURF-1): read from the first alone, a lying first RPC could hide a guardian
+that a pause had emptied.</p>
+<p>A mined transaction consumes its nonce even when it reverts. A pause at a new nonce starts from the current fee
+quotes, without the previous nonce’s replacement increases. This prevents those increases compounding across
+separate failed transactions. With the original two-RPC rule, disagreement can still cause repeated paid reverts:
+believing one RPC that wrongly says “paused” could prevent a real emergency pause. The optional corroboration mode
+below can stop one false “not paused” view from causing those sends. The per-transaction fee cap is not a limit on
+the total cost of retries when corroboration is unavailable.</p>
+<p>Since run 21’s review (RV-SM SF-1) the tip is also at least 2 gwei, or the max fee where that is lower. With no floor,
+one RPC naming a max fee over the cap and a tip of a wei had the guardian sign a pause at the cap with a 2-wei tip: no
+replacement could ever outbid it (its max fee can rise no further), every one was refused and counted as sent, and no
+builder had a reason to mine it within the payout wait.</p>
+<p>A canceller key’s <code dir="auto">AccessManager.cancel</code> is priced the same way since run 21 (R21-OPS-1), from every RPC’s figures,
+with the same tip floor, and is given a gas limit set by the monitor from the size of its calldata (100,000 and 40 a
+byte), never an RPC’s estimate. Until then it signed whatever fees and gas the one RPC it went through named, again at
+every retry: one lying RPC had it tip 50,000 gwei. Since run 21’s review every RPC is asked for its estimate before
+anything is signed: when more of them say the cancel would revert (an operation already run or cancelled, a key
+without the role) than say it goes through, nothing is signed. One RPC alone saying it reverts stops nothing, and a tie
+signs: an unannounced owner operation runs at its time. The cancel goes through an RPC whose own estimate fits the gas
+it is given.</p>
+<div class="sl-heading-wrapper level-h4"><h4 id="three-provider-pause-corroboration">Three-provider pause corroboration</h4><a class="sl-anchor-link" href="#three-provider-pause-corroboration"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Three-provider pause corroboration”</span></a></div>
+<p>Set <code dir="auto">pauseQuorumRpcs</code> to a full list of exactly three independent providers for each chain to opt in. The two
+ordinary <code dir="auto">evmRpcs</code> may be reused, plus a third provider for short read-only queries. The third is not added to
+historical log reads or broadcast routes. This is a different trust assumption: at most one of the three may be
+faulty; distinct domain names do not prove independent operation.</p>
+<p>Before suppressing a redundant send, two providers must corroborate the newest matching canonical block and
+answer <code dir="auto">paused()</code> at that block hash. Calls use EIP-1898’s <code dir="auto">requireCanonical: true</code>; providers that do not support it
+cannot supply a vote. Answers from different blocks are not combined. The selected block must be no more than 30
+seconds old and no more than 5 seconds ahead of the host clock. A fresh block can still lag the tip inside that
+bound: this mode trusts a recent majority view, not instantaneous finality. Each check has a 1.5-second deadline.</p>
+<p>Two fresh honest “paused” answers stop a false “not paused” answer from causing paid retries. Two fresh honest
+“not paused” answers allow an emergency pause despite one false “paused” answer. The state is checked again on
+later attempts, including after an owner unpause; a prior pause does not permanently lock the guardian’s nonce.</p>
+<p>Missing configuration keeps the original emergency retry rule and adds a warning. With configuration, a missing
+fresh quorum also falls back to emergency retries and warns: two faulty or unavailable providers, unsupported
+block-hash calls, stale or forked views, or a host clock outside the bounds can still lead to repeated gas spending.
+The monitor does not switch a provider off merely because it disagrees. Inspect the transactions and replace an
+incorrect provider as the RUNBOOK describes. <code dir="auto">kusdt check</code> probes this mode without signing or sending a transaction;
+the monitor checks it in the background every five minutes and before a pause decision. Warnings never assert that
+a pause landed or disable an emergency send by themselves.</p>
+<div class="sl-heading-wrapper level-h4"><h4 id="kaspa-pause-retries">Kaspa pause retries</h4><a class="sl-anchor-link" href="#kaspa-pause-retries"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Kaspa pause retries”</span></a></div>
 <p>On Kaspa the minter’s and the pool’s pauses are built at the tip: the moves the node’s mempool and the blocks not yet
 read show ahead of the state the monitor has read, newest first, so a steady stream of spends cannot keep them out. A
 pause that goes out and is not followed within 30 seconds is sent again at a higher feerate, multiplied by 4 each try
@@ -512,7 +685,12 @@ seconds when the coin the last one was built on is seen spent by another transac
 way, a swap): such a pause can never be accepted, and the next goes out in the same round. The monitor sees that in
 the blocks not yet read, in the state it has read, and in its node’s mempool, which it asks once a round for that one
 coin, with a deadline. None of this is ever taken as the followed state: a spend ahead of it that later drops costs
-one rejected submit, and the tries go on until a pause is followed.</p>
+one rejected submit, and the tries go on until a pause is followed. Since run 21 (R21-CHAIN2-1) the same holds when
+nothing is left on the coin, the pause included: on kaspad 2.1.0 anyone can push the pool’s pause out of a node’s
+mempool for about 0.1 KAS (a buy a gram-rate above it replaces it, and a spend of the buy’s own funding coin a gram-rate
+above the buy replaces the buy), and the minter’s with a copy of a mint in flight. A pause in no block fetched that the
+node, asked by its id, says is not in its mempool brings the next one out in the same round; each pause does so once.
+Every pause also goes to the extra nodes of <code dir="auto">kaspaSubmitRpcs</code> from its first try, whether the node took it or not.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="pausing-kaspa-while-the-follower-cannot-read-it">Pausing Kaspa while the follower cannot read it</h3><a class="sl-anchor-link" href="#pausing-kaspa-while-the-follower-cannot-read-it"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Pausing Kaspa while the follower cannot read it”</span></a></div>
 <p>A pause of the minter or the pool spends the coin the state is in, and the monitor builds it on the coin its follower
 last read. A follower that cannot read Kaspa may have last read a coin that has been spent since, and the guardian
@@ -542,10 +720,15 @@ asks which of the states it can name is there: the one it follows, the ones ahea
 in the mempool (and the paused states a pause found there leads to), and the coins of its own pauses. A paused one is
 a pause that landed (another monitor’s with the same key counts too). One not paused is the coin to pause, so the
 pause on it was refused for a guardian coin that is gone: those coins are set aside, the guardian’s address is read
-again, and the pause is built on that coin at once, in the same try. None of them there: <code dir="auto">pause-failed</code> says that the
-coin it follows is gone and no later one it can name is there, and the guardian’s coins are not put in doubt for it.
-Until rc.24 a refusal while the follower was stuck behind a move it had fetched was always taken for the state
-coin’s, which could keep stale guardian coins paying every try until the follower moved on.</li>
+again, and the pause is built on that coin at once, in the same try. None of them there: it looks for the paused
+successor of each state whose pause was refused, at any outpoint (since run 21, R21-REG-1): a state’s pause makes
+one paused state (the minter’s also moves <code dir="auto">admin_nonce</code> on), and only the covenant’s own spends make a coin with its
+ID, so a coin there with the covenant’s ID and exactly that paused state’s script is that state paused, by another
+monitor with the same key whose pause this one’s follower has not read. Until rc.24 that raised <code dir="auto">pause-failed</code> every
+minute for a minter that was paused. Not that either: <code dir="auto">pause-failed</code> says that the coin it follows is gone and no
+later one it can name is there, and the guardian’s coins are not put in doubt for it. Until rc.24 a refusal while
+the follower was stuck behind a move it had fetched was always taken for the state coin’s, which could keep stale
+guardian coins paying every try until the follower moved on.</li>
 <li><strong>What it cannot do.</strong> A state coin’s address is the hash of its script, which holds the state, and kaspad 2.1.0
 has no call that lists a covenant’s coins: the UTXO set confirms a state the monitor can name and finds none it
 cannot. A minter or a pool that moved in blocks the follower has not fetched is paused once the follower, the blocks
@@ -556,16 +739,18 @@ when it comes; the pause is paid from the coins kept meanwhile). A look that fai
 the pause goes out as it did without it, through <code dir="auto">kaspaSubmitRpcs</code> as well, and <code dir="auto">pause-failed</code> comes only when it
 truly failed for a minute. The first pause of an alarm waits for no look: one is made only once a pause has gone
 out. A coin is taken for the covenant’s only when the UTXO set holds that outpoint at its own state’s address, with
-that script and the covenant’s ID; a state that does not decode is not looked for. The guardian coins a pause spends
-are in a block or made with the state coin, as rc.22’s input rule asks (the core refuses anything else).</li>
+that script and the covenant’s ID (for the paused successor of a state it tried, any outpoint there with that script
+and the covenant’s ID; a coin anyone sends to that address carries no covenant ID); a state that does not decode is
+not looked for. The guardian coins a pause spends are in a block or made with the state coin, as rc.22’s input rule
+asks (the core refuses anything else).</li>
 </ul>
 <div class="sl-heading-wrapper level-h3"><h3 id="a-monitor-that-keeps-dying">A monitor that keeps dying</h3><a class="sl-anchor-link" href="#a-monitor-that-keeps-dying"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “A monitor that keeps dying”</span></a></div>
 <p>The failure clocks above live in the monitor’s memory and its state. A monitor that dies in every round (an RPC
 answer that exhausts its memory, a state it can no longer save) starts each time with fresh clocks, so none of
 them ever runs out: it would sit there judging nothing and raising nothing. Two things close this, since rc.16:</p>
 <ul>
-<li><strong>The starts file.</strong> Before it reads anything, the monitor writes the time of each start to a small file next to
-its state, <code dir="auto">&lt;statePath&gt;.starts</code>. A round that finishes empties it. Three starts or more with no finished round
+<li><strong>The starts file.</strong> Before it reads anything, its state included, the monitor writes the time of each start to a
+small file next to its state, <code dir="auto">&lt;statePath&gt;.starts</code>. A round that finishes empties it. Three starts or more with no finished round
 between them, the first of them <code dir="auto">failClosedMs</code> ago or longer, is a crash loop: the monitor pauses everything
 first, then raises <code dir="auto">crash-loop</code> (saving the alarm may be the very thing it dies of). Starts further apart than
 <code dir="auto">failClosedMs</code> are a host that was off, not a loop. A monitor with no <code dir="auto">statePath</code> keeps no such file. A host that
@@ -577,6 +762,16 @@ its own place, which needs no new space. Until rc.24 it was a plain write, and o
 failed, the file never grew, and a monitor dying in every round was never counted as a crash loop. When it cannot
 be written at all (the disk filled before the file was first written, a volume that cannot be written), <code dir="auto">/health</code>
 warns <code dir="auto">the starts file ... could not be written</code> until it can.
+Until run 21 (Daybreak [26], R21-ADV-1) the state was read before the start was counted. A state the process could
+not read (one an outsider’s records grew past what it can parse under its 512 MB heap, which ends the process; one
+cut short) ended every start before its count: no crash loop, no pause, nothing raised, while the monitor judged
+nothing and only its status went stale. Now the start is counted first, a state that cannot be read (<code dir="auto">... could not be read</code>, or <code dir="auto">... is not a monitor's state file</code>) leaves it counted, and at a crash loop’s start the vaults are
+paused before the state is read: a vault’s pause needs only the deployment and the guardian’s key. The minter’s
+and the pool’s pauses need their coins, which are in the state: they follow once it is read, as above. Another
+deployment’s state is still refused at once, and counts no start (it must pause nothing).</li>
+<li><strong>The state’s size.</strong> <code dir="auto">/health</code> warns, and pauses nothing, when a save takes more than a second or the state holds
+more than 100,000 records (mints, deposit nonces, skips, burns, payouts, alarms): such a state is on its way to one
+the monitor saves and cannot read back (deploy/RUNBOOK.md, “The monitor’s state keeps growing”).
 Its Kaspa pauses at that start are built on the minter and the pool its state last saved, and until rc.24 the node
 refused them once either had moved since (a mint, a swap): the vaults were paused and the minter and the pool stayed
 open for as long as the loop lasted (run 20’s deep round, D3-4). Since then, when one of them did not go out, the
@@ -737,7 +932,7 @@ the machine is down while the monitor may still be judging).</p>
 <tbody>
 <tr>
 <td><code dir="auto">GET /health</code></td>
-<td>200 when healthy, the last check is fresh (under 5 minutes old, and made since the monitor’s last start: R17-PUB-3) and the status file is (under a minute), otherwise 503. Since round 30 it answers 503 with <code dir="auto">not guarding: offline since ...</code> or <code dir="auto">not guarding: catching up since ...</code> while the monitor’s own machine is offline or catching up (<a href="#when-its-own-machine-is-away-or-offline">above</a>). It also answers 503 while its Kaspa view lags (600 DAA scores by default), so an operator learns about a stalled node before alarms would come late. Its <code dir="auto">warnings</code> list a guardian short of gas (under 0.001) or of spendable KAS (under 1 KAS in its four largest coins), a chain whose releases exceed what its deposits minted by more than its <code dir="auto">releaseCapacity</code> (or <code dir="auto">releaseImbalanceWarnUnits</code>), and on mainnet a vault whose payout wait no longer leaves <code dir="auto">failClosedMs</code> its margin (R17-PAY-2), by name, all read every 5 minutes: a warning is never an alarm and pauses nothing. Moving value across chains is a normal use, and the warning shows when it has gone far. Since round 11 the warnings also name a transaction in the monitor’s node’s mempool that spends the minter or the pool coin and that no block will take (looked for every 10 seconds): anyone can place one on the pool for a fee, so it is never an alarm and pauses nothing. Since run 20 they also name the pool’s kUSDT reserve address when it holds more coins than one read takes (D6-2: wallets then cannot check the pool, and swaps and liquidity stop; read once a minute), and a starts file that cannot be written (D5-6, below). Wire it to uptime alerts</td>
+<td>200 when healthy, the last check is fresh (under 5 minutes old, and made since the monitor’s last start: R17-PUB-3) and the status file is (under a minute), otherwise 503. Since round 30 it answers 503 with <code dir="auto">not guarding: offline since ...</code> or <code dir="auto">not guarding: catching up since ...</code> while the monitor’s own machine is offline or catching up (<a href="#when-its-own-machine-is-away-or-offline">above</a>). It also answers 503 while its Kaspa view lags (600 DAA scores by default), so an operator learns about a stalled node before alarms would come late. Its <code dir="auto">warnings</code> list a guardian short of gas (under 0.01 ETH or BNB) or of spendable KAS (under 1 KAS in its four largest coins), a chain whose releases exceed what its deposits minted by more than its <code dir="auto">releaseCapacity</code> (or <code dir="auto">releaseImbalanceWarnUnits</code>), on mainnet a vault whose payout wait no longer leaves <code dir="auto">failClosedMs</code> its margin (R17-PAY-2), and since run 21 a token that charges a fee on transfers (Ethereum USDT’s <code dir="auto">basisPointsRate</code> above 0, with its <code dir="auto">maximumFee</code>: payouts and refunds are short-paid by it, Daybreak [54]; a token without those views, such as BSC-USD, is asked once), by name, all read every 5 minutes: a warning is never an alarm and pauses nothing. Moving value across chains is a normal use, and the warning shows when it has gone far. Since round 11 the warnings also name a transaction in the monitor’s node’s mempool that spends the minter or the pool coin and that no block will take (looked for every 10 seconds): anyone can place one on the pool for a fee, so it is never an alarm and pauses nothing. Since run 20 they also name the pool’s kUSDT reserve address when it holds more coins than one read takes (D6-2, read once a minute: wallets and web apps of rc.24 and older then cannot check the pool, and swaps and liquidity stop for them; newer ones prove the reserve from the transaction that made it, and are stopped only while the coordinator serves no <code dir="auto">reserve.made</code>, R21-POOL-1), and a starts file that cannot be written (D5-6, below). With an EVM guardian, warnings also show absent or degraded pause corroboration, updated from the latest read-only probe; those warnings do not stop emergency retries. Wire it to uptime alerts</td>
 </tr>
 <tr>
 <td><code dir="auto">GET /api/v1/signal</code></td>
@@ -749,7 +944,7 @@ the machine is down while the monitor may still be judging).</p>
 </tr>
 <tr>
 <td><code dir="auto">GET /api/v1/checkpoint</code></td>
-<td>Where another follower can start: <code dir="auto">scanFrom</code>, <code dir="auto">initialMinter</code>, <code dir="auto">initialPool</code>, <code dir="auto">judgeFromBlock</code> and <code dir="auto">initialSkipped</code> (when the list is whole), with <code dir="auto">initialSkippedFrom</code>, the <code dir="auto">scanFrom</code> the list belongs to (since round 16, for a coordinator’s config: R16-FIX-5), and <code dir="auto">skips</code>: for each skip this monitor followed itself, by deposit (<code dir="auto">"1:7"</code>), its transaction (<code dir="auto">txid</code>) and the DAA score of the block that accepted it (<code dir="auto">acceptingDaa</code>), for <code dir="auto">kusdt record-skip</code> (since run 20, D1-1; none for a skip it took from a checkpoint’s list). All of one moment: copy them into a monitor’s config together, from one answer</td>
+<td>Where another follower can start: <code dir="auto">scanFrom</code>, <code dir="auto">initialMinter</code>, <code dir="auto">initialPool</code>, <code dir="auto">judgeFromBlock</code> and <code dir="auto">initialSkipped</code> (when the list is whole), with <code dir="auto">initialSkippedFrom</code>, the <code dir="auto">scanFrom</code> the list belongs to (since round 16, for a coordinator’s config: R16-FIX-5), and <code dir="auto">skips</code>: for each skip this monitor followed itself, by deposit (<code dir="auto">"1:7"</code>), its transaction (<code dir="auto">txid</code>), the DAA score of the block that accepted it (<code dir="auto">acceptingDaa</code>) and, since run 21, that block’s hash (<code dir="auto">acceptingBlock</code>): <code dir="auto">kusdt record-skip</code> takes the transaction and the block, and prints the DAA score it reads from the signer’s own node to compare with <code dir="auto">acceptingDaa</code> (since run 20, D1-1; none for a skip it took from a checkpoint’s list). All of one moment: copy them into a monitor’s config together, from one answer</td>
 </tr>
 </tbody>
 </table>
@@ -772,8 +967,11 @@ the machine is down while the monitor may still be judging).</p>
 </tbody>
 </table>
 <p>The operator listener refuses every request without the operator bearer before anything is read, and serves
-nothing else. Keep it on a private address: the mainnet package’s Caddy lets only the operators’ own addresses
-(<code dir="auto">OPERATOR_IPS</code>) through to it, and only for those two paths with a bearer.</p>
+nothing else. Keep it on a private address. In the packages it listens on 127.0.0.1 inside the monitor’s container, and
+the operator reaches it on the monitor’s machine with the package’s operator tool, a container of its own on the
+monitor’s loopback (<code dir="auto">docker compose run --rm --no-deps operator</code>, <code dir="auto">deploy/mainnet-monitor/README.md</code>). Until
+run 21 the mainnet package’s Caddy, which faces the internet, carried the operators’ requests to it from their own
+addresses (<code dir="auto">OPERATOR_IPS</code>): a Caddy someone took over could read the bearer and use it (Daybreak [56]).</p>
 <p>The four public answers are made by the status process at most once a second from the files it last read (it looks at
 them every quarter second, and reads one only when it changed), so an answer can be a few seconds old, and an
 acknowledgement shows within a second. The checkpoint alone can be older: it lists every skipped deposit, so the
@@ -818,12 +1016,16 @@ that monitor would not know the deposits of the mints let go of.</p>
 <td>The monitor’s own Kaspa node and EVM RPCs (by chain code)</td>
 </tr>
 <tr>
+<td><code dir="auto">pauseQuorumRpcs</code></td>
+<td>Optional: full lists of exactly three independently operated RPCs per chain. Enables fresh 2-of-3 canonical-block pause corroboration (<a href="#three-provider-pause-corroboration">above</a>); may reuse the two ordinary RPCs plus a third read-only provider. Requires EIP-1898 <code dir="auto">eth_call</code> by block hash with <code dir="auto">requireCanonical: true</code>. Missing or unavailable corroboration warns and leaves emergency retries active</td>
+</tr>
+<tr>
 <td><code dir="auto">kaspaSubmitRpcs</code></td>
-<td>Optional: extra Kaspa nodes (wRPC URLs) a Kaspa pause is also submitted to when <code dir="auto">kaspaRpc</code> refuses it or does not answer, and at every retry. Nodes that build block templates and are connected to mining nodes. Nothing is read from them</td>
+<td>Optional: extra Kaspa nodes (wRPC URLs) every Kaspa pause is also submitted to, from its first try, whether <code dir="auto">kaspaRpc</code> took it or not (since run 21, R21-CHAIN2-1; until then only when <code dir="auto">kaspaRpc</code> refused it or did not answer, and at every retry). Nodes that build block templates and are connected to mining nodes. Nothing is read from them</td>
 </tr>
 <tr>
 <td><code dir="auto">guardianKaspaSecretPath</code>, <code dir="auto">guardianEvmSecretPath</code></td>
-<td>The guardian keys. Without them the monitor can alarm but not pause</td>
+<td>The guardian keys. Without them the monitor can alarm but not pause. Since run 21 (Daybreak [20]) a mainnet monitor refuses to start without both unless <code dir="auto">dryRun</code> is <code dir="auto">true</code> (one that only watches)</td>
 </tr>
 <tr>
 <td><code dir="auto">statusPath</code></td>
@@ -879,7 +1081,7 @@ that monitor would not know the deposits of the mints let go of.</p>
 </tr>
 <tr>
 <td><code dir="auto">dryRun</code></td>
-<td>Optional: alarm without pausing anything</td>
+<td>Optional: alarm without pausing anything. <code dir="auto">true</code> or <code dir="auto">false</code>, without quotes: since run 21 (Daybreak [20]) the monitor refuses to start on anything else (<code dir="auto">"false"</code> in quotes was read as true, and paused nothing)</td>
 </tr>
 <tr>
 <td><code dir="auto">minDaaPerSecond</code></td>
@@ -927,7 +1129,7 @@ that monitor would not know the deposits of the mints let go of.</p>
 </tr>
 <tr>
 <td><code dir="auto">listen</code></td>
-<td><code dir="auto">{host, port}</code> for the operator listener: <code dir="auto">0.0.0.0</code> and 9311 in the shipped packages. In a container the host must be one of the container’s own addresses (the machine’s address is not), and compose and Caddy decide who reaches it. A listener that cannot listen is said in the log and tried again every minute; the monitor goes on judging and pausing (since round 17), and <code dir="auto">kusdt check</code> fails a host it cannot listen on</td>
+<td><code dir="auto">{host, port}</code> for the operator listener: <code dir="auto">127.0.0.1</code> and 9311 in the shipped packages (since run 21), so that nothing but a command run inside the monitor’s own container reaches it. In a container the host must be one of the container’s own addresses (the machine’s address is not). A listener that cannot listen is said in the log and tried again every minute; the monitor goes on judging and pausing (since round 17), and <code dir="auto">kusdt check</code> fails a host it cannot listen on</td>
 </tr>
 </tbody>
 </table>
