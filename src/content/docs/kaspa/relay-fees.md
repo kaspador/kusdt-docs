@@ -54,5 +54,7 @@ Every request may set `feerate` (sompi per gram). Lower values are raised to 100
 - Covenant transactions are large: they carry the covenant program in each input. Expect fees well above a plain
   KAS payment.
 - Change below 0.2 KAS is left to the fee by the builders, because a tiny output costs more storage mass than it
-  is worth.
+  is worth. The wallet never lets a sale on the pool pay what it brings this way: it compares what comes back with
+  the fee the transaction's size needs (`mass.feeMass` × feerate), not with the fee paid, and drops a sale that pays
+  more than that (see [Selling kUSDT](/getting-started/swap/#selling-kusdt)).
 - The node computes the masses itself; the builders send transactions with the mass fields set to 0.

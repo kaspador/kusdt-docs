@@ -23,7 +23,9 @@ Rules for the burn output:
 | `amount` | Above the release fee for that chain, or it is never paid |
 
 Signers refuse a burn state whose borrow scheme, borrow guard or extension commitment is not zero: a borrowable
-state could move to a new outpoint and be claimed twice. Such kUSDT is lost, so wallets never build one.
+state could move to a new outpoint and be claimed twice. Such kUSDT is lost, so wallets never build one, and since
+run 21 the core's `transfer` builder refuses one, as it refuses a redemption naming a chain other than 1 or 2 or the
+zero address (Daybreak [27]).
 
 The transaction payload should name the burn outputs and their payout, so the bridge can find them.
 
@@ -52,12 +54,13 @@ struct Release { bytes32 redeemId; address recipient; uint256 units; }
 
 The vault:
 
-1. requires `redeemId` unused, and a recipient that is neither the zero address nor the vault itself;
+1. requires `redeemId` unused and not cancelled by the owner, and a recipient that is not the zero address, the
+   vault itself or the token contract;
 2. computes `fee = max(minReleaseFee, ceil(units × feeBps / 10⁴))` and requires `units > fee`;
 3. verifies at least 3 EIP-712 signatures by distinct **current** signers, given in strictly increasing order of
    signer address (the ordering proves they are distinct);
 4. requires `units ≤ unreservedBacking()`, the backing no other queued payout has a claim on;
-5. draws the payout, `units − fee`, from the release allowance;
+5. draws `units` from the release allowance, the fee included, because the fee leaves the backing too;
 6. marks `redeemId` used and queues the payout;
 7. emits `ReleaseQueued(redeemId, recipient, units, fee, payout, readyAt)`.
 
@@ -74,6 +77,14 @@ The wait is the guardian's time to pause. Nothing is paid while a vault is pause
 again for everything queued, so if signer keys are stolen, a pause within the wait means no forged payout leaves. Every payout waits, however small: otherwise a thief would split the
 theft into small payouts. See the [threat model](/security/threat-model/).
 
+**A payout the owner cancels stays cancelled.** The owner can take a queued payout out of the queue
+(`cancelRelease`, `cancelRefund`): nothing is paid and its allowance comes back. From then on the vault refuses to
+queue that `redeemId` or nonce again, whatever signatures come with it, until the owner reinstates it
+(`reinstateRelease`, `reinstateRefund`; on mainnet that waits 48 hours). After that it must be queued again with
+signatures of the current signers, and it waits again. Meanwhile the coordinator asks no signer for it, looks
+again every ten minutes, and holds up no other payout. A release's fee is always the flat fee: the
+[rising deposit fee](/protocol/fees/#the-rising-deposit-fee) does not apply to it.
+
 ## The redeem ID
 
 Each burn output has one redeem ID:
@@ -89,9 +100,10 @@ output is paid at most once (INV-3).
 
 | Condition | Consequence |
 |---|---|
-| `units ≤ fee`, or a zero or vault recipient | Never paid: marked `unpayable`, and its kUSDT is lost. Wallets never build one |
-| Payout above what the allowance holds now, or a paused vault | Reverts; the relayer retries it with its own backoff, without holding up other burns |
-| Payout above `releaseCapacity` (250 000 USDT by default) | Cannot be paid until the owner raises the capacity (within its hard bound). Wallets refuse to build such a burn |
+| `units ≤ fee` | Not paid: marked `unpayable`, looked at again about once a minute, and paid if the fee falls below `units`. Wallets never build one |
+| A zero or vault recipient | Never paid: marked `unpayable`, and its kUSDT is lost. Wallets never build one |
+| `units` above what the allowance holds now, or a paused vault | Reverts; the relayer retries it with its own backoff, without holding up other burns |
+| `units` above `releaseCapacity` (250 000 USDT by default) | Cannot be paid until the owner raises the capacity (within its hard bound). Wallets refuse to build such a burn |
 | `units` above that vault's backing | Reverts; waits until deposits on that chain bring the backing. Wallets refuse to build such a burn |
 | Recipient blocked by the token | Never signed. The burn is held as `blocked`, checked again every hour, and paid if the token unblocks the address. Its USDT stays in the vault as backing, and it holds up no other burn. Wallets refuse to build such a burn (see [Blocked recipients](/security/known-limits/#blocked-recipients)) |
 | The token blocks the vault itself | The vault can pay nothing out, while deposits still go in. The monitor raises `vault-blocked` and the guardian pauses everything (see [The monitor](/security/monitor/)) |

@@ -21,13 +21,14 @@ The pool's **kUSDT reserve** is one `KCC20` state in the kUSDT family, owned by 
 
 | Entry | Does | Checks (exact, with 128-bit products) |
 |---|---|---|
-| `init` | First deposit | `X = Y = S = 0` before; `S = kas_in`; the Position gets `kas_in − 1000` shares, and the 1000 unowned shares stay forever |
-| `buy` | KAS in, kUSDT out | Not paused; fee 0.30 %, of which 0.05 % of the input goes to `protocol_kas`; `(X + 0.997·in) · Y′ ≥ X · Y` |
-| `sell`, `sell_all` | kUSDT in, KAS out | Not paused; the same, with the protocol cut in kUSDT; and the [circuit breaker](#the-circuit-breaker), with `now_daa` covered by the transaction's lock time |
-| `add` | KAS and kUSDT in, a new Position | Not paused; `shares · X ≤ kas_in · S` and `shares · Y ≤ tokens_in · S` |
-| `remove` | Burns a Position (its owner signs) | Open while paused; `kas_out · S ≤ shares · X`, `tokens_out · S ≤ shares · Y`; `S` stays ≥ 1000 |
+| `init` | First deposit | The admin's signature; `X = Y = S = 0` before; `S = kas_in`; the Position gets `kas_in − 1000` shares, and the 1000 unowned shares stay forever |
+| `buy` | KAS in, kUSDT out | Not paused; fee 0.50 %, of which 0.05 % of the input goes to `protocol_kas`; `(X + 0.995·in) · Y′ ≥ X · Y`; the breaker's [clock](#the-circuit-breaker) `age_daa` |
+| `sell`, `sell_all` | kUSDT in, KAS out | Not paused; the same, with the protocol cut in kUSDT; and the [circuit breaker](#the-circuit-breaker), with `age_daa` within the pool UTXO's real age |
+| `add` | KAS and kUSDT in, a new Position | Not paused; `shares · X ≤ kas_in · S` and `shares · Y ≤ tokens_in · S`; `age_daa` settles the breaker first, as a swap's does; into an emptied pool (only the 1000 unowned shares left) the admin's signature, and the reference starts again at the new reserve |
+| `remove` | Burns a Position (its owner signs) | Open while paused; `kas_out · S ≤ shares · X`, `tokens_out · S ≤ shares · Y`; `S` stays ≥ 1000; `age_daa` settles the breaker first; while paused it claims 0 and settles nothing |
+| `tick` | Settles the breaker with the pool UTXO's age, and nothing else | Anyone; not paused; an opened pool (refused between the genesis and `init`); `age_daa` at least the minimum claim (50 DAA); no kUSDT input; the pool's value unchanged |
 | `collect` | The admin takes `protocol_kas` and `protocol_tokens` | Admin signature; X and Y unchanged |
-| `pause` | Stops swaps and new liquidity | The guardian's signature; no kUSDT input in the transaction |
+| `pause` | Stops swaps and new liquidity | The guardian's signature; not paused already; no kUSDT input in the transaction |
 | `unpause` | Resumes them | The admin's signature; no kUSDT input |
 | `set_keys` | Hands the admin key, the guardian key or both over | Admin signature; no kUSDT input |
 | `Position.transfer` | Gives a Position to a new owner | Owner signature; no kUSDT input in the transaction |
@@ -45,8 +46,10 @@ The details of each follow.
 | `protocol_kas`, `protocol_tokens` | The protocol's accrued fees, kept apart from the reserves |
 | `base_value` | KAS the pool UTXO always keeps beyond the reserve (its storage deposit) |
 | `admin` | The key that collects protocol fees, resumes a paused pool and hands the keys over |
-| `max_out_bps`, `window_len` | The circuit breaker: the share of the KAS reserve sells may take per window, and the window's length in DAA. Fixed at genesis |
-| `window_start`, `window_ref`, `window_out` | The open window: its start (DAA), the KAS reserve it opened with, and the net KAS that left in it so far (sells out, less buys in; negative after net buying) |
+| `max_out_bps`, `window_len` | The circuit breaker: the share of the KAS reserve that is the cap, and the DAA it takes one cap to refill. Fixed at genesis |
+| `window_credit` | How much of the room buys gave is still KAS those buys left in the reserve. A withdrawal moves it back onto `window_out` |
+| Reserve deposit | The reserve's token output keeps at least 1 KAS, enforced by the pool: nothing else binds that KAS |
+| `window_ref`, `window_out` | The KAS reserve the cap is measured on (set by the first deposit, down at once with the reserve, up only with claimed time), and the allowance used so far in net KAS (sells out, less buys in, moving toward zero with claimed time; negative after net buying, at most one cap) |
 | `paused` | Whether the guardian paused swaps and new liquidity |
 | `guardian` | The key that may pause the pool, and nothing else: the bridge's guardian |
 
@@ -61,8 +64,8 @@ reserve state amount = Y + protocol_tokens
 
 | Name | Value | Purpose |
 |---|---|---|
-| `FEE_BPS` | 30 | 0.30 % per swap |
-| `PROTOCOL_BPS` | 5 | 0.05 % of the input accrues to the protocol; the other 0.25 % stays with liquidity |
+| `FEE_BPS` | 50 | 0.50 % per swap |
+| `PROTOCOL_BPS` | 5 | 0.05 % of the input accrues to the protocol; the other 0.45 % stays with liquidity |
 | `MIN_LIQUIDITY` | 1 000 shares | Minted at the first deposit to nobody |
 | `LIMB` | 2³¹ | Limb size for the 128-bit products |
 | `MAX_OPERAND` | 2⁶¹ − 1 = 2 305 843 009 213 693 951 | Largest reserve, share count or amount the products accept |
@@ -77,7 +80,7 @@ A **buy** (KAS in, kUSDT out) with input `kas_in` and output `out`:
 
 ```text
 cut       = floor(kas_in × 5 / 10 000)                // protocol share
-effective = floor(kas_in × 9 970 / 10 000)            // input after the 0.30 % fee
+effective = floor(kas_in × 9 950 / 10 000)            // input after the 0.50 % fee
 X'        = X + kas_in − cut
 Y'        = Y − out                                    // must stay > 0
 require   (X + effective) × Y' ≥ X × Y                 // exact, 128-bit
@@ -88,14 +91,14 @@ A **sell** (kUSDT in, KAS out) is the mirror image, with `tokens_in` and `kas_ou
 
 ```text
 cut       = floor(tokens_in × 5 / 10 000)
-effective = floor(tokens_in × 9 970 / 10 000)
+effective = floor(tokens_in × 9 950 / 10 000)
 Y'        = Y + tokens_in − cut
 X'        = X − kas_out                                // must stay > 0
 require   (Y + effective) × X' ≥ Y × X
 protocol_tokens' = protocol_tokens + cut
 ```
 
-The check uses only the `effective` input, but the reserve keeps `input − cut`. The 0.25 % difference stays in the
+The check uses only the `effective` input, but the reserve keeps `input − cut`. The 0.45 % difference stays in the
 pool, so the product of the reserves grows with every swap. That growth is what liquidity providers earn.
 
 The best output a client can ask for is the quote:
@@ -120,29 +123,114 @@ off-chain can stop such a dump. The pool limits it on-chain instead.
 
 | Rule | Value |
 |---|---|
-| Window | `window_len` DAA: 36 000, an hour at 10 BPS |
-| What it counts | The **net** KAS that leaves in the window: what sells take out, less what buys bring in. The count goes negative after net buying |
-| Cap | Within a window, the net outflow is at most `max_out_bps` (1 000, 10 %) of the KAS reserve the window opened with, or of the reserve now if that is smaller. So withdrawals shrink the cap too |
-| Buys | Never capped. Each buy gives sells back the KAS it added to the reserve |
-| New window | A sell after the window ran its course (or the first sell ever) opens a new one, with the reserve of that moment and a count of zero |
-| Clock | The sell names `now_daa`. Its lock time must cover it, and consensus holds the transaction back until the DAG reaches it, so the clock cannot run ahead. It may not go back before the open window's start |
+| Cap | `max_out_bps` (1 000, 10 %) of `window_ref`, or of the reserve now if that is smaller. `init` sets `window_ref`; a sell or withdrawal lowers it at once. It rises only with claimed time: a swap moves it toward the reserve by `age_daa ÷ window_len` of the gap, so KAS that arrives at one moment (a buy, new liquidity) can't lift it |
+| Used | `window_out`: the **net** KAS out so far, sells less buys. Only claimed time and real buys lower a positive count, and a withdrawal that shrinks the pool cuts it to two of the new caps, which gives no room. Negative after net buying, at most one cap |
+| Reference | `window_ref` rises only with claimed time, by at most its own size per window. Liquidity added to inflate the cap and withdrawn again earns nothing; a large genuine deposit lifts the cap by about doubling an hour |
+| Refill | One cap per `window_len` DAA (36 000, an hour at 10 BPS): `window_out` moves toward zero by `elapsed × cap ÷ window_len`, stopping at zero. Idle time never fills it past one cap |
+| Buys | Never capped. Each buy gives sells back the KAS it added to the reserve, at most one cap of credit. If that KAS is then withdrawn, the room goes with it. The credit does not fade with time alone: it falls only as a spend claims time (or a sell or a withdrawal uses it), so after a quiet period a sell that claims age 0 still has all of it on top of a whole cap (below) |
+| Clock | Every public entry (buy, sell, add, remove, tick) names `age_daa`, the DAA since the pool UTXO it spends was accepted, at most two windows. Its pool input's sequence must be exactly that (`OP_CHECKSEQUENCEVERIFY`, and `require_settled_inputs` since rc.22), and consensus holds a relative lock against the UTXO's real age, so the clock can't run ahead of real time. An age above 0 is claimed only on a pool UTXO already in a block. Every pool transaction makes a new UTXO of age zero, so claiming less only gives less room, except while buys have left the count below zero: then claiming less keeps more of their credit (below) |
+| Shortest claim | While more than half of the cap is in use (`window_out` above half of the cap on the stored `window_ref`), every public entry claims at least `window_len ÷ 720`: 50 DAA, about 5 seconds. So nobody can spend the pool more often than that, every spend refills at least that much, and the count falls back to half a cap at the full rate. At or below half, sells have at least half a cap of room and a spend may claim nothing. A withdrawal while the pool is paused needs no minimum. A tick always claims at least 50 DAA. `init`, `collect`, `pause`, `unpause` and `set_keys` claim no age: the first comes before any window, the others take the admin's or the guardian's key |
+| Bound | At one moment: at most one cap of the reference net of buys, plus any credit, whatever sequence of buys, sells, adds and removes is used: up to two caps, after buys that left a cap of credit. Over any time *t*: about `cap + credit + cap × t ÷ window_len`, with `cap` on the largest reference in that time. Credit is at most one cap and comes only from real buys |
 | Who can change it | Nobody: both values are fixed at genesis |
 
-Then the monitor pauses the pool with everything else. A dump costs the liquidity providers at most about 10 % of the
-KAS side, and they can still withdraw.
+Then the monitor pauses the pool with everything else. A dump costs the liquidity providers at most about one cap
+(10 % of the KAS side) and then its refill rate, and they can still withdraw. Right after buys, the KAS those buys
+brought in can leave on top of that: up to one more cap, as long as no spend has claimed time since.
+
+**The credit stays until time is claimed** (corrected 13 November 2026, second outside review of rc.22, D8-1; the
+specification said it "fades over a window"). A buy that leaves the count below zero gives sells that much more room,
+and only claimed time brings a negative count back to zero. With no spend in between, a sell hours later that claims
+age 0 still has the whole credit and a whole cap: two caps of the reference at once, about 18 % of the KAS reserve
+right after net buying of one cap (17.4 % in the reviewer's case). A sell that claims the pool UTXO's age settles the
+credit away first and has one cap, about 10 %. kUSDT Wallet builds every sell claiming the age, the web app's too, so an
+honest seller is offered the one cap; a dumper builds its own sell at age 0 and gets the two. The bound above holds
+with the credit in it: what leaves is what buyers brought in plus one cap.
+
+Time a spend does not claim is lost. Before 10 November 2026 any pool spend could claim none, so a bot sending a
+dust buy, or an add and a remove, every few blocks could keep a used-up allowance from refilling for its network fees
+alone. Now, while more than half of the cap is in use, every such spend claims at least 50 DAA, so spending the pool
+often refills it. The minimum stops at half of the cap so that dust can't keep it in force: a first version applied it
+whenever any sell room was in use, and a bot could keep that true with a dust sell in every slot. Keeping the count
+above half takes selling about the whole refill, a cap an hour.
+
+While the pool is paused the breaker stands still: no tick, and a withdrawal claims nothing and needs nothing, so
+providers can always leave at once. The admin's unpause starts the clock again, so a long pause never hands sells a
+fresh cap.
+
+The first deposit takes the admin's signature: the pool's opening, and the first deposit after every provider has
+left, which also starts the sell cap again at the new reserve. An opening by anyone with dust left a cap so small that
+sells stayed shut for about a day.
+
+### Slots
+
+Above half of the cap, each pool UTXO can be spent once it is 50 DAA old: one slot per pool UTXO, which goes to
+whichever transaction the network takes first. Wallets and the web app are ready at that same DAA as anyone, so a bot
+has no head start. A bot that always gets there first can keep every other pool transaction out while the count is
+above half: with dust for at most as long as the count takes to fall to half (half an hour after a full cap was sold,
+an hour and a half if half the pool was also withdrawn), since its own spends refill at the full rate, and for longer
+only by also selling about a cap an hour, besides a fee per slot (720 an hour, about 42 KAS). In the tests a seller
+who wins one race in two loses about one race per sell and is served in full. Replacing others' transactions with a
+higher fee spreads across the network, but a bot can always bid higher: it would only start a fee auction in each
+slot, so the clients don't.
+
+### The keeper
+
+What is left is a bot that lets the pool UTXO age and then spends it claiming only those 50 DAA, so the count stays
+up. The keeper is a small service (`kusdt keeper`, with its own key, which pays only network fees). It follows the
+pool, and once it sees a spend that claimed less than its UTXO's age by more than 5 seconds while more than half of
+the cap was in use, it sends a `tick` for the next hour 2.5 seconds after each new pool UTXO is 50 DAA old (so wallets,
+who send at that moment and take up to about 2.5 seconds to do it, come first), while more than half of the cap is in
+use, the pool is not paused and nobody else's spend of that UTXO is on its way. A tick settles the breaker and changes
+nothing else, so the time it claims stays counted whatever the next spend claims; one that is refused or dropped is
+sent again. In the tests, a bot that spends each pool UTXO 95 seconds late keeps the refill at 5 % of the stated rate
+without a keeper and 84 % with one; a bot that stays just under the 5 seconds is never caught and keeps it at 50 %
+while nobody else spends (76 % with a seller about). The keeper's 2.5 seconds are a trade-off: sooner, it took slots
+from slower wallets; later, a griefer landing just before it wastes more of each slot.
+
+The keeper pays one coin per tick, free again as soon as that tick is gone, and splits a coin into four when it
+starts. A tick costs about 0.057 KAS at the network's floor and 0.57 KAS at the keeper's fee ceiling: at most 480 an
+hour (27 or 271 KAS), never more than 30 KAS of fees in an hour (its `maxFeesPerHour`), and only while more than half
+of the cap is in use and the tick would change the breaker. A pool every provider has left keeps a cap of a few
+sompi, nobody can trade in it, and the keeper does not tick it at all (nor any pool whose reserve would allow a cap
+under 0.1 KAS); up to rc.24 it paid for a tick every 75 DAA there that changed nothing, and its own late ticks kept it
+armed (run 21). Without
+sells the ticking lasts at most half an hour of claimed time after a full cap was sold, and an hour and a half if half
+the pool was also withdrawn (about 830 ticks). Anyone may run a keeper; the operators run one. It keeps its own coins and the pool's age from the
+transactions the chain accepts, so coins anyone sends to its address or to the pool's do not stop it (since round 13),
+and its health check fails, with the reason, when a tick it owes could not go out for a minute.
+
+Wallets and the web app build a pool transaction only on a pool UTXO their node shows accepted and at least 50 DAA
+old while more than half of the cap is in use, and send it at that DAA. A node refuses a transaction whose relative
+lock is not met yet instead of keeping it, so they send again for a moment if their node is a little behind.
+
+### Why the clock is the UTXO's age
+
+Until 8 November 2026 the breaker's clock was `now_daa`, a claim bounded only from above by the transaction's lock
+time. A seller could name any older time, so the clock could be set back and idle windows replayed one claim after
+the other: a day without sells gave 24 windows at once, and the first sell ever could count the chain's whole history
+(92 % and 98.5 % of the reserve, in tests). The clock is now the pool UTXO's own age, which consensus proves with a
+relative lock and which a new UTXO starts again at zero, so one moment can claim only the one age the current UTXO has.
+
+### Why the reference rises only with time
+
+The first refilling design reset the reference to the current reserve when a sell found no allowance in use. Then a
+buy of at least one cap reset it to a reserve that buy had just inflated, and a positive count was cut down to a cap
+that had shrunk, so `buy two caps, sell all the room` drained about 2 % of the reserve per cycle with no time passing
+(found in an independent review, 8 November 2026). Now only claimed time raises the reference, and a positive count
+falls only with claimed time or real buys. Time weights the reference by how long the reserve stood at that level.
 
 ### Why it counts the net flow
 
 Until 5 November 2026 the breaker counted every sell and ignored buys. An external review pointed out that anyone
-could then use up the hour's sell room with round trips (buy kUSDT, sell it straight back) for about 0.6 % in fees,
+could then use up the hour's sell room with round trips (buy kUSDT, sell it straight back) for their fees alone,
 and so hold up honest sellers. Counting the net flow ends that: a round trip brings in about as much KAS as it takes
-out, so it leaves the room where it was and only pays its fees, to the liquidity providers.
+out, so it leaves the room where it was and only pays its fees, mostly to the liquidity providers.
 
 It protects the pool just as well. On the constant-product curve the pool's end state follows from its net KAS change
 alone. Whether a dumper sells at once, or buys first and then sells more, the pool ends at the same point, so the
-most it can lose in a window is the same 10 % of its KAS. Tests in `tests/pool.rs` play both: five 900 KAS round
+most it can lose at once is the same 10 % of its KAS, plus what buyers brought in since a spend last claimed time (the credit above). Tests in `tests/pool.rs` play both: five 900 KAS round
 trips leave an honest seller the whole room, and after a large buy the sells may take more than the cap gross but
-never more than the cap net.
+never more than one cap of credit past it.
 
 The local end-to-end run (`npm run local:e2e`) shows it: three stolen signer keys mint 400 000 kUSDT and sell them
 into the pool at once. The breaker refuses the whole sell, and the most it lets out is under 10 % of the pool's
@@ -155,8 +243,14 @@ KAS. Within seconds the monitor pauses the pool.
 | The guardian (the bridge's, held by the [monitor](/security/monitor/)) | `pause` | Swaps (`buy`, `sell`, `sell_all`) and new liquidity (`init`, `add`) stop |
 | The admin | `unpause` | They resume |
 
-`remove` stays open while paused, so liquidity providers can always withdraw. The monitor pauses the pool on any
-alarm, with the vaults and the minter.
+`remove` stays open while paused, so liquidity providers can always withdraw, at once. The breaker stands still while
+paused (no tick; a withdrawal claims no time), and the unpause starts its clock again. The monitor pauses the pool on
+any alarm, with the vaults and the minter. A paused pool takes no second pause: the guardian's key can't keep moving
+a paused pool from under a withdrawal or under the admin's unpause.
+
+Before its first deposit the pool takes no tick either. Nothing is in it yet, and a tick would only move it to a new
+outpoint, away from where the launch check looks for it and from under the admin's opening deposit, which may be
+signed offline. Until that deposit only the admin and the guardian can spend it.
 
 ## Liquidity shares
 
@@ -216,6 +310,24 @@ family in a transaction counts as the pool approving, and that includes a Positi
 Tests prove that a thief who owns a Position, or who holds the admin key, cannot move the reserve: the guard
 itself rejects the transaction.
 
+## Why every pool entry checks every input
+
+A Kaspa node checks no relative lock on an input whose coin is still in its mempool, and a block does. Before rc.22
+that let anyone place a pool transaction in ordinary nodes' mempools that no block would ever take, holding the pool
+coin there (see [Known limits](/security/known-limits/)). Since rc.22 every `Pool` entry, the admin's and the
+guardian's included, calls `require_settled_inputs`. A `Position`'s `transfer` does not, by design: it is signed by
+the position's owner, claims no age and never spends the pool UTXO, so it cannot hold the pool coin (`remove`, which
+burns a position, is a `Pool` entry and checks):
+
+| Input | Rule |
+|---|---|
+| The pool's own | Its sequence is exactly the `age_daa` the entry claims (0 for `init`, `collect`, `pause`, `unpause`, `set_keys`, and for `remove` while paused); an age above 0 only on a pool UTXO already in a block |
+| Every other | Sequence 0; a coin already in a block, or another output of the transaction that made the pool UTXO; a coin of the pool's or kUSDT's family, or a plain Schnorr P2PK coin |
+| All | At most 8 inputs |
+
+A script tells a coin in a block from one only in a node's mempool by its DAA score: the node gives the latter
+u64::MAX, which reads as -1. So any pool transaction a node accepts is one a block can take.
+
 ## Protocol fees and the admin
 
 | Entry | Who | Effect |
@@ -230,7 +342,7 @@ Before mainnet, the operator holds the admin key offline ([mainnet checklist](/s
 
 ## Tests
 
-23 tests run the pool in Kaspa's script engine (`bridge/kaspa/tests/pool.rs`). Each transaction spends the pool
+Tests run the pool in Kaspa's script engine (`bridge/kaspa/tests/pool.rs`). Each transaction spends the pool
 and its kUSDT reserve together, two covenant families, and runs input by input:
 
 | Area | What is shown |
@@ -242,7 +354,8 @@ and its kUSDT reserve together, two covenant families, and runs input by input:
 | Reserve guards | The reserve cannot ride along a Position transfer or an admin key change |
 | Large numbers | Exact 128-bit products with reserves whose product is far above 2⁶³ |
 | Liquidity | Liquidity comes in proportion and leaves with its share; only the Position's owner can burn it; Positions change hands with the owner's signature |
-| Circuit breaker | The net outflow is capped within a window; round trips leave the room; a buy gives room back and a buy cannot forge the count; a window reopens with the reserve of that moment; the clock cannot run ahead of the lock time or back; withdrawals shrink the cap |
+| Circuit breaker | The net outflow is capped at one cap per moment; round trips leave the room; a buy gives room back and a buy cannot forge the count; a full cap comes back after an idle window, half after half a window; the clock cannot run ahead of the pool UTXO's age and claiming less only costs room; a burst at one moment can't replay idle windows; the first sell ever has one cap whatever the chain's age; withdrawals shrink the cap |
+| The shortest claim and the tick | While more than half of the cap is in use every public entry claiming under 50 DAA is refused, and at 50 accepted; at or below half (and for a withdrawal while paused) a claim of nothing is accepted; a tick settles only the breaker, is refused with any kUSDT in its transaction, with a changed pool value or under 50 DAA, and is refused while paused (the breaker stands still); every accepted public spend above half is a tick of at least 50 DAA followed by its own effect, and below half sells always had at least half a cap (a search over about 140 000 spends and 7 000 states); the review's dust bot holds the slots only until half of the cap is back, through the real builders and the node's rules; the slot race of every bot strategy, with and without a keeper |
 | Pause and keys | Only the guardian pauses and only the admin resumes; withdrawals stay open while paused; the reserve cannot ride along a pause or a key change; the admin rotates the guardian |
 
 `tests/standard.rs` builds the pool's transactions with the real builders: a sell is about 108 000 transient mass,

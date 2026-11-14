@@ -10,7 +10,7 @@ directly from a chain or carries signatures that a contract checks.
 
 | From | To | What | How the receiver checks it |
 |---|---|---|---|
-| Vault | Each signer | `Deposit` events | Read from every one of the signer's own EVM RPCs, which must agree on every field; counted only once the block is finalized |
+| Vault | Each signer | `Deposit` events | Read from every one of the signer's own EVM RPCs, which must agree on every field, asked all at once at the deposit's own blocks for each mint and refund; counted only once the block is finalized |
 | Kaspa | Each signer | Burn outputs and BridgeMint state | Read from the signer's own Kaspa node; counted only 1 000 DAA below the virtual DAA score (300 on testnet), and deeper for larger burns |
 | Signer | Coordinator | Signatures (see below) | The coordinator only relays them; the contracts check them |
 | Coordinator | BridgeMint | Mint transactions | BridgeMint checks 3 signatures, the nonce, the limits and every output |
@@ -29,8 +29,8 @@ nodes.
 
 | Key | Held by | Signs | Checked by |
 |---|---|---|---|
-| Kaspa Schnorr key (×5) | Signers | Mint digest (`kUSDT/mint/v1`) | `BridgeMint.mint`: 3 distinct signers |
-| Kaspa Schnorr key (×5) | Signers | Govern digest (`kUSDT/govern/v1`) | `BridgeMint.govern`: 3 or 4 distinct signers |
+| Kaspa Schnorr key (×5) | Signers | Mint digest (`kUSDT/mint/v2`) | `BridgeMint.mint`: 3 distinct signers |
+| Kaspa Schnorr key (×5) | Signers | Govern digest (`kUSDT/govern/v2`; an unpause: `kUSDT/unpause/v2`) | `BridgeMint.govern`: 3 or 4 distinct signers |
 | EVM ECDSA key (×5) | Signers | EIP-712 `Release` | `KusdtVault.release`: 3 or more distinct current signers |
 | EVM ECDSA key (×5) | Signers | EIP-712 `Refund` | `KusdtVault.refund`: same rule |
 | Guardian Kaspa key | Monitor | The pause transactions | `BridgeMint.pause`, `Pool.pause` |

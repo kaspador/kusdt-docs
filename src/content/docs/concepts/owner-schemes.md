@@ -35,7 +35,9 @@ input runs its own script, and that script decides whether to accept.
 | The **KasPool reserve** | `0x04` | Owned by the pool's covenant ID, so only a transaction that includes the pool can move it |
 
 The vaults accept owner schemes `0x00` to `0x04` in deposits and reject any other byte. See
-[Kaspa recipients](/protocol/identifiers-and-units/#kaspa-recipients).
+[Kaspa recipients](/protocol/identifiers-and-units/#kaspa-recipients). The web app's Bridge form is narrower
+than the vault: it takes a Schnorr address (`0x00`) only, since that is the one owner the wallets here can send,
+sell and redeem from. A deposit to another scheme is made by calling the vault directly.
 
 ## A caution about covenant-ID owners
 

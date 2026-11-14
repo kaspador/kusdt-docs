@@ -1,0 +1,19 @@
+---
+// Starlight's page content, plus the column names a phone shows in a wide table.
+import Default from '@astrojs/starlight/components/MarkdownContent.astro';
+---
+
+<Default><slot /></Default>
+
+<script>
+	// On a phone a table of four or more columns shows each row as one block (src/styles/trestly.css):
+	// every value gets its column's name, and the table is marked to stack.
+	for (const table of document.querySelectorAll('.sl-markdown-content table')) {
+		const names = [...table.querySelectorAll('thead th')].map((th) => th.textContent?.trim() ?? '');
+		if (names.length < 4) continue;
+		for (const row of table.querySelectorAll('tbody tr')) {
+			[...row.children].forEach((cell, i) => cell.setAttribute('data-label', names[i] ?? ''));
+		}
+		table.classList.add('stacked');
+	}
+</script>

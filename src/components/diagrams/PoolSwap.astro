@@ -21,7 +21,7 @@ const buy = {
     { n: '#2', title: "Buyer's kUSDT state", detail: 'amount = buyer_state.amount', family: 'token' },
     { n: '#3', title: 'KAS change', detail: 'plain output', family: 'kas' },
   ] as Row[],
-  check: ['(X + 0.997·kas_in) · Y′', '≥ X · Y'],
+  check: ['(X + 0.995·kas_in) · Y′', '≥ X · Y'],
 };
 
 const sell = {
@@ -37,7 +37,7 @@ const sell = {
     { n: '#2', title: "Seller's kUSDT change", detail: 'amount = change_state.amount', family: 'token' },
     { n: '#3', title: 'KAS to the seller', detail: 'plain output, less the network fee', family: 'kas' },
   ] as Row[],
-  check: ['(Y + 0.997·in) · X′', '≥ Y · X'],
+  check: ['(Y + 0.995·in) · X′', '≥ Y · X'],
 };
 
 const d = kind === 'buy' ? buy : sell;

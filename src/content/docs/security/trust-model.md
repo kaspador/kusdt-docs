@@ -43,9 +43,9 @@ between Kaspa and the EVM chains is a **federation**: it relies on a group of si
 - **Signers are independent.** Before mainnet, the five must be run by five independent operators, each with
   their own nodes ([mainnet checklist](/security/mainnet-checklist/)). Each needs a pruned Kaspa node with
   `--utxoindex` and at least 2 independent EVM RPC providers per chain, different from the other signers'. See
-  [What a signer needs](/developers/operations/#what-a-signer-needs). Five operators are lined up for mainnet. Today all 5 testnet signers run on one machine.
+  [What a signer needs](/developers/operations/#what-a-signer-needs). Five operators are lined up for mainnet. On the public testnet (4 to 14 November 2026) all 5 signers ran on one machine.
 - **Forged kUSDT looks real to the pool.** With 3 stolen signer keys it is the same token. The pool's circuit
-  breaker caps a dump at about 10 % of its KAS per hour, until the guardian pauses it. See
+  breaker caps a dump at about 10 % of its KAS per hour (up to about twice that at once right after buys), until the guardian pauses it. See
   [KasPool](/contracts/kaspool/#the-circuit-breaker).
 
 ## Why a federation

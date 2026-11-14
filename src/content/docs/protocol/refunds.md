@@ -47,17 +47,19 @@ release fee is charged.
 
 ## What only the signers enforce
 
-The vault cannot see Kaspa, so three rules rest on the signers:
+The vault cannot see Kaspa, so four rules rest on the signers:
 
 - **Refund only what Kaspa skipped.** A nonce must never be both minted and refunded (INV-2). Each signer follows
-  the minter itself, from its own Kaspa node (configured with `initialMinter` and `scanFrom`), and signs a refund only when it sees the `skip_nonce` as final and the nonce never minted. If the chain drops blocks it already read, the signer undoes the minter moves those blocks accepted, so a skip the new chain replaced with a mint no longer stands. It also signs no refund unless the minter it follows is unspent on its own node and its view is at most 100 DAA behind: that output exists only if every move leading to it was accepted, so it proves the whole history, the skip included. A minter that moved a moment ago is refused too, and the coordinator asks again. The other way round, it signs a mint only while the vault's `depositMinted(nonce)` is non-zero on every RPC, so a refunded nonce is never minted, even after a deep Kaspa reorg.
+  the minter itself, from its own Kaspa node (configured with `initialMinter` and `scanFrom`), and signs a refund only when it sees the `skip_nonce` as final and the nonce never minted. If the chain drops blocks it already read, the signer undoes the minter moves those blocks accepted, so a skip the new chain replaced with a mint no longer stands. It also signs no refund unless the minter it follows is unspent on its own node and its view is at most 100 DAA behind: that output exists only if every move leading to it was accepted, so it proves the whole history, the skip included. A minter that moved a moment ago is refused too, and the coordinator asks again. The other way round, it signs a mint only while the vault's `depositMinted(nonce)` is non-zero on every RPC, and never for a nonce its own follower shows skipped, so no mint is signed after its refund.
+- **Wait for the skip to be final.** A mint signed before the skip does not expire. If a Kaspa reorg undid the skip, the nonce would be free again and that mint could land after the refund was paid. No check can take a signature back, so this rests on depth: a signer signs a refund only once the skip is as deep as the deepest finality tier, whatever the refund's size (36 000 DAA, about an hour, on mainnet). Until round 14 a small refund waited only its own tier when the signer had no record of signing a mint for that deposit, and a signer rolled back from a snapshot, or started on new volumes with its key, has no such record even when it signed one. A reorg deeper than that is the one case where a deposit could be both refunded and minted; every release rests on the same assumption.
 - **Refund the depositor, exactly.** The recipient must be the `sender` of the original `Deposit` event, and the
   amount exactly its `minted`.
 - **Never refund a blocked address.** A signer refuses a refund to an address the token blocks, on every one of
   its RPCs. The USDT would be frozen there for good, since USDT's blacklist stops only senders.
 
 The monitor checks the same rules from its own nodes: `refund-of-minted-deposit` and `refund-without-skip` are
-alarms (see [The monitor](/security/monitor/)).
+alarms, and so is `mint-of-refunded-deposit`, a mint that names a deposit a vault has refunded (see
+[The monitor](/security/monitor/)).
 
 ## A blocked depositor
 

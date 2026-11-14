@@ -6,6 +6,12 @@ description: Where everything lives in the kUSDT repository.
 The repository has two top-level product folders, `bridge/` and `wallet/`, plus the specification, tools, vendored
 sources and these docs.
 
+The code that holds and moves users' money is public:
+[github.com/kaspador/kusdt-open](https://github.com/kaspador/kusdt-open) has the vault contracts, the Kaspa covenants
+and their builders, the client packages, kUSDT Wallet and the specification, as a snapshot of each release (now
+`mainnet-v0.9.8-rc.25`), with the same checks that rebuild the covenants and the WebAssembly core byte for byte. The
+rest (the services, the deployment packages and the runbooks) is shared with the operators and auditors.
+
 | Path | What |
 |---|---|
 | `SPEC.md` | The protocol specification. Every part follows it |
@@ -44,7 +50,8 @@ sources and these docs.
 
 The Kaspa crate pins the Argent compiler and runtime and rusty-kaspa at the revisions the KCC-20 reference pins,
 so the `KCC20` actor compiles to the bytes wallets recognise. The Rust toolchain is pinned to 1.94.1
-(`rust-toolchain.toml`, and the `rust:1.94.1` container).
+(`rust-toolchain.toml`, and the `rust:1.94.1` container, named by its digest in `tools/rust.sh` and
+`tools/docker/rust-wasm.Dockerfile`).
 
 `tools/vendor.sh` fetches:
 

@@ -51,9 +51,10 @@ backing and cannot renounce ownership. See [Governance](/security/governance/).
 ## Off-chain
 
 The signer and the coordinator are written (`bridge/services`) and have run together with the monitor on one machine
-(see [Run the simnet flow](/developers/simnet/#the-whole-bridge-on-one-machine)). For the public testnet they run on
-one test host, in isolated containers; only the coordinator's API and the monitor's read-only status are reachable
-from outside (see [Operations](/developers/operations/#the-testnet-deployment)).
+(see [Run the simnet flow](/developers/simnet/#the-whole-bridge-on-one-machine)). For the public testnet (4 to 14
+November 2026) they ran on one test host, in isolated containers; only the coordinator's API and the monitor's
+read-only status were reachable from outside (see [Operations](/developers/operations/#the-testnet-deployment)). On
+mainnet each signer runs on its own operator's machine.
 
 ### Signers
 
@@ -84,12 +85,12 @@ See [The monitor](/security/monitor/) and [Guardian and pause](/security/guardia
 
 ### Public API
 
-The coordinator serves the public [API](/protocol/coordinator-api/), including `GET /reserves` for INV-1. The web app's Reserves page shows proof of reserves live on the testnet; on mainnet it is to be published live at launch. The URL is **to be published**.
+The coordinator serves the public [API](/protocol/coordinator-api/), including `GET /reserves` for INV-1. The web app's Reserves page showed proof of reserves live on the public testnet (4 to 14 November 2026); on mainnet it is to be published live at launch. The URL is **to be published** on the [Status](/overview/status/) page once the launch is verified.
 
 ## On the user's device
 
 ### Web app and wallet extension
 
-The [web app](/getting-started/web-app/) (bridge, swap, pool, reserves) and the wallet extension, both built and not on mainnet (on testnet the web app is public at trestly.io and a wallet build can be downloaded), hold the user's keys and sign
+The [web app](/getting-started/web-app/) (bridge, swap, pool, reserves) and the wallet extension, both built (the web app is served at trestly.io for the mainnet launch, 14 November 2026; during the public testnet, 4 to 14 November 2026, it ran on testnet and a testnet wallet build could be downloaded), hold the user's keys and sign
 locally. Both pin the deployment, meaning the kUSDT covenant ID and the vault addresses, so they cannot be pointed
 at a look-alike. See [The wallet](/getting-started/wallet/).

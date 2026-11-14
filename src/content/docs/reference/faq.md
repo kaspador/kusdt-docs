@@ -17,20 +17,26 @@ the issuers of those tokens. kUSDT's own rules are the covenants and contracts d
 
 ### Is it live?
 
-On testnet only: TN10, Sepolia and BSC testnet, since 4 November 2026. The public testnet is at
-[testnet.trestly.io](https://testnet.trestly.io), with test coins only, and the testnet wallet can be
-downloaded. Nothing is on mainnet. See [Test on the public testnet](/getting-started/public-testnet/) and
-[Status](/overview/status/).
+kUSDT launches on mainnet on 14 November 2026: Kaspa, Ethereum and BNB Chain. Until the launch is verified,
+[trestly.io](https://trestly.io) shows a "Launching today" page; the web app opens there once it is, and the
+addresses are published on [Status](/overview/status/#addresses). The public testnet ran from 4 to 14 November 2026
+and has ended ([The public testnet](/getting-started/public-testnet/)).
 
-### Who runs the testnet?
+### Where are the mainnet addresses?
 
-One public test host runs every service, each in its own isolated container: a TN10 node, the five signers, the
-coordinator, the monitor and the web app. That is a testnet convenience. On mainnet each signer is a different
-operator on its own machine. See [Operations](/developers/operations/#the-testnet-deployment).
+On [Status](/overview/status/#addresses), once the launch is verified. Until then no mainnet address is published.
+Trust no vault address, covenant ID or API that claims to be kUSDT's and is not listed there.
+
+### Who runs the bridge?
+
+Five independent operators run the signers, each on its own machine; any 3 approve a mint or a payout. Two monitors
+watch the bridge and can pause it. Each vault is owned by an AccessManager under a 2-of-3 Safe. See the
+[trust model](/security/trust-model/) and [Governance](/security/governance/).
 
 ### Has it been audited?
 
-No. See [Audit status](/security/audit-status/).
+No. No independent audit has been done, and the legal review is still open. Internal attack rounds and outside
+reviews have taken place, but none of them is an audit. See [Audit status](/security/audit-status/).
 
 ### Does kUSDT use Igra or Kasplex?
 
@@ -45,8 +51,10 @@ with KAS in KasPool ([Swap](/getting-started/swap/)).
 
 ### What does bridging cost?
 
-0.20 % each way. The minimum is 0.50 USDT per deposit, and 5 USDT (Ethereum) or 0.50 USDT (BNB Chain) per
-release on mainnet; on the testnet both chains' minimum release fee is 0.50 USDT. You also pay gas on the EVM
+0.50 % each way. The minimum is 0.50 USDT per deposit, and 5 USDT (Ethereum) or 0.50 USDT (BNB Chain) per
+release. A deposit pays more on a busy day: the deposit fee rises with the deposits made on that chain in the last 24 hours,
+up to 2.50 %, and the web app and the wallet send nothing that would mint less than they showed you, within a
+quarter of a percent. Bridging back always pays the flat fee. You also pay gas on the EVM
 chain and a network fee in KAS on Kaspa. See [Fees](/protocol/fees/).
 
 ### Why does my kUSDT UTXO hold KAS?
@@ -83,9 +91,14 @@ If such a burn lands anyway, it is held and paid if Tether unblocks the address.
 
 ### Which wallets support kUSDT?
 
-Any wallet with KCC-20 support can read kUSDT states, because kUSDT uses the standard template. The kUSDT wallet
-extension has a testnet build to download ([Install](/getting-started/wallet/#install)) and is not in any store
-yet. Always check the covenant ID.
+Any wallet with KCC-20 support can read kUSDT states, because kUSDT uses the standard template. The mainnet
+version of the kUSDT Wallet extension is published right after the launch, and [The wallet](/getting-started/wallet/#install)
+will link it then. Always check the covenant ID.
+
+On the web app, kUSDT Wallet is the only Kaspa wallet. KasWare and Kastle are not supported: they signed transactions the
+page built and showed neither the amounts nor the network fee in their own windows.
+
+For the Ethereum and BNB Chain side, the web app works with MetaMask and with WalletConnect.
 
 ## Security
 
@@ -96,8 +109,8 @@ Five independent signers; any 3 approve a mint or a payout. Both sides limit how
 
 ### What happens if 3 signers are compromised?
 
-They could mint unbacked kUSDT up to the Kaspa allowance (500 000 USDT at once) and pay out from each vault up to
-its release allowance (250 000 USDT at once), each refilling over 24 hours. They cannot undo the guardian's pause:
+They could mint unbacked kUSDT up to the Kaspa allowance (100 000 USDT at once at the mainnet launch) and pay out
+from each vault up to its release allowance (50 000 USDT at once at the launch), each refilling over 24 hours. They cannot undo the guardian's pause:
 unpausing the minter takes 4 signers, and unpausing a vault takes the owner. See the
 [threat model](/security/threat-model/).
 

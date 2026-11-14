@@ -9,12 +9,19 @@ import BridgeIn from '../../../components/diagrams/BridgeIn.astro';
 
 ```solidity
 function deposit(uint256 units, uint8 ownerScheme, bytes32 owner) returns (uint64 nonce)
+function depositAtLeast(uint256 units, uint8 ownerScheme, bytes32 owner, uint256 minMinted) returns (uint64 nonce)
 ```
+
+The two are the same deposit. `depositAtLeast` also reverts, taking nothing, unless at least `minMinted` is minted:
+the fee can rise with deposits that land just before, and this bounds what the depositor accepts. The web app and
+the wallet always use it.
 
 The vault:
 
 1. requires `ownerScheme ≤ 4` and `owner ≠ 0`, and `minDeposit ≤ units ≤ maxDeposit`;
-2. computes `fee = max(minDepositFee, ceil(units × feeBps / 10⁴))` and requires `minted = units − fee > 0`;
+2. computes the fee and requires `minted = units − fee > 0` (and `minted ≥ minMinted`). The fee is
+   `max(minDepositFee, ceil(units × feeBps / 10⁴))` while the whole deposit fits under half of the vault's deposit meter, and more for the part above it
+   (the meter counts the deposits of the last 24 hours), up to `surgeFeeBps` (see [the rising deposit fee](/protocol/fees/#the-rising-deposit-fee));
 3. pulls `units × scale` of the token and requires that its balance grew by exactly that amount (this refuses
    tokens that charge a transfer fee);
 4. assigns the next nonce: deposits are numbered 0, 1, 2, … per vault;
@@ -41,15 +48,16 @@ The covenant checks, on-chain, whoever builds the transaction:
 1. Minting is not paused. Every recipient has `amount > 0`, a valid owner scheme, borrow scheme `0x00`, borrow
    guard of 32 zero bytes, and extension commitment of 32 zero bytes.
 2. `first_nonce` equals the chain's next nonce. The nonce advances by the number of recipients.
-3. `tx.daa ≥ now_daa ≥ last_daa`. The transaction's lock time is at least `now_daa`, and consensus accepts it
-   only once the DAG has reached that DAA score. This proves `now_daa` without trusting the submitter.
+3. `age_daa` is at most the age of the minter UTXO. The input's sequence is a relative lock: consensus accepts the
+   transaction only once the UTXO is that old, which proves the age without trusting the submitter. The spend starts
+   a new UTXO at age zero, so a stretch of time can refill the allowance only once.
 4. The total is at most the refilled allowance and at most `remaining` (the hard cap).
 5. Three signatures by distinct signers, in increasing signer order, over the **mint digest**.
 6. The successor BridgeMint carries exactly the updated state and the same KAS value, and each minted output is
    a standard `KCC20` state equal to its recipient.
 
 ```text
-mint digest = BLAKE3( "kUSDT/mint/v1" ‖ covenant_id[32] ‖ chain[1] ‖ first_nonce[8]
+mint digest = BLAKE3( "kUSDT/mint/v2" ‖ covenant_id[32] ‖ chain[1] ‖ first_nonce[8] ‖ age_daa[8]
                       ‖ for each recipient: owner_scheme[1] ‖ owner[32] ‖ amount[8] )
 ```
 

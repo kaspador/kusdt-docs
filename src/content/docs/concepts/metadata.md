@@ -35,7 +35,7 @@ The specification fixes these fields: `{"name":"kUSDT","symbol":"kUSDT","decimal
 }
 ```
 
-On testnet the description reads "USDT from Ethereum and BNB Chain on Kaspa L1 (testnet)". The mainnet deploy plan uses "USDT from Ethereum and BNB Chain on Kaspa L1"; the mainnet metadata will be published with its deployment.
+On mainnet the deploy plan uses the description "USDT from Ethereum and BNB Chain on Kaspa L1". The mainnet metadata is published with the deployment, whose IDs are on [Status](/overview/status/#addresses) once the launch is verified. The public testnet, which ended on 14 November 2026, used "USDT from Ethereum and BNB Chain on Kaspa L1 (testnet)".
 
 ## Verifying it yourself
 
