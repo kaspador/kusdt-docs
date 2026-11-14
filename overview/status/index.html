@@ -260,8 +260,9 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 <p>No mainnet address is published yet. The kUSDT covenant ID, the KasPool covenant ID, the two vault addresses and the
 coordinator API will be listed here once the launch is verified. Until then, trust no address, covenant ID or API
 that claims to be kUSDT’s.</p>
-<p>The two mainnet monitors are private: they publish no status, and the pause they set on any alarm shows on chain
-(<a href="/kusdt-docs/integrate/developer-guide/#is-the-bridge-paused">Is the bridge paused?</a>).</p>
+<p>The two mainnet monitors run on closed machines (nothing open but SSH). Each publishes only its read-only status,
+through a Cloudflare tunnel; both addresses will be listed here once the launch is verified. The pause they set on any
+alarm also shows on chain (<a href="/kusdt-docs/integrate/developer-guide/#is-the-bridge-paused">Is the bridge paused?</a>).</p>
 <p>The public testnet has its own addresses, for test coins only: see
 <a href="/kusdt-docs/getting-started/public-testnet/#networks-and-addresses">Test on the public testnet</a>. They are not mainnet’s.</p>
 <p>The USDT contracts that the mainnet vaults hold are fixed by the specification:</p>

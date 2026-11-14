@@ -152,8 +152,9 @@ a kUSDT burn on Kaspa is paid out by a vault. See <a href="/kusdt-docs/protocol/
 <li><strong>KasPool</strong> is the KAS⇄kUSDT pool on Kaspa L1. See <a href="/kusdt-docs/contracts/kaspool/">KasPool</a>.</li>
 <li><strong>The coordinator’s API</strong> is a public, read-mostly JSON API. Nothing in it moves funds. See
 <a href="/kusdt-docs/protocol/coordinator-api/">Coordinator API</a>.</li>
-<li><strong>The monitor</strong> watches every chain and pauses the bridge on any alarm. The mainnet monitors are private: to know
-whether the bridge is paused, read each vault’s <code dir="auto">paused()</code> and the minter’s and the pool’s state on Kaspa. See <a href="/kusdt-docs/security/monitor/">The monitor</a>.</li>
+<li><strong>The monitor</strong> watches every chain and pauses the bridge on any alarm. The two mainnet monitors run on closed machines
+and publish only their read-only status, through Cloudflare tunnels. To know whether the bridge is paused, read their
+signal, and each vault’s <code dir="auto">paused()</code> and the minter’s and the pool’s state on Kaspa. See <a href="/kusdt-docs/security/monitor/">The monitor</a>.</li>
 <li><strong>kUSDT Wallet</strong> is the browser extension. It injects <code dir="auto">window.kusdt</code> for sites. See
 <a href="/kusdt-docs/getting-started/wallet/">The wallet</a>.</li>
 </ul>
@@ -180,7 +181,7 @@ whether the bridge is paused, read each vault’s <code dir="auto">paused()</cod
 </tr>
 <tr>
 <td>Monitor status</td>
-<td>None public on mainnet: the mainnet monitors are private. Read the vaults’ <code dir="auto">paused()</code> and the minter’s and the pool’s state instead. The public testnet’s is at <code dir="auto">https://testnet.trestly.io/monitor/health</code></td>
+<td>Two, read-only, at the addresses on <a href="/kusdt-docs/overview/status/#addresses">Status: Addresses</a> once the launch is verified (their machines are closed; the status goes out through Cloudflare tunnels). Read both, and the vaults’ <code dir="auto">paused()</code> and the minter’s and the pool’s state. The public testnet’s is at <code dir="auto">https://testnet.trestly.io/monitor/health</code></td>
 </tr>
 <tr>
 <td>Covenant IDs, the pool, the vaults</td>
