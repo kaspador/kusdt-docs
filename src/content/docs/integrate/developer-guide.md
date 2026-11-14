@@ -41,7 +41,8 @@ parameters are on [Websites and apps](/integrate/websites/#linking-to-the-web-ap
 
 ## Is the bridge paused?
 
-The mainnet monitors are private: there is no public mainnet monitor status to read. Read the chain instead:
+Read the chain, and both monitors' signal (`GET /api/v1/signal` at each monitor's address on [Status: Addresses](/overview/status/#addresses); the mainnet
+monitors' servers are closed and publish only that read-only status, through Cloudflare tunnels):
 
 - each vault's `paused()`, on Ethereum and on BNB Chain;
 - the minter's `paused` flag and the pool's `paused` flag, in their states on Kaspa;

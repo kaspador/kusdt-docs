@@ -86,8 +86,9 @@ No mainnet address is published yet. The kUSDT covenant ID, the KasPool covenant
 coordinator API will be listed here once the launch is verified. Until then, trust no address, covenant ID or API
 that claims to be kUSDT's.
 
-The two mainnet monitors are private: they publish no status, and the pause they set on any alarm shows on chain
-([Is the bridge paused?](/integrate/developer-guide/#is-the-bridge-paused)).
+The two mainnet monitors run on closed machines (nothing open but SSH). Each publishes only its read-only status,
+through a Cloudflare tunnel; both addresses will be listed here once the launch is verified. The pause they set on any
+alarm also shows on chain ([Is the bridge paused?](/integrate/developer-guide/#is-the-bridge-paused)).
 
 The public testnet has its own addresses, for test coins only: see
 [Test on the public testnet](/getting-started/public-testnet/#networks-and-addresses). They are not mainnet's.

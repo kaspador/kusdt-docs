@@ -76,7 +76,8 @@ The same values are in the repository, in `deployments/testnet.json`.
 | The monitor's health | `https://testnet.trestly.io/monitor/health` |
 | The monitor's status (read-only) | `https://testnet.trestly.io/monitor/api/v1/monitor` |
 
-The mainnet monitors are private: mainnet has no public monitor status.
+The mainnet monitors run on closed machines: each publishes only its read-only status, through a Cloudflare tunnel,
+at the addresses on [Status: Addresses](/overview/status/#addresses) once the launch is verified.
 
 ## Test your integration here
 

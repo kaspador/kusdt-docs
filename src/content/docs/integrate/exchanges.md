@@ -64,13 +64,15 @@ Before you take kUSDT, and while you hold it:
 
 | Check | Where | Healthy when |
 |---|---|---|
+| Each monitor's signal | `GET /api/v1/signal` at each monitor's address on [Status: Addresses](/overview/status/#addresses) | `ok` is true, on both |
 | The coordinator's reserves | `GET /reserves` on the API | `healthy` is true: backing ≥ minted − released (INV-1) |
 | Proof of reserves, read in your browser | The web app's Reserves page (`https://trestly.io/reserves`, once the launch is verified) | It reads the vaults and the minter itself, next to `GET /reserves` |
 | On-chain flags | The minter's `paused` flag, each vault's `paused()`, the pool's `paused` ([how to read them](/integrate/developer-guide/#is-the-bridge-paused)) | All false |
 | The same flags, from the API | `GET /status` (each vault's `paused`, the minter's state) and `GET /pool` (`paused`) | All false, and the same as on chain |
 
-The mainnet monitors are private: their alarms go to their operators, and what you see is the pause they set. Treat
-no answer, or an answer you cannot read, as paused. The answers and their fields:
+Read the signal from both monitors (`GET /api/v1/signal` at each one's address on [Status: Addresses](/overview/status/#addresses)): their machines are
+closed and publish only their read-only status, through Cloudflare tunnels. Treat no answer, or an answer you cannot
+read, as paused. The answers and their fields:
 [Reading the bridge's state](/integrate/bridge-state/). On the public testnet the monitor's signal is public too
 (`https://testnet.trestly.io/monitor/api/v1/signal`), to test against.
 

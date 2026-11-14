@@ -11,14 +11,14 @@ once the launch is verified. Nothing has been independently audited, and a legal
 [testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
 
-On mainnet one public, read-only service describes the bridge: the coordinator's API. The two mainnet monitors are
-private: they have no public address, and their alarms go to their operators, who act on them. On the public testnet
-the monitor's status is public too, so you can test how your code reacts to it. Neither service can move funds.
+Two public, read-only services describe the bridge: the coordinator's API, and the two monitors' status. The mainnet
+monitors run on closed machines (nothing open but SSH) and publish only their read-only status, through Cloudflare
+tunnels. Neither service can move funds.
 
 | Service | Mainnet | Public testnet | Reference |
 |---|---|---|---|
 | The coordinator's API | The address on [Status: Addresses](/overview/status/#addresses), once the launch is verified | `https://testnet.trestly.io/api/v1` | [Coordinator API](/protocol/coordinator-api/) |
-| The monitor's status | Private | `https://testnet.trestly.io/monitor` | [The monitor](/security/monitor/) |
+| The monitors' status | Two, at the addresses on [Status: Addresses](/overview/status/#addresses), once the launch is verified | `https://testnet.trestly.io/monitor` | [The monitor](/security/monitor/) |
 
 The API is answered from what the coordinator writes. A monitor reads every chain from its own nodes and takes
 nothing from the coordinator, so the two are separate views.
@@ -30,7 +30,8 @@ On mainnet, read the pause state from the chain, where nobody can fake it, and c
 - each vault's `paused()`, on Ethereum and on BNB Chain;
 - the minter's `paused` flag and the pool's `paused` flag, in their states on Kaspa;
 - the API's `GET /status` (each vault's `paused`, and the minter's state), `GET /pool` (`paused`) and `GET /reserves`
-  (`healthy` is false while the backing does not cover what is owed).
+  (`healthy` is false while the backing does not cover what is owed);
+- each monitor's signal (below), from both monitors.
 
 **While any of them is paused, or `/reserves` is not healthy, stop accepting new kUSDT**: no new deposits credited,
 no kUSDT taken as payment. kUSDT transfers cannot be paused, and forged kUSDT looks like the real token, so the pause
@@ -39,11 +40,11 @@ you cannot read, as paused. What to do meanwhile:
 [When the bridge is paused](/integrate/exchanges/#when-the-bridge-is-paused). How to read each flag:
 [Is the bridge paused?](/integrate/developer-guide/#is-the-bridge-paused).
 
-## The monitor's signal (public testnet)
+## The monitors' signal
 
 A monitor answers `GET /api/v1/signal` with everything above in one place
-([The integrators' signal](/security/monitor/#the-integrators-signal)). On mainnet it is private; on the public
-testnet it is at `https://testnet.trestly.io/monitor/api/v1/signal`:
+([The integrators' signal](/security/monitor/#the-integrators-signal)). On mainnet each monitor answers it at its
+address on [Status: Addresses](/overview/status/#addresses): read both. On the public testnet it is at `https://testnet.trestly.io/monitor/api/v1/signal`:
 
 ```json
 {
@@ -61,17 +62,17 @@ while the minter, the pool or a vault is paused, when the last check is over 5 m
 Kaspa view lags. `reasons` says which. `backing.healthy` is never true while `owed` exceeds `total`;
 `unverifiedMinted` is the part of `owed` the monitor has not judged against a deposit yet.
 
-On the testnet, treat `ok: false`, no answer, or an answer you cannot read as the stop above, so that your code is
-ready for a pause before mainnet.
+Treat `ok: false`, no answer, or an answer you cannot read as the stop above. On the testnet you can watch your code
+react to it before mainnet.
 
-## The testnet monitor's other answers
+## The monitors' other answers
 
 | Call | Means |
 |---|---|
 | `GET /health` | 200 while the monitor is healthy (no alarm open, the backing read covers what is owed, and no kUSDT minted for a deposit it has not seen yet), its last check is under 5 minutes old and its status file under a minute; otherwise 503. Point uptime checks here, and alert when it does not answer at all |
 | `GET /api/v1/monitor` | The last check in full: minted, released, owed and backing per chain, the alarms, the warnings, the pauses and the pool |
 
-The paths are relative to `https://testnet.trestly.io/monitor`. An answer can be a few seconds old: the status
+The paths are relative to each monitor's address on [Status: Addresses](/overview/status/#addresses) (on the public testnet, `https://testnet.trestly.io/monitor`). An answer can be a few seconds old: the status
 process reads the monitor's files at most once a second ([Operating it](/security/monitor/#operating-it)).
 
 ## The coordinator's answers

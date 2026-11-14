@@ -179,8 +179,8 @@ serves its tiers in `GET /status` (`kaspa.finalityDaa`, `kaspa.finalityTiers`). 
 
 ## While the bridge is paused
 
-kUSDT transfers never stop: the token has no pause. The vaults, the minter and the pool can be paused. The mainnet
-monitors are private, so read the chain: each vault's `paused()` on Ethereum and BNB Chain, and the minter's and the
+kUSDT transfers never stop: the token has no pause. The vaults, the minter and the pool can be paused. Read the chain
+(and the monitors' signal, [Reading the bridge's state](/integrate/bridge-state/)): each vault's `paused()` on Ethereum and BNB Chain, and the minter's and the
 pool's `paused` on Kaspa (`GET /status` and `GET /pool` report them too). While any is paused, stop crediting new
 kUSDT ([When the bridge is paused](/integrate/exchanges/#when-the-bridge-is-paused)).
 
