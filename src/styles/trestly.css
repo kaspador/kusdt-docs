@@ -165,7 +165,43 @@ h1#_top { font-weight: 650; letter-spacing: -0.012em; }
 }
 .sl-markdown-content td.num, .sl-markdown-content th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .sl-markdown-content tr:nth-child(even) td { background: transparent; }
-.sl-markdown-content table code { white-space: nowrap; }
+
+/* Phones: no page is wider than the screen. IDs, hashes and addresses in code break anywhere,
+   long words hyphenate, and a table that still cannot fit scrolls inside itself. */
+.sl-markdown-content code:not(pre code) { overflow-wrap: anywhere; }
+@media (max-width: 50rem) {
+  .sl-markdown-content table { display: block; overflow-x: auto; }
+  .sl-markdown-content :is(th, td) { padding: 0.45rem 0.4rem; hyphens: auto; }
+  .sl-markdown-content :is(th, td):first-child { padding-inline-start: 0; }
+  .sl-markdown-content :is(th, td):last-child { padding-inline-end: 0; }
+}
+/* On a phone a table of four or more columns shows each row as one block, every value under its
+   column's name (src/components/MarkdownContent.astro marks it `stacked` and names the cells). The header
+   row stays for screen readers. Without the script the table keeps its columns and scrolls inside itself. */
+@media (max-width: 30rem) {
+  .sl-markdown-content table.stacked { display: block; overflow: visible; }
+  .sl-markdown-content table.stacked thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .sl-markdown-content table.stacked :is(tbody, tr, td) { display: block; margin: 0; }
+  .sl-markdown-content table.stacked tr {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--sl-color-hairline-light);
+  }
+  .sl-markdown-content table.stacked td {
+    border: 0;
+    padding: 0.15rem 0;
+    text-align: start;
+    overflow-wrap: anywhere;
+  }
+  .sl-markdown-content table.stacked td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+    font-weight: 600;
+  }
+}
 
 /* Diagrams */
 .diagram {
@@ -230,6 +266,17 @@ h1#_top { font-weight: 650; letter-spacing: -0.012em; }
 .hero h1 { font-weight: 650; letter-spacing: -0.012em; line-height: 1.1; }
 .hero .tagline { color: var(--sl-color-gray-2); max-width: 34rem; }
 .hero > img, .hero .hero-html img { width: 100%; height: auto; max-width: 34rem; object-fit: contain; pointer-events: none; }
+/* The main page's live ribbon (src/components/Hero.astro), on a canvas larger than the picture so its glow fades
+   out before the canvas's edge. The light theme, and a browser without WebGL 2, keep the picture; in the dark
+   theme the picture waits a moment, so it does not flash before the ribbon opens. */
+main:has(.hero .ribbon) { overflow-x: clip; }
+.hero .stack { position: relative; z-index: 1; }
+.hero .ribbon { position: relative; width: 100%; max-width: 34rem; }
+.hero .ribbon canvas { position: absolute; inset: -12%; width: 124%; height: 124%; pointer-events: none; }
+.hero .ribbon:not(.live) canvas, :root[data-theme='light'] .hero .ribbon canvas { visibility: hidden; }
+.hero .ribbon.live img { visibility: hidden; }
+:root:not([data-theme='light']) .hero .ribbon:not(.live) img { animation: ribbon-picture 0.3s ease 0.6s both; }
+@keyframes ribbon-picture { from { opacity: 0; } }
 .sl-link-button { border-radius: 0.75rem; font-weight: 600; }
 .sl-link-button.primary { background: var(--sl-color-accent); color: #06211c; border-color: var(--sl-color-accent); }
 .sl-link-button.primary:hover { background: #6ffadc; border-color: #6ffadc; color: #06211c; }

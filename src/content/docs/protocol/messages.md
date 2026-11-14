@@ -11,7 +11,7 @@ digests are **8-byte little-endian** and must not be negative.
 ### Mint digest
 
 ```text
-BLAKE3( "kUSDT/mint/v1" ‖ covenant_id[32] ‖ chain[1] ‖ first_nonce[8]
+BLAKE3( "kUSDT/mint/v2" ‖ covenant_id[32] ‖ chain[1] ‖ first_nonce[8] ‖ age_daa[8]
         ‖ for each recipient (1 to 3): owner_scheme[1] ‖ owner[32] ‖ amount[8] )
 ```
 
@@ -21,16 +21,34 @@ Signed by 3 distinct signers. Signatures are 64-byte Schnorr signatures over the
 ### Govern digest
 
 ```text
-BLAKE3( "kUSDT/govern/v1" ‖ covenant_id[32] ‖ admin_nonce[8] ‖ action[1] ‖ params )
+BLAKE3( "kUSDT/govern/v2" ‖ covenant_id[32] ‖ nonce[8] ‖ age_daa[8] ‖ action[1] ‖ params )
 ```
+
+`nonce` is the minter's `admin_nonce`, or its `recovery_nonce` for a recovery proposal or veto. `age_daa` is the age of
+the minter UTXO the governance transaction claims, which refills the mint allowance: it is signed, so the transaction
+must claim exactly that age, and it is valid once the UTXO is that old. 0 is always valid and credits no refill.
+Integers are 8 bytes, little-endian. The string was `kUSDT/govern/v1` before the age was signed (rc.16): a signature
+over the old message never verifies under this one.
 
 | Action | Code | `params` | Length | Quorum |
 |---|---|---|---|---|
-| `unpause` | `0x01` | none | 0 | 4 |
+| `unpause` | `0x01` | none; signed over the unpause digest below, not the govern digest | 0 | 4 |
 | `set_limits` | `0x02` | `capacity[8] ‖ refill_per_daa[8]` | 16 | 4 |
 | `set_signers` | `0x03` | `signer_set[32] ‖ guardian[32]` | 64 | 4 |
 | `skip_nonce` | `0x04` | `chain[1] ‖ nonce[8]`; the nonce must be the chain's current one | 9 | 4 |
-| `set_value` | `0x05` | `value[8]`, the minter's own KAS deposit in sompi, above 0 | 8 | 3 |
+| `set_value` | `0x05` | `value[8]`, the minter's own KAS deposit in sompi, above 0 | 8 | 4 |
+
+### Unpause digest
+
+```text
+BLAKE3( "kUSDT/unpause/v2" ‖ covenant_id[32] ‖ admin_nonce[8] ‖ age_daa[8] ‖ outpoint_txid[32] ‖ outpoint_index[8] )
+```
+
+The outpoint is the transaction ID and output index of the paused minter UTXO the unpause spends, and `age_daa` is the
+age of that UTXO the unpause claims, signed as in the govern digest (integers as 8-byte little-endian; 104 bytes in
+all). An unpause is therefore good for that one coin: it cannot be signed before the pause
+exists, and any other spend of the paused minter (another governance action, a recovery proposal, a veto, a recovery
+carried out) makes a new coin and voids it.
 
 Each accepted action moves `admin_nonce` forward by one, so every governance message is single-use.
 
@@ -119,7 +137,7 @@ event Released(bytes32 indexed redeemId, address indexed recipient,
 event Refunded(uint64 indexed nonce, address indexed recipient, uint256 units);
 ```
 
-Administrative events: `FeesSet`, `DepositLimitsSet`, `ReleaseLimitsSet`, `PayoutDelaySet`, `ReleaseCancelled`, `RefundCancelled`, `SignersSet`, `GuardianSet`,
+Administrative events: `FeesSet`, `DepositSurgeSet`, `DepositLimitsSet`, `ReleaseLimitsSet`, `PayoutDelaySet`, `ReleaseCancelled`, `RefundCancelled`, `ReleaseReinstated`, `RefundReinstated`, `SignersSet`, `GuardianSet`,
 `FeesWithdrawn`, and OpenZeppelin's `Paused`, `Unpaused`, `OwnershipTransferStarted` and
 `OwnershipTransferred`.
 
@@ -127,8 +145,9 @@ Administrative events: `FeesSet`, `DepositLimitsSet`, `ReleaseLimitsSet`, `Payou
 
 | String | Used in |
 |---|---|
-| `kUSDT/mint/v1` | Mint digest |
-| `kUSDT/govern/v1` | Govern digest |
+| `kUSDT/mint/v2` | Mint digest |
+| `kUSDT/govern/v2` | Govern digest |
+| `kUSDT/unpause/v2` | Unpause digest |
 | `kUSDT/redeem/v1` | Burn script `R` |
 | `kusdt/redeem/v1` | EVM redeem ID |
 | `KUSDT` | Redemption payload magic |

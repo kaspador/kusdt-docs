@@ -3,11 +3,16 @@ title: Status
 description: What exists today, what is tested, and what is not built yet.
 ---
 
-As of 7 November 2026. The specification is **v1, for testnet**. kUSDT is deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at [testnet.trestly.io](https://testnet.trestly.io), with test coins only. The latest testnet release is `v0.9.12`, with wallet 0.9.8. The mainnet candidate is `mainnet-v0.9.8-rc.8`, a pre-release and not audited. The public testnet's services run commit `503a292`, with the third and fourth reviews' fixes. Its vaults predate the [payout wait](/protocol/redemptions-and-releases/#the-wait), which needs a new testnet deployment, so payouts there don't wait yet. Nothing is on mainnet. To try it, see [Test on the public testnet](/getting-started/public-testnet/).
+As of 14 November 2026. kUSDT **launches on mainnet today** (Kaspa, Ethereum and BNB Chain), from the release
+`mainnet-v0.9.8-rc.25`. Until the launch is verified, [trestly.io](https://trestly.io) shows a "Launching today"
+page; the web app (Bridge, Swap, Pool, Reserves) opens there once the launch is verified. The mainnet addresses are
+published [below](#addresses) at the same time. The public testnet ran from 4 to 14 November 2026 and has ended
+([The public testnet](/getting-started/public-testnet/)).
 
 :::danger[Not audited]
-No external audit has taken place. Mainnet requires audits and the other steps in the
-[mainnet checklist](/security/mainnet-checklist/).
+No independent audit has been done, and the legal review is still open. Internal attack rounds and outside
+reviews have taken place ([Audit status](/security/audit-status/)), but none of them is an audit. The open items
+are on the [mainnet checklist](/security/mainnet-checklist/). Bridge only what you can afford to lose.
 :::
 
 ## Components
@@ -15,28 +20,28 @@ No external audit has taken place. Mainnet requires audits and the other steps i
 | Component | Runs on | Status | Evidence |
 |---|---|---|---|
 | Protocol specification | (document) | v1 | `SPEC.md`, the source of truth for these docs |
-| BridgeMint covenant | Kaspa L1 | Written | 22 script-engine tests, attacks included; simnet run |
+| BridgeMint covenant | Kaspa L1 | Written | Script-engine tests, attacks included (175 Rust tests in all, with the pool's); simnet run |
 | kUSDT token family (KCC20, TokenSeed, BridgeMint) | Kaspa L1 | Written | KCC20 template matches the standard byte for byte (test) |
-| KasPool covenants (Pool, Position) | Kaspa L1 | Written, with the circuit breaker and the pause | 23 script-engine tests; simnet run; the forged-kUSDT dump capped in `local:e2e` |
-| KusdtVault | Ethereum, BNB Chain | Written | 102 Hardhat tests; reviewed line by line against the specification |
+| KasPool covenants (Pool, Position) | Kaspa L1 | Written, with the circuit breaker and the pause | Script-engine tests; simnet run; the forged-kUSDT dump capped in `local:e2e` |
+| KusdtVault | Ethereum, BNB Chain | Written | 209 Hardhat tests; reviewed line by line against the specification |
 | Transaction builders | Rust CLI (`kusdt-tx`) and WebAssembly | Written | The simnet run uses them |
 | Signer and coordinator services | Off-chain | Written | The local end-to-end run (below) |
 | Monitor and guardian service | Off-chain | Written | Caught and paused a forged mint in the local end-to-end run (below) |
-| Web app | Browser | Built (`bridge/web`) | 133 unit tests, 160 end-to-end tests on the live stack, 25 driving the real wallet extension |
-| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack; a testnet build is downloadable, not released to any store | 123 unit tests, simnet and smoke suites, 7 against the live stack. Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
+| Web app | Browser | Built (`bridge/web`); ran on the public testnet, 4 to 14 November 2026; on mainnet at [trestly.io](https://trestly.io) once the launch is verified | 249 unit tests, end-to-end tests on the live stack, and a suite driving the real wallet extension |
+| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack and on the public testnet. Its mainnet version is published right after the launch | 227 unit tests, simnet and smoke suites, and tests against the live stack. Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
 | Refunds | Services and vault | Working | `local:load`: a deposit skipped and refunded 14.5 USDT |
 | Mainnet fork rehearsal | Forks of Ethereum and BNB Chain | Passed | The vault against the real USDT and BSC-USD |
 | Internal security review | Money paths | Done, fixes applied | See [Audit status](/security/audit-status/) |
 | Deployment tooling | Docker image, testnet compose file, runbook, mainnet packages | Written | See [Operations](/developers/operations/) |
-| Vault owner: AccessManager under a Safe | Ethereum, BNB Chain | Built and rehearsed, not on any live vault: testnet vaults keep a plain owner | 17 Hardhat tests; `mainnet:rehearse` |
-| Mainnet packages: signer, coordinator, monitor, deployer, web app | Off-chain | Built; nothing deployed | `mainnet:rehearse` on forks and simnet, 49 checks; `local:rotate`, 16 checks |
+| Vault owner: AccessManager under a Safe | Ethereum, BNB Chain | Built and rehearsed; each mainnet vault is owned this way (a 2-of-3 Safe, 48-hour delays, a 6-hour emergency delay, two cancellers). The testnet vaults kept a plain owner | 17 Hardhat tests; `mainnet:rehearse` |
+| Mainnet packages: signer, coordinator, monitor, deployer, web app | Off-chain | Built; launching today from `mainnet-v0.9.8-rc.25` | `mainnet:rehearse` on forks and simnet, 49 checks; `local:rotate`, 16 checks |
 | Signer keys in an HSM or KMS | Off-chain | Built, as an option | See [Operations](/developers/operations/#signer-keys-in-an-hsm-or-kms) |
-| Proof of reserves | Browser | Live on the testnet: the web app's Reserves page | Reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check |
+| Proof of reserves | Browser | The web app's Reserves page: ran on the public testnet, 4 to 14 November 2026; on mainnet once the launch is verified | Reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check |
 | Reproducible covenant bytecode | CI | Built | `tools/check-artifacts.mjs` and a CI job recompile and compare, byte for byte |
 | Outside reviews | Code and services | Four so far, each finding answered. Not an audit | See [Audit status](/security/audit-status/) |
-| Testnet deployment | TN10, Sepolia, BSC testnet | Deployed 4 November 2026 | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. Public from 4 November 2026, on one test host in isolated containers (see [Operations](/developers/operations/#the-testnet-deployment)) |
-| Mainnet deployment | Kaspa, Ethereum, BNB Chain | Not yet | Gated on the [mainnet checklist](/security/mainnet-checklist/) |
-| Signer operators | Mainnet | Five lined up; nothing runs on mainnet yet | The [mainnet checklist](/security/mainnet-checklist/), item 1 |
+| Public testnet | TN10, Sepolia, BSC testnet | Ran on the public testnet, 4 to 14 November 2026; ended | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. It ran on one test host in isolated containers (see [Operations](/developers/operations/#the-testnet-deployment)) |
+| Mainnet deployment | Kaspa, Ethereum, BNB Chain | Launching today, 14 November 2026, from `mainnet-v0.9.8-rc.25` | Addresses published [here](#addresses) once the launch is verified. See the [mainnet checklist](/security/mainnet-checklist/) |
+| Signer operators | Mainnet | Five independent operators; any 3 approve a mint or a payout, 4 for Kaspa governance | The [mainnet checklist](/security/mainnet-checklist/), item 1 |
 
 ## What the simnet run shows
 
@@ -76,21 +81,13 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 
 ## Addresses
 
-| Item | Testnet | Mainnet |
-|---|---|---|
-| kUSDT covenant ID | `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314` | to be published |
-| KasPool covenant ID | `102a59644f81734faa6e7870a694ee8da047b02b8bc21945576f535f94f5efb4`, since 5 November 2026 (it replaced `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9`, whose breaker counted gross sells, which had replaced `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b`, with no circuit breaker) | to be published |
-| KusdtVault on Ethereum (Sepolia on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
-| KusdtVault on BNB Chain (BSC testnet on testnet) | `0x7a9CA592adc5fC024660AF66e44051145a1f7C57` | to be published |
-| MockUSDT (testnet only) | `0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` on both | not used |
-| Coordinator API | `https://testnet.trestly.io/api/v1` | to be published |
-| Web app URL | `https://testnet.trestly.io` | to be published |
-| Monitor status (read-only) | `https://testnet.trestly.io/monitor/health`, `https://testnet.trestly.io/monitor/api/v1/monitor`, `https://testnet.trestly.io/monitor/api/v1/signal` | to be published |
-| Wallet download (testnet build) | `https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip` | to be published |
+No mainnet address is published yet. The kUSDT covenant ID, the KasPool covenant ID, the two vault addresses, the
+coordinator API and the monitor's status URLs will be listed here once the launch is verified. Until then, trust
+no address, covenant ID or API that claims to be kUSDT's.
 
-The testnet values come from `deployments/testnet.json`.
+The public testnet's addresses no longer work: it ended on 14 November 2026.
 
-The USDT contracts that the mainnet vaults will hold are fixed by the specification:
+The USDT contracts that the mainnet vaults hold are fixed by the specification:
 
 | Chain | Token | Address | Decimals |
 |---|---|---|---|

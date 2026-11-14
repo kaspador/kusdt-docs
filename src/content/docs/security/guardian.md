@@ -25,7 +25,7 @@ the guardian key is checked only by `pause`.
 |---|---|---|
 | BridgeMint | `mint` | Governance (`govern`), including `skip_nonce` and `set_limits` |
 | Vault | `deposit`, `release`, `refund`, and the paying of queued payouts (`executeRelease`, `executeRefund`) | Every owner function, so a fix can be made before unpausing, such as cancelling a bad queued payout |
-| KasPool | `buy`, `sell`, `sell_all`, `add`, `init` | `remove`: liquidity providers can always withdraw. `collect` and the admin's key changes |
+| KasPool | `buy`, `sell`, `sell_all`, `add`, `init` | `remove`: liquidity providers can withdraw, unless a stolen pool admin key keeps moving the pool ([known limits](/security/known-limits/#a-stolen-pool-admin-key-can-hold-the-pool-up)). `collect` and the admin's key changes |
 
 A pause never affects kUSDT itself. Transfers between users and burns keep working, because the KCC-20 token has
 no pause.
@@ -43,7 +43,7 @@ no pause.
 | Side | How |
 |---|---|
 | BridgeMint | `set_signers`, which sets the signer set and the guardian together; 4 of 5 signers |
-| Vault | `setGuardian`, by the owner; on mainnet through the AccessManager's emergency delay, about 6 hours. Queue it with `unpause`, or a thief with the old key pauses again |
+| Vault | `setGuardian`, by the owner; on mainnet through the AccessManager's emergency delay, about 6 hours. Queue it with `unpause`, and execute `setGuardian` first (best: both executes in one `multicall`, `setGuardian` first): an `unpause` executed while the old key is still the guardian lets a thief pause again at once, and the next `unpause` waits another 6 hours |
 | KasPool | `set_keys`, by the pool admin |
 
 ## Two monitors, one guardian

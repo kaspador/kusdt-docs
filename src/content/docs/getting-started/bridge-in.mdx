@@ -9,24 +9,24 @@ Bridging in turns USDT on Ethereum, or BSC-USD on BNB Chain, into kUSDT on Kaspa
 vault on that chain. After the deposit is final, the bridge signers approve it and kUSDT is created at your
 Kaspa address.
 
-:::note[Testnet only]
-kUSDT runs on testnet: TN10, Sepolia and BSC testnet (addresses on [Status](/overview/status/#addresses)). The
-public testnet web app is [testnet.trestly.io](https://testnet.trestly.io); see
-[Test on the public testnet](/getting-started/public-testnet/). Nothing is on mainnet. Do not send real USDT to any
-address.
+:::caution[Mainnet, launching today, not audited]
+kUSDT launches on mainnet on 14 November 2026. The web app is [trestly.io](https://trestly.io); it shows a
+"Launching today" page until the launch is verified. The vault addresses are published on
+[Status](/overview/status/#addresses) once the launch is verified: send USDT to no address that is not listed there.
+No independent audit has been done ([Audit status](/security/audit-status/)). Bridge only what you can afford to
+lose.
 :::
 
 ## What you need
 
 | Item | Why |
 |---|---|
-| USDT on Ethereum, or BSC-USD on BNB Chain | The amount you bridge, between 10 and 100 000 USDT per deposit |
-| An EVM wallet with some ETH or BNB | To pay gas for two transactions: approve and deposit |
-| A Kaspa address | Where your kUSDT will arrive. A Schnorr address (`kaspa:q…`) is the usual choice |
+| USDT on Ethereum, or BSC-USD on BNB Chain | The amount you bridge, between 10 and 8 000 USDT per deposit at the launch (see [Limits](/protocol/limits/#at-the-mainnet-launch)) |
+| An EVM wallet with some ETH or BNB: MetaMask, or a phone wallet through WalletConnect | To pay gas for two transactions: approve and deposit |
+| A Kaspa address | Where your kUSDT will arrive: a normal (Schnorr) address, `kaspa:q…`, the one your wallet shows. The web app takes no other kind. It refuses a script address (`kaspa:p…`, which is also where an explorer shows each kUSDT coin) and an ECDSA address, because no wallet here can move or redeem kUSDT from either, and an address whose key is no point of the curve, which nothing could ever spend from (since run 21 round 2) |
 
-On testnet the vaults hold `MockUSDT`, a test token that anyone can mint, paying only gas. Its address is
-`0x5bF185d9ce3A194b7090f069398580A66fb1F8a1` on both Sepolia and BSC testnet. The web app's Bridge page and the
-wallet's Bridge tab have "Get 1,000 test USDT", which calls that open mint from your EVM account.
+The vaults hold the real tokens: USDT on Ethereum, `0xdAC17F958D2ee523a2206206994597C13D831ec7` (6 decimals),
+and BSC-USD on BNB Chain, `0x55d398326f99059fF775485246999027B3197955` (18 decimals).
 
 ## Steps
 
@@ -34,9 +34,10 @@ wallet's Bridge tab have "Get 1,000 test USDT", which calls that open mint from 
 
 1. **Deposit.** On the [web app](/getting-started/web-app/)'s Bridge page, set From to your chain and To to Kaspa, then enter the amount and your Kaspa address. The app converts the address into a KCC-2 owner (see
    [Kaspa recipients](/protocol/identifiers-and-units/#kaspa-recipients)). Your EVM wallet then asks you to
-   approve the vault to take exactly that amount, and then to call `deposit(units, ownerScheme, owner)`. On
+   approve the vault to take exactly that amount, and then to make the deposit (`depositAtLeast`, which names the
+   least kUSDT you accept: see [What you receive](#what-you-receive)). On
    Ethereum there can be a third prompt first: Ethereum's USDT refuses to change a non-zero allowance, so the app
-   resets an old allowance to 0 before it approves. The app then follows the deposit in its own window until it is minted. You can close the window: the bridge keeps going, and a tag stays in the corner of the page until it is done.
+   resets an old allowance to 0 before it approves. The app then follows the deposit in its own window until it is minted. You can close the window: the bridge keeps going, and a tag stays in the corner of the page until it is done. Stay on the Bridge page until your wallet has sent the deposit itself: if you leave it between the approval and the deposit, the app stops there, asks your wallet for nothing more and tells you so (the approval stays in place for your next bridge, and no USDT has moved).
 2. **The vault records it.** The vault takes the USDT, keeps the fee, and emits a `Deposit` event with the next
    deposit number (the *nonce*) and the amount to mint.
 3. **Finality.** The bridge waits until the deposit's block is at or below the chain's *finalized* block, the
@@ -54,19 +55,41 @@ wallet's Bridge tab have "Get 1,000 test USDT", which calls that open mint from 
 
 ## What you receive
 
-You receive `minted = units − fee`. The fee is 0.20 % of the deposit, at least 0.50 USDT. The proportional part
-rounds up to the next base unit (10⁻⁶ USDT).
+You receive `minted = units − fee`. The fee is 0.50 % of the deposit, at least 0.50 USDT, as long as the whole
+deposit fits under half of that vault's deposit meter (below): on mainnet at the launch, as long as the meter and
+your deposit together come to at most 6 250 USDT. On an empty meter that is every deposit up to 6 250 USDT; the
+part of a larger one above that pays a little more (the 8 000 USDT row below). The proportional part rounds up to
+the next base unit (10⁻⁶ USDT).
+
+With the meter empty (mainnet at the launch):
 
 | Deposit | Fee | kUSDT minted |
 |---|---|---|
 | 10 USDT | 0.50 | 9.50 |
 | 100 USDT | 0.50 | 99.50 |
-| 250 USDT | 0.50 | 249.50 |
-| 1 000 USDT | 2.00 | 998.00 |
-| 10 000 USDT | 20.00 | 9 980.00 |
-| 100 000 USDT | 200.00 | 99 800.00 |
+| 250 USDT | 1.25 | 248.75 |
+| 1 000 USDT | 5.00 | 995.00 |
+| 8 000 USDT | 44.90 | 7 955.10 |
 
-Below 250 USDT the 0.50 USDT minimum applies. Above it, the 0.20 % rate applies.
+Below 100 USDT the 0.50 USDT minimum applies. Above it, the 0.50 % rate applies, up to 6 250 USDT: 8 000 USDT pays
+0.50 % on its first 6 250 and a little more on the last 1 750, which go in above half the meter.
+
+**When the day's deposits have filled the meter past half, the fee is higher.** With the mainnet values, the
+deposit fee rises with the deposits made on that chain in the last 24 hours. Each vault keeps a meter of them,
+12 500 USDT at the launch (a quarter of the signers' daily limit). The part of a deposit that goes in while the
+meter is under half full pays the plain 0.50 %. From half full the rate rises in a straight line, to 2.50 % when the
+meter is full. So 8 000 USDT pays 68.90 USDT (0.86 %) with 2 500 USDT already in the meter, and 137.50 USDT (1.71 %)
+with 6 250. The meter drains over a
+day, so the fee comes back down by itself. The rule and more examples are on
+[Fees](/protocol/fees/#the-rising-deposit-fee). Bridging back never pays more than the flat fee.
+
+- **The page shows the fee you would pay now.** When the day's deposits have raised it, it says so, and names the
+  usual fee.
+- **You get what you were shown, or nothing is sent.** Someone else's deposit can land just before yours and raise
+  your fee a little. The web app and the wallet tell the vault the least kUSDT you accept: what they showed you,
+  less a quarter of a percent of the deposit. If the fee has risen by more, the vault refuses the deposit and takes
+  no USDT (you pay only the gas of the failed transaction). The web app also reads the fee again right before you
+  sign, and if it has moved too far it sends nothing and shows the new figures.
 
 Your new kUSDT state also carries 1.5 KAS (the deployment's token value). Kaspa requires every output
 to carry KAS in proportion to the storage it uses, and covenant outputs count double (see
@@ -76,13 +99,14 @@ your token UTXO and travels with the token when you spend it.
 ## How long it takes
 
 The wait is mostly the source chain's finality. After that, the signers, the coordinator and a Kaspa
-confirmation add a short delay. A busy day can add more: minting draws on an allowance of 500 000 USDT that
+confirmation add a short delay. A busy day can add more: minting draws on an allowance of 100 000 USDT at the launch that
 refills over 24 hours, and a deposit waits if the allowance is used up. See [Limits](/protocol/limits/).
 
 ## If something goes wrong
 
-- **The deposit reverts.** Nothing is taken. Common causes: an amount outside 10 to 100 000 USDT, a missing
-  approval, or the vault being paused.
+- **The deposit reverts.** Nothing is taken. Common causes: an amount outside 10 to 8 000 USDT (the launch limits), a missing
+  approval, the vault being paused, or a fee that rose past what you were shown (`MintedBelowMinimum`): look at the
+  new figures and try again.
 - **The deposit is never minted.** Deposits are minted strictly in nonce order. If a deposit can never be
   minted, 4 of the 5 signers can skip its nonce on Kaspa, and the vault then refunds exactly the amount it would
   have minted to the address that made the deposit. See [Refunds](/protocol/refunds/).
@@ -95,7 +119,12 @@ decimals:
 ```solidity
 // Approve units × scale of the token first. scale = 1 on Ethereum, 10^12 on BNB Chain.
 uint64 nonce = vault.deposit(units, ownerScheme, owner);
+// Or, to refuse a fee that rose since you read it (it reverts unless at least minMinted is minted):
+// uint64 nonce = vault.depositAtLeast(units, ownerScheme, owner, minMinted);
 ```
+
+`vault.depositFeeOf(units)` answers the fee a deposit of `units` would pay in the current block. With plain
+`deposit` you accept whatever the fee is when your transaction lands.
 
 `ownerScheme` and `owner` come from your Kaspa address as described in
 [Kaspa recipients](/protocol/identifiers-and-units/#kaspa-recipients). A wrong owner cannot be corrected after

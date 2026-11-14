@@ -7,7 +7,10 @@ description: Limits of the v1 design that users, partners and auditors should kn
 
 Kaspa cannot verify Ethereum or BNB Chain, and they cannot verify Kaspa. In v1 a federation of 5 signers attests
 to deposits and burns, and 3 of them suffice. The [threat model](/security/threat-model/) shows what a bad quorum
-could do; rate limits on both sides cap it.
+could do; rate limits on both sides cap it. At the mainnet launch three stolen signer keys could mint at most
+the mint allowance at once, 100 000 kUSDT (twice the signers' daily limit), and 200 000 in any 24 hours. Until 14
+November 2026 the plan kept 500 000, ten times the daily limit; the owner lowered it on the reviewers' advice (run 21,
+R21-ECON-5), and the deployer now refuses a mainnet ceiling above twice the limit.
 
 **Upgrade path: zero-knowledge light-client verification.** Kaspa's Toccata upgrade includes an opcode that
 verifies zero-knowledge proofs (`OpZkPrecompile`, KIP-16), and KIP-17 lists trustless bridges built on it as a use
@@ -17,13 +20,92 @@ signatures. This is the planned direction, not part of v1, and it has no date.
 **It would cover one direction only.** A proof checked on Kaspa replaces the signers' word about deposits, so it
 removes the risk of unbacked mints. Releases are the other direction: the vaults on Ethereum and BNB Chain would have
 to verify Kaspa burns themselves, which needs a Kaspa light client on the EVM side, a separate and harder project.
-Until then, a release rests on 3 of 5 signers, capped by each vault's release allowance (250 000 USDT at once, at
-most 500 000 in any 24 hours). Every payout waits in the vault first, and the monitor pauses the vaults the moment it
+Until then, a release rests on 3 of 5 signers, capped by each vault's release allowance (50 000 USDT at once at the launch, under
+150 000 in any 24 hours). Every payout waits in the vault first, and the monitor pauses the vaults the moment it
 sees one queued with no burn behind it.
+
+## Accepted for the launch
+
+The 21st review (November 2026) left choices that a code change alone cannot make: a new contract, a rule change, or a
+choice about money and risk. On 14 November 2026 the owner took the reviewers' advice on each. These are accepted for
+the launch, with what is planned later:
+
+| What | Accepted for the launch | Planned later |
+|---|---|---|
+| One daily limit for everyone | The signers' daily limit is shared by all users, so one large holder can fill it and others wait, up to a day. Deposits already pay a fee that rises as the day's deposits grow. See [The daily limit can be used up by one party](#the-daily-limit-can-be-used-up-by-one-party) | A withdrawal fee that rises with use, as deposits have |
+| A recipient blocked after the payout was queued | If Tether blocks an address during the payout's 10-minute wait, the vault still pays it and the USDT is frozen there. It is rare, and the signers check the address when they sign. See [Blocked recipients](#blocked-recipients) | The next vault checks the address again when it pays |
+| Both vaults back kUSDT together | kUSDT from one chain can be redeemed from the other vault, so if one chain's USDT is lost, holders on the other chain share the loss. See [Redemptions depend on one vault](#redemptions-depend-on-one-vault) | Nothing: this is how kUSDT works |
+| A flood of forged payouts | After three stolen signer keys, every forged payout must be cancelled before the vaults run again, one cancel per call. `kusdt cancel-plan` writes the Safe's transactions, 50 cancels in each. See [Forged payouts are cancelled one by one](#forged-payouts-are-cancelled-one-by-one) | The operators practise `kusdt cancel-plan` once on the testnet before the launch |
+| Mint signatures don't fix the KAS amounts | The signers sign each recipient's kUSDT, not the small amount of KAS under it, so someone who copies a signed mint can choose that KAS, down to the 1 KAS floor. No kUSDT is lost | The next minter contract binds it |
+| The pool's rules | Bots or tiny holders can hold selling up for a while, someone can take 0.5 KAS from the pool's reserve once, and a filled reserve address no longer stops the wallets (they read the reserve another way). See [Pool transactions wait a few seconds](#pool-transactions-wait-a-few-seconds-while-more-than-half-of-the-cap-is-in-use) and [The KAS under the pool's kUSDT reserve](#the-kas-under-the-pools-kusdt-reserve-can-be-taken-down-to-its-floor-once) | A new pool contract after the launch |
+| The testnet signers shared one connection | On the public testnet (4 to 14 November 2026) all five signers used one RPC per chain and one Kaspa node. Mainnet refuses that setup. See [The testnet runs on one host](#the-testnet-runs-on-one-host) | Nothing for mainnet |
+| One wallet for testnet and mainnet, and the API sharing the coordinator's node | The wallet uses the same keys on both, and the coordinator's API process reads the coordinator's own Kaspa node. See [The wallet's keys are the same on test networks and on mainnet](#the-wallets-keys-are-the-same-on-test-networks-and-on-mainnet) and [A flood can take the public answers down](#a-flood-can-take-the-public-answers-down-and-the-machines-network-with-them) | Testnet keys of their own with a testnet reset; an API node of its own is the operator's choice |
+| A catching-up monitor cannot pause the minter or the pool | A monitor hours behind cannot name the minter's and the pool's current coins, so its pauses of those fail until it has caught up (its vault pauses still work). The other monitor covers that time. See [A monitor whose own network is cut](#a-monitor-whose-own-network-is-cut) | The monitor finds those coins with kaspad's `getUtxosByCovenantIds` once kaspad has it |
+
+Also decided: the Ethereum Safe that owns the vault needs 2 of its 3 owners, as on BNB Chain, so one lost owner key
+does not lock that vault's owner for good. The change is on the launch list, and the Ethereum Safe needs all three
+owners only until it is made. The deposit fee's meter is a quarter of the signers' daily limit, and the mint allowance
+twice it (see [Limits](/protocol/limits/#at-the-mainnet-launch)).
 
 ## A reorg that flips a mint and a skip
 
-After a reorg that flips a mint and a skip, the coordinator and the monitor need an operator. Only the signers undo what the dropped blocks accepted. The coordinator and the monitor keep following a minter state that is gone, so they fail safe: the monitor raises `minter-lost` and pauses, and no signer signs a refund from such a view. An operator then brings them back from the launch record.
+A Kaspa reorg can drop the block that accepted a mint, or a skip, and accept the other in its place. The signers,
+the coordinator and the monitor each keep a journal of the minter's last 256 moves and undo the ones the dropped
+blocks accepted, by themselves, and then follow the new chain. (At first only the signers did. The coordinator has
+done so since 8 November and the monitor since rc.13, and this page went on saying otherwise until round 12: an
+operator was told to rebuild the coordinator and the monitor from a checkpoint after such a reorg. That is not
+needed, and a monitor rebuilt from a checkpoint has limits of its own.)
+
+What is left: a reorg that undoes more than those 256 moves of the minter at once. A follower cannot undo past its
+journal. It then stays on a minter the chain no longer has, and fails safe: the monitor raises `minter-lost` and
+pauses, and no signer signs a refund from such a view. An operator brings it back from a recent checkpoint. The
+coordinator waits for each mint to be accepted before it sends the next, so by the project's own arithmetic 256
+moves are several minutes of chain at the least: a reorg that deep is deeper than the 1,000 DAA a burn waits
+before it is paid. None has been seen, and none was produced in a test.
+
+A refund the monitor judges by its skip's depth, as a release by its burn's (since round 13, R13-ONCE-1: before,
+the skip's presence at any depth was enough, and a queued refund was no longer watched). It asks the depth an
+honest refund of that amount always has, less 650 DAA for its own node's lag. The signers wait longer since round 14
+(the deepest tier for every refund), and the monitor still asks only the depth by amount, so a refund three keys
+sign between the two depths is not raised by its depth alone: it is still raised if a reorg then drops the skip while the refund is
+queued, and its mint is still `mint-of-refunded-deposit`. A skip the monitor took from a checkpoint's list
+(`initialSkipped`), or one recorded before round 13, has no depth known: its refund is judged by the skip's
+presence, as before, and stays watched while it is queued.
+
+## A vault and its kUSDT are a pair that no chain enforces
+
+A burn is identified by its Kaspa outpoint and a deposit by a number its vault counts up. Neither names the other
+side: nothing in a burn says which vault pays it, and nothing in a deposit says which kUSDT covenant mints it. That
+is safe only because each vault serves one covenant from its first block to its last. If operators ever paired a
+new vault with a kUSDT that had lived, every earlier burn of that chain could be paid a second time from the new
+vault. If they paired a new kUSDT with vaults that had lived, every earlier deposit could be minted a second time.
+Neither can happen by an outsider's doing, and the shipped deployer always makes vaults and covenant together.
+
+Since round 12 the rule is written down (a vault is never replaced under a live kUSDT, nor a kUSDT over live
+vaults), and the operators' checks refuse what the chains show of a broken pair: a vault that has taken fewer
+deposits than the minter is past, a vault that paid out before its kUSDT minted anything, a vault made after its
+kUSDT's genesis, and a service state that shares only half of its pair with the deployment it is started on.
+
+What is left:
+
+- **Deposits made before the first mint look the same either way.** A vault is public from its first block, so
+  deposits before its kUSDT's first mint are ordinary, and no chain can tell them from deposits an earlier covenant
+  already minted. That case rests on the rule and on the services refusing a state made under another pairing.
+- **The signers do not check the pair when they sign.** The checks run in `mainnet:verify`, in the deployer and in
+  the preflight (`kusdt check`) before a service is started, not at each signature.
+- **The time of the genesis is the node's estimate.** "Made after the genesis" compares the time of the block that
+  created the vault with the node's time for the genesis's DAA score, with an hour left out. A vault put under a
+  kUSDT within that hour is not caught by this line. Until round 13 the margin was also a twentieth of the kUSDT's
+  age, so a vault made ten days late passed every run from day 200 on (R13-OWN-2), and the vault was dated by
+  deployment.json's `fromBlock` alone, so a file that kept the old vault's `fromBlock` passed a replaced vault
+  (R13-ONCE-2). The vault's creation is now read from the chain: the deploy transaction in that block, or the
+  vault's code before and after it, and no proof fails the line on mainnet.
+- **Once the minter has moved, the genesis is dated by deployment.json.** While the node holds the launch's minter
+  (or, in `mainnet:verify`, its chain still shows the genesis accepted), the genesis's DAA score is the node's.
+  After that the only score left is the one deployment.json records, and the line says it rests on that record. A
+  file whose score was raised would move the genesis later and could hide a late vault, which is why each operator
+  compares deployment.json's SHA-256 with the others' and runs the checks soon after the launch, when the node's
+  own score is still there. When the node gives no time for the score at all, the line is left out.
 
 ## Blocked recipients
 
@@ -36,7 +118,13 @@ blacklisted address, and the USDT would be frozen there for good. The bridge sto
 
 - **Wallets ask first.** Before every burn, the wallet and the web app call
   [`GET /recipients/:chain/:address`](/protocol/coordinator-api/) and refuse an address the vault would not pay.
-  If they cannot ask, they refuse too: a burn cannot be undone. The wallet asks again right before it sends, and
+  That is the coordinator's word only, so kUSDT Wallet also asks the token itself (`isBlackListed` on Ethereum
+  USDT), on each of the chain's RPCs, and refuses the burn if any of them says blocked or none answers (since run
+  21, Daybreak [24]): a coordinator saying "payable" for a blocked address can no longer get kUSDT burnt.
+  The web app asks the token too, over the deployment's own RPCs, right before it asks the wallet (since round 18,
+  R18-CL-1), so a kUSDT Wallet from before run 21 is not left to the coordinator's word either.
+  If they cannot ask, they refuse too: a burn cannot be undone. The wallet asks again right before it sends (after
+  any merge the burn needed first), and
   neither offers the other chain for a blocked address.
 - **Signers refuse.** A signer will not sign a release or a refund to an address the token reports blocked. It
   asks every one of its RPCs, and signs nothing if they disagree. The deployment names the view to read
@@ -46,7 +134,10 @@ blacklisted address, and the USDT would be frozen there for good. The bridge sto
   never holds up the others.
 
 One gap: the vault can't read a blocklist, and anyone may pay a queued payout. If the token blocks a recipient during
-the wait, the coordinator holds its payout, but anyone else could still pay it, and the USDT would be frozen there.
+the wait, the coordinator holds its payout, but anyone else could still pay it, and the USDT would be frozen there
+(Daybreak [11]). Only a vault that checks the recipient again when it pays would close this. **Accepted for the
+launch** (14 November 2026): it needs Tether to block the address inside the 10-minute wait, and the signers check
+it when they sign. The next vault checks the recipient again when it pays.
 
 Nothing can send a held burn elsewhere. The burn commits to its address, and **no key can redirect it**: the vault
 has no re-target power. Its USDT stays in the vault as backing for as long as the address is blocked.
@@ -61,7 +152,7 @@ and refunds, the signers' refusals and the `vault-blocked` pause were checked in
 |---|---|
 | The release recipient is blocked by the token | See [Blocked recipients](#blocked-recipients) |
 | A vault's own address is blacklisted by the token's issuer | That vault can pay nothing out, while deposits still go in. The monitor raises `vault-blocked` and the guardian pauses everything ([The monitor](/security/monitor/)) |
-| Ethereum USDT turns on its dormant transfer fee (`basisPointsRate`) | Deposits revert (the vault checks the exact amount received), and release recipients receive less than the payout |
+| Ethereum USDT turns on its dormant transfer fee (`basisPointsRate`) | Deposits revert (the vault checks the exact amount received). Payouts are short-paid: a release recipient receives less than the payout, and a refund recipient less than the deposit refunded, while the vault records each as paid in full (run 21, Daybreak [54]: both shown on the vault with the fee switched on). Since run 21 the monitor reads the token's `basisPointsRate` and `maximumFee` every 5 minutes, and its `/health` warns while the rate is above 0, naming the rate and the cap: a warning, never an alarm or a pause |
 
 ## A burn's payload can be missing
 
@@ -69,30 +160,157 @@ A redemption transaction *should* carry the burn's preimage in its payload. If i
 valid, but the bridge cannot know its chain and address from the chain alone. Anyone can give the coordinator the
 preimage later (`POST /redeems`), and it is checked against the burn owner. Until then, the burn waits.
 
+A deposit that names a burn owner never has a payload (run 21, R21-IDENT-2). The vault takes such a deposit (owner
+scheme 3), and the mint pays straight into the burn: a mint carries no redemption payload, and the minted state alone
+does not say that its owner is a burn owner rather than another script's hash. One case is known without a claim:
+since run 21 the coordinator records the redemption itself when the owner is the burn owner of the depositor's own
+address on either chain (the deposit's `sender`), as it follows the mint. A deposit on the Sepolia testnet did so, and
+waited unpaid. Any other burn owner is paid only after someone posts its preimage, `{txid, outputIndex,
+chain, address, state}` of the minted output, to `POST /redeems`; until then `GET /redeems/...` answers 404 for it. It
+has the exposure of every burn without a payload (below: "A signer that never read the burn's block", and a burn at a
+filled address). The web app and the wallet never build such a deposit.
+A script that deposits for a payout on the other chain this way sends the claim itself, once the mint is accepted.
+
+A claim can be kept out for as long as someone keeps trying (run 21 review, RV-CK; left as it is, a team decision).
+The coordinator keeps at most 256 claims nobody has proven yet, and drops none of them for a newer one before the
+node was asked about it ([Reporting a burn](/protocol/coordinator-api/#reporting-a-burn)). 256 client networks that
+each send a claim about a made-up output again after every pass of the claims loop keep that bound full of claims not
+asked about yet, and a newcomer's claim is refused with 503 and `retryAt` while they go on. Only burns with no
+payload need a claim: the chain shows every other burn, whatever is claimed. One output's 16 places for other
+claims can no longer be held so (since the review, a network's place that the node was asked about is kept for ten
+minutes while they are full).
+
+## A burn the coordinator missed is claimed again only while kUSDT Wallet is open
+
+kUSDT Wallet tells the coordinator of each burn as it goes out (`POST /redeems`, the burn's own transaction). A
+coordinator that was away then, and later rebuilt or re-anchored past the burn, reads burns only from where it
+starts, so it never finds that burn on the chain by itself. Since run 21 round 2 (R21-COORD2-5) the wallet keeps each
+burn's claim and sends it again while `GET /redeems` answers that the coordinator has no record of the burn, or while
+no claim of it was ever taken: at once, then a minute later, each wait twice the one before and at most six hours,
+twenty times in all. A burn the Kaspa node did not answer about (**May have been sent**) is claimed only once the node
+shows it accepted.
+
+It does this only while its window is open: Home and Activity follow open redemptions every 20 seconds. With the
+window closed, or with only the web app open, nothing is sent again. The web app has no way to ask the wallet for it,
+and none was added: a page's call would then make the wallet contact the coordinator whenever the page chose. A
+redemption that shows **Sent** and does not move: open kUSDT Wallet for a moment. Anyone can also claim a burn by
+hand, with its chain and address (see [Reporting a burn](/protocol/coordinator-api/#reporting-a-burn)).
+
 ## Redemptions depend on one vault
 
 kUSDT is one fungible token, whichever chain its USDT came from. A release, however, is paid by one vault:
 
 - A release must not exceed that vault's backing. kUSDT minted from Ethereum deposits can be redeemed on BNB
   Chain only if the BNB Chain vault holds enough.
-- A single burn output's payout must fit in that vault's release capacity, 250 000 USDT by default.
+- A single burn output, fee included, must fit in that vault's release capacity, 250 000 USDT by default. The vault
+  queues a payout only while the queue and it fit the capacity together, so a burn of all the room left waits for as long
+  as any payout waits, and anyone can keep one tiny payout always waiting (run 21 round 2, R21-ECON-2). Wallets leave 1 %
+  of the capacity free beside what is queued, so keeping a burn out takes more than that always queued; the coordinator
+  still gives such a burn no hold of its own.
 
 Wallets refuse a burn the named vault cannot pay now (above its release capacity or `releaseAvailable`, above its
-backing, or while it is paused) and offer the other chain. If one lands anyway, it waits: the relayer retries it
+backing, or while it is paused) and offer the other chain. Since rc.18 they decide this on the vault's own answers,
+read over the chain's RPCs before the burn is built and again before it is sent (`paused()`,
+`unreservedBacking()`, `releaseAvailable()`, `reservedUnits`, the capacity and the fee): the coordinator's
+`/status` is not enough on its own, and when the two disagree nothing is burnt. Since run 21 (Daybreak [2]) kUSDT
+Wallet reads them the second time after the merges a burn may need first, right before the burn goes out, and
+refuses a release fee above the one its review showed (Daybreak [19]). The vault takes the fee of the moment it
+queues the payout, after the burn, and the burn binds no fee: one raised after the burn is still charged. Before, these four came from
+`/status` alone, so a wrong or stale answer there could have a wallet burn kUSDT the vault could not pay yet.
+Another burn or a pause can still land between the read and the burn. If one lands anyway, it waits: the relayer retries it
 with its own backoff until the allowance refills, deposits on that chain bring the backing, or the owner raises
-the capacity within its hard bound. It never holds up other burns.
+the capacity within its hard bound. A burn the vault refuses only for its queue or its allowance holds up the other
+payouts of that vault until it is queued, 25 hours at the most (since run 21, R21-ECON-2): the vault takes a payout
+only with all of it free at once, and before, anyone could keep one tiny payout always waiting there and so keep a
+burn of the whole capacity out for good. One the vault can never take (above its capacity), one short of backing, or
+one of a paused vault holds up nothing. The other side of it: a payout as large as the vault's whole capacity holds
+every other payout of that chain, those that would fit as well, until the allowance has refilled to its size, about
+24 hours at the mainnet parameters. Someone holding about that much kUSDT can do it again after each payout, for the
+release fee each time. It is the daily limit used up by one party ([8], "The daily limit can be used up by one
+party") where the capacity is close to the signers' limit, and `/health` names each such hold.
 
 **Rebalancing uses the bridge's own paths.** No key can move backing from one vault to the other. When one chain runs
 short, an operator holding kUSDT redeems it from the vault that has plenty, moves the USDT across (an exchange or
-another bridge), and deposits it into the short vault, which mints the same kUSDT back. Backing moves for 0.2 % each
+another bridge), and deposits it into the short vault, which mints the same kUSDT back. Backing moves for 0.5 % each
 way plus the cost of the crossing, and no new trust is added. See [Operations](/developers/operations/#rebalancing-the-vaults).
-In a run on one chain, holders are still paid in full, on the other chain.
 
-## Small burns are lost
+**kUSDT is backed by the two vaults together.** If one chain's stablecoin depegs or is mis-minted, kUSDT minted from
+it can redeem real USDT from the other vault, up to the release allowances (Daybreak [22]). Nothing on either chain
+can tell which
+vault a token came from, and the backing check (INV-1) counts both vaults as one. In a run on one chain, holders are
+paid on the other chain only while that vault holds enough. The monitor warns on `/health` when one chain's releases
+exceed what its deposits minted by more than `releaseCapacity`: that is a warning, and it pauses nothing, because
+moving value across chains is a normal use. **Accepted for the launch** (14 November 2026): both vaults back kUSDT
+together, and if one chain's USDT were lost, holders on both chains would share the loss. Capping each vault to what
+came in on its own chain was the other choice.
 
-A burn whose amount is at or below the release fee (5 USDT on Ethereum, 0.50 USDT on BNB Chain, or 0.20 % if
-higher) is never paid. It is marked `unpayable`, and the tokens are still burned. The same holds for a burn naming the
-zero address or the vault itself.
+## USDT sent straight to a vault is lost
+
+Only the vault's `deposit` function bridges. USDT sent to a vault's address with a plain transfer (from an exchange
+withdrawal, say) names no Kaspa address and gets no deposit number: nothing is minted for it, and no function of the
+vault can send it back. It adds to the backing and stays there. The vault has no owner withdrawal of anything but
+fees, on purpose: such a power would be a way to take the backing. Always bridge through the web app or the wallet.
+
+## The daily limit can be used up by one party
+
+The signers sign for a limited amount a day, across both chains (50 000 USDT at the launch), for mints and for
+payouts each. Someone who uses that up keeps other people waiting until the day has passed (Daybreak [23] for
+deposits, [8] for payouts): a deposit made then waits, and is minted when there is room again. Nothing is lost.
+Raising the limit only raises the money such a party needs.
+
+**Deposits: the fee rises with use.** Decided on 10 November 2026. Each vault's deposit fee goes up as the day's
+deposits on it grow: 0.50 % until its deposit meter is half full, rising in a straight line to 2.50 % at a full
+meter, and 2.50 % while it stays full ([Fees](/protocol/fees/#the-rising-deposit-fee)). Each vault's meter is a
+quarter of the signers' limit (decided on 14 November 2026), so both meters are full once half the limit is used.
+At the launch values, filling both meters from empty costs 250 USDT in deposit fees on 25 000 USDT, and the other
+25 000 of the day's limit, deposited while the meters are full, pays 2.50 %: about 875 USDT for the whole 50 000,
+against 250 at the flat rate. Spread over the day, one 8 000 USDT deposit into each vault every 7.6 hours, the same
+use pays about 2.1 %. With meters of half the limit, the first choice, that steady flow paid only the plain 0.50 %
+(run 21, R21-ECON-1). This makes the attack cost more. It does not rule it out: a meter drains over a day, so a
+party willing to pay can do it again the next day. Honest depositors pay the higher rate too while a meter is more
+than half full, and the web app says so.
+
+**Bridging back: still the flat fee.** The rising fee covers deposits only. A release's fee is set by the vault
+after the kUSDT is burnt, and a burn cannot be undone, so nobody could refuse a higher fee at that point. So
+someone holding kUSDT can still use up the signers' limit for payouts by bridging back that much, for the flat fee
+of 0.50 % (250 USDT on 50 000 at the launch). Other people's payouts then wait, up to a day. Nothing is lost.
+
+**Accepted for the launch** (the owner's decision of 14 November 2026): one daily limit shared by everyone, in both
+directions. A per-person limit was the other choice. Planned later: a withdrawal fee that rises as the day's limit
+fills, as the deposit fee does.
+
+**Two signers' word that their limit is used up.** A payout or a mint batch that only the signers' daily limits hold up
+keeps first claim on the room that frees: the other payouts of both chains (or the other chain's mints) wait for it,
+25 hours at the most, so that a large burn is not passed by small ones forever. Two signers refusing it for their
+limit start such a hold. Until run 21 round 2 (R21-COORD2-1) their words were enough, and two lying signers, which
+the threat model allows, could stop every payout of both chains and the other chain's mints, 25 hours at a time,
+whenever one honest signer could not sign one chain (its RPCs down). Now such a refusal counts only with the signer's
+proof: what it signed in its last 24 hours, signed with its Kaspa key, naming the limit every signer agreed to (the
+coordinator's `signerDailyLimit`). The coordinator counts only releases, refunds and deposits signed for it in the last
+25 hours by a signer other than those whose refusals it is judging (a valid signature came back from one), or that its
+records show queued, paid, refunded or minted, each
+once at the units it knows them by and never the one refused, and believes the refusal when they and the amount pass
+that limit. A refusal that names another limit, lists invented, unsigned or repeated payouts, or comes without a proof
+is an ordinary one, and `/health` names the signer. Holds of signers whose limit really is used up go on as before.
+What remains:
+
+- Two lying signers can still start a hold when the payouts and deposits of that kind that other signers signed for the
+  coordinator in the last 25 hours, or that were paid or minted, with the one held, pass the agreed limit. They can
+  list those whether or not they signed them; what only they signed does not count (RV-F round 3). So a party that
+  wants a hold must first have about a day's limit signed through the bridge, which is when the honest signers'
+  limits are near full too.
+- All five signers must run this release for holds to work: an older signer sends no proof, and its refusals for the
+  limit hold nothing up. For 24 hours after the signers upgrade their earlier charges name nothing, so a full limit
+  can't be proven. A proof lists at most 800 charges, largest first: a limit filled by charges averaging under 1/800
+  of it (62.5 kUSDT at the launch's 50 000) can't be shown. In each case the hold is lost, which costs only the wait:
+  the largest payout waits as any refused payout while the others go ahead. No payout or mint is wrong or lost.
+
+## Small burns are not paid
+
+A burn whose amount is at or below the release fee (5 USDT on Ethereum, 0.50 USDT on BNB Chain, or 0.50 % if
+higher) is not paid. It is marked `unpayable`, and the tokens are still burned. It is looked at again about once a
+minute and paid if the fee falls below its amount; nothing obliges the owner to lower the fee. A burn naming the
+zero address, the vault itself or the token contract's own address is lost for good.
 
 The wallet and the web app refuse such a burn, and warn when the fee would take more than 20 % of a redemption. Only a
 transaction built by hand can still lose a burn this way. Each burn output also locks 0.3 KAS for good (below).
@@ -100,13 +318,69 @@ transaction built by hand can still lose a burn this way. Each burn output also 
 ## Only plain burns are paid
 
 Signers refuse a burn state whose borrow scheme, borrow guard or extension commitment is not zero, because a
-borrowable state could move to a new outpoint and be claimed twice. Such kUSDT is lost. Wallets never build one.
+borrowable state could move to a new outpoint and be claimed twice. Such kUSDT is lost. Wallets never build one,
+and since run 21 the core's `transfer` builder refuses one too (Daybreak [27]), as it refuses a redemption naming a
+chain other than 1 or 2 or the zero address. The coordinator does not record such a state as a redemption at all, nor
+one with an amount of zero.
 
 ## Burns lock KAS too
 
 An ordinary kUSDT state carries the deployment's token value, 1.5 KAS, for its storage mass, and that KAS comes
 back when the state is spent. A burn state can never be spent, so it carries the smaller burn value, 0.3 KAS, which
 is gone for good. Wallets show it as part of a redemption's cost.
+
+## Small deposits could cost the funding key more KAS than they pay
+
+Found in the second outside review of rc.22 (D6-6). Open: a parameter change, which is the owner's decision.
+
+Each mint gives every minted kUSDT state the deployment's token value, 1.5 KAS, and the coordinator's funding key pays
+it. From then on that KAS is the holder's. What pays for it is the deposit fee, which stays in the vault in USDT: at
+least 0.50 USDT a deposit. While KAS is cheap the fee covers the 1.5 KAS several times over. If KAS rose past about
+0.33 USDT (0.50 USDT for 1.5 KAS), a deposit of the minimum would hand its maker more KAS than it paid in fees.
+Someone could then make many small deposits, merge the kUSDT states they get (each merge frees the KAS of every state
+but one) and keep that KAS, or bridge the kUSDT back once. With the gas of each deposit and the Kaspa fees counted,
+the review put the point where this pays at about 0.40 to 0.55 USDT a KAS.
+
+No user funds are at risk and nothing is minted without a deposit. The cost falls on the operators, who keep the
+funding key topped up, and a key that runs dry stops mints until it is topped up again. The coordinator's `/api/v1/health`
+warns when the funding address holds less than 50 KAS.
+
+**What to watch:**
+
+- The price of KAS against the minimum deposit fee divided by the token value: 0.50 USDT ÷ 1.5 KAS, about 0.33 USDT
+  at the launch values. Above it a minimum deposit brings its maker more KAS than it costs in fees; how much above
+  depends on the gas each deposit costs.
+- How fast the funding key's KAS goes, against the number of deposits minted.
+- Many deposits at or near the minimum from one sender, or to one Kaspa owner.
+
+**The remedy,** for the owner to decide:
+
+- Raise the minimum deposit fee (`setFees` on each vault, through the owner's 48-hour delay; at most 50 USDT). At
+  1.00 USDT the point where it pays roughly doubles. Raising the minimum deposit (`setDepositLimits`) does the same
+  only above 100 USDT, where 0.50 % of it passes the minimum fee: a 200 USDT minimum makes the smallest fee 1.00 USDT.
+- Or lower the KAS each minted state carries (`kaspa.tokenValue` in the coordinator's deployment file, 1.5 KAS at the
+  launch). The minter refuses a minted output under 1 KAS, so this takes it down by a third at most, and a holder with
+  no other KAS then has less to pay a transfer's fee from.
+
+## Small payouts can cost the relayer more gas than their fee
+
+Found in run 21 (R21-ECON-4), the EVM side of the case above. The relayer pays the gas of both transactions of a
+payout, `release` and then `executeRelease` (about 290,000 gas together), and the vault keeps the release fee in
+USDT: on Ethereum at least 5 USDT a payout. From a base fee of about 4 gwei (ETH at 3,000 USDT) a payout with the
+minimum fee costs the operators more ETH than its fee, and anyone can make many such payouts: 1,000 at 50 gwei cost
+the relayer about 15 ETH. A relayer that runs dry stops that chain's payouts until it is topped up; no user funds are
+at risk.
+
+Since run 21 a payout waits while its two transactions, at the base fee of the newest block and the relayer's tip,
+would cost more than twice its release fee, priced with the chain's coin at Chainlink's price (the ETH/USD and
+BNB/USD feeds the web app reads), the lowest any of the coordinator's RPCs gives for each. It is looked at again every
+five minutes and paid once gas falls, and a day after it began to wait it is paid whatever gas costs (up to the
+relayer's cap of 500 gwei, above which every payout waits). The others do not wait for it, and `/api/v1/health` says
+how many wait for gas. Mainnet only; with no fresh price nothing waits.
+
+**What to watch:** the relayer's ETH against the number of payouts, and many small burns to Ethereum while gas is
+high. **The remedy** beyond this, for the owner: a higher Ethereum `minReleaseFee` (`setFees`, through the owner's
+48-hour delay).
 
 ## Rules the vault cannot check
 
@@ -119,11 +393,659 @@ The vault cannot see Kaspa, and USDT pays a blacklisted address. Four rules rest
 
 A bad quorum that broke them would still be capped by the release allowance.
 
+## Forged payouts are cancelled one by one
+
+Three stolen signer keys can queue forged payouts of any size above the release fee, thousands of them before a
+guardian's pause lands on a chain with fast blocks. The pause holds them all, and nothing leaves; but the vault
+cancels one payout per call (`cancelRelease`, `cancelRefund`, each an EMERGENCY operation with its 6 hour delay),
+and every one must be cancelled before any unpause, or it is paid to the thief afterwards (round 15, R15-OWN-1;
+Daybreak [42]). The
+vault's bytecode is not changed for this: a batch cancel is a new contract and a new audit.
+
+- **What the operators have.** Each monitor flags every queued payout an alarm names, a payout it failed closed on
+  included, with what it pays and to whom, and keeps it on its list until it has left the queue. `kusdt cancel-plan`
+  reads the whole list from the monitors' state files and writes the announcements and the Safe's transactions,
+  50 cancels to a transaction through the AccessManager's `multicall`: about 1.8 M gas to schedule and 3.4 M to
+  execute per batch. A thousand forged payouts are 20 batches each way, signed by the Safe's threshold. A monitor
+  takes the thousand announcements at the cost of one lookup each. Run again for payouts flagged meanwhile, it is
+  given the earlier run's `owner-calls.json` (`--scheduled`) and schedules only what is new, so no batch repeats a
+  scheduled cancel and reverts (round 16, R16-OWN-1); it still reads nothing from a chain.
+- **Payouts of kUSDT minted with nothing behind it** (since round 16, R16-PAY-6). Their burns are real, match and
+  are deep, so no payout alarm names them. While a mint alarm is open (`mint-mismatch`, `mint-without-deposit`, a
+  mint of a skipped or refunded deposit), every payout still queued that was seen since the bad mint was accepted
+  (by the monitor's view of it, with a margin) is flagged `after-unbacked-mint`. While INV-1 is short they are
+  flagged `after-inv1-short` from the oldest mint not yet checked, or all of them when every mint is checked, and
+  taken off again once the backing covers what is owed. While a mint fails closed unjudged (`mint-unjudged`, what a
+  mint of a nonce nobody deposited raises since rc.21), or the mints step fails closed, they are flagged
+  `after-unchecked-mint` from that mint (from the oldest mint not yet checked, for the step), and taken off again once
+  no mint that old waits to be checked and backed. This flags honest payouts too: the owners reinstate those
+  they cancelled (`reinstateRelease`, a GOVERNOR call, 48 hours). A mint the monitor never read (below its
+  checkpoint) has no time, so only INV-1 flags what it paid.
+- **What is left.** The cancelling work, hours to days of Safe signing for a thief who spent cents of gas on BNB
+  Chain, overlaps the 48 hour rotation (`setSigners`) a theft of three keys needs anyway. A payout no monitor
+  flagged (none of them saw it, or each was rebuilt and lost its list) is not on the plan: before the unpause the
+  owners also read the vault's `ReleaseQueued` and `RefundQueued` events since the theft and compare. And the
+  `flagged-payout-still-queued` alarm, raised the moment a vault runs again with a flagged payout still queued, is
+  the backstop, not a guarantee.
+- **Accepted for the launch** (14 November 2026): cancels go one payout at a time in the vault, 50 to a Safe
+  transaction with `kusdt cancel-plan`. A vault that cancels many at once would be a new contract and a new audit.
+  The operators practise `kusdt cancel-plan` on a test stack of their own (the local stack in
+  [Simnet](/developers/simnet/), or a testnet of their own): flag, plan, schedule, wait and execute.
+
+## The monitor's depth rule by total is a lower bound
+
+A signer chooses a payout's finality tier by the payout and what it first signed within the last hour (Finality). The
+monitor cannot read the signers' records. Since round 15 (R15-PAY-1) it judges by total all the same, and since round
+16 by when the signers could have signed each payout: after the payout's burn (or skip) was as deep as its own amount
+asks, and before the monitor first judged it queued. Of payouts of one kind on one vault that must all have been
+first signed within 45 minutes, one must be as deep as the tier of three fifths of their total. That catches a
+redemption split into small payouts by three keys. It asks for less than the signers do when payouts go to both
+vaults, refunds and releases alternate, or a payout was first signed long before the monitor judged it (a relay
+outage, a monitor that was down): such a payout is counted with no other.
+
+Round 15 counted by the vault's order and readyAt, and three honest events made it call an honest payout early and
+pause everything: a relay that failed and was tried again long after its signatures, with every signer up (R16-ST-2);
+a payout signed again and queued after one signed later (R16-FIX-3, R16-PAY-3); and a payoutDelay the owner lowered
+(R16-FIX-2, R16-PAY-4). The two cases this page named for round 15 (a signer that signed a payout early while the
+other two were down, a coordinator restarted long after it collected signatures) were of the same kind. None of
+them moves the bounds the monitor counts by now.
+
+What the rule still rests on, each of which could make it call an honest payout early if it failed:
+
+- The signers' records are whole. A signer restored from a backup holds its daily limits as spent (`fuseHoldUntil`,
+  or its own hold when its journal shows a lost record), so it signs nothing new until the hold ends.
+- The network makes at least 7.5 DAA a second over the hour: the 45 minutes are measured in DAA scores.
+- A signer's clock does not jump forward by many minutes between two signatures.
+- A burn's place in the chain does not move after its release was signed: a reorg that deep is an incident of its own.
+- The vault's signers are the ones the monitor knows. It counts the deployment's five, every address it read in the
+  vault within the window, and the new keys of a rotation announced in `expectedOwnerCalls`. A monitor started from
+  an empty state within an hour after a rotation, with neither the old keys nor the announcement, counts five.
+
+If `release-before-finality` or `refund-before-finality` names a payout whose burn (or skip) is real and was as deep
+as the signers' logs say it was when they signed, the operators acknowledge the alarm as false. Nothing is lost by it.
+
+## Every RPC must serve a deposit's own blocks when it is decided
+
+Since run 21 (R21-SIG2-1) a signer's mint and refund, and a monitor's check of a mint or of a queued refund, decide a
+deposit on what every one of the service's RPCs shows of it when asked, all of them at once, at the deposit's own
+blocks. The deposit cache (`<statePath>.deposits-<chain>.json`) only says where to look. Until then the cached records
+were compared, each given by its RPC at a time of its own: a lie one RPC told once, at the last scan that read the
+deposit's block, and another told days later, when the signer looked back for the record it lacked, agreed, and a mint
+and a refund of the lie were signed with no two RPCs ever lying at the same moment.
+
+What it costs: an RPC that no longer serves logs that old cannot vouch for the deposit, and the mint or refund is
+refused, saying `RPC k no longer serves the blocks of deposit N`; a monitor counts that check as unreadable and fails
+closed after `failClosedMs`. Later deposits of the chain then wait behind it, in nonce order. Honest ways a deposit gets
+old: a backlog behind the daily limit, or a minter paused for days. The guides already ask for RPCs that serve the
+vault's whole history (some free plans keep a few days of logs, and a BNB Chain node run with `--pruneancient` keeps
+about the last 90,000 blocks, some 11 hours); now that applies to every deposit still to be minted or refunded, for as
+long as the service runs, not only to a first start. `kusdt check` asks each RPC for the vault's first block and fails
+one that refuses it (run 21's review RV-E, P2). An RPC that disagrees now (`the RPCs disagree about deposit N: RPC 1
+shows ...; RPC 2 shows ...`) is wrong now,
+whatever the cache holds: replace it. A deposit no RPC shows where the RPCs' records put it (two lies about its block,
+told at different moments) is read by its own nonce on every RPC at once, and the records are replaced by what that
+finds (run 21's review RV-E, RVE-STUCK); until then it was refused until the cache file was deleted by hand. None of
+this was run against a real RPC.
+
+## A refund's deposit is read by its nonce while a monitor reads the history
+
+A monitor that has no deposit cache (a new state) or one of whose RPCs starts its scan over reads the vault's whole
+deposit history first. Until round 15 a refund queued in that time was never judged, and failed closed at two thirds
+of its wait, however honest (R15-PAY-3). Now that refund's one deposit is read by its nonce's topic, back from the
+finalized block, eight seconds a round for all such refunds together. At RPCs that answer a 5,000 block range in a
+few hundred milliseconds that is about a day of BNB Chain's blocks a round, so within the refund's wait a deposit up
+to some weeks old is found (much older on Ethereum, with its slower blocks). A skip's deposit is usually days old.
+One the read does not reach in time still fails closed, as before. Until round 16 those eight seconds were counted
+from before the history's own read of 20 seconds, so the read by nonce read nothing (R16-PAY-2); they now start with
+it, and once a round has found the history behind, its other refunds go straight to it. None of this was run against
+a real RPC.
+
+## Each mint must be judged within failClosedMs of being seen
+
+Since round 16 every open mint has its own fail-closed clock from when the monitor saw it, whatever keeps it
+unjudged (see [Monitor](/security/monitor/#each-mint-has-its-own-clock)). That closes the ways a forged mint was kept
+from a verdict for good (R16-MINT-1, R16-ONCE-1, R16-PAY-1, R16-FIX-1). It also means a monitor that cannot judge mints
+as fast as they come pauses everything, honest or not:
+
+- **More mints at once than its RPCs answer for in 5 minutes.** With its history read to its end, a mint's check is
+  one read of the vault on every RPC for each of its deposits (whether it was refunded). Since run 21 (R21-SIG2-1) the
+  deposit is also asked of every RPC again at its own blocks, and one such read, as many blocks as one getLogs takes
+  (5,000 unless a provider names less), takes in the deposits after it there for the rest of the round: a backlog costs
+  a read per window of deposits, not one per deposit. The window was 128 blocks at first, 58 s of BNB Chain, and
+  deposits further apart each cost a read of their own: 600 mints of three, 130 blocks apart, paused everything (run
+  21's review RV-E, RVE-COST). Until rc.22 those were read
+  one after another, about a second for a mint of three deposits at 300 ms an answer, so about 300 such mints could
+  be judged in 5 minutes. Since round 17 the reads for the mints next in line go out eight at a time (R17-ST-2): about
+  2,000 mints of three deposits at 300 ms an answer are judged within `failClosedMs` in the tests (since run 21's review,
+  282 s with their deposits 4 or 130 blocks apart, a window read once a round). A monitor back from
+  an outage (a crash, a reboot, its Kaspa node catching up) meets every mint made meanwhile at once, each seen when it
+  is read, so that is roughly the outage a busy bridge can take without a pause; a longer one with more mints than
+  that pauses everything. While a history is being read, each mint's deposit
+  is read near the head (on BNB Chain four requests of 5,000 blocks on every RPC) and, if older than two hours, by its
+  nonce back from the finalized block, or up from a lower nonce's deposit: a few seconds a mint, ten or more a round.
+  A monitor rebuilt from a checkpoint hours old, while it reads a long history, can meet more mints at once than that.
+  Take a recent checkpoint (the RUNBOOK says so); the alarm names each mint, and step 2 of "The monitor raised
+  `unverifiable` for a mint" in the RUNBOOK is what an operator does.
+- **An RPC that lags more than `failClosedMs`.** A mint whose deposit its RPCs do not show yet waits on its own clock
+  and fails closed after `failClosedMs`. A lag of seconds or a few minutes raises nothing, and nothing is judged
+  short meanwhile.
+- **INV-1 is later for a mint past the vault's count.** Such a mint stays out of INV-1 until its clock runs out, so
+  that an honest mint is not called short while every RPC lags alike (R16-FIX-4). A forged mint of a nonce no one
+  deposited is then stopped by its `unverifiable` at `failClosedMs` (5 minutes), and INV-1 a minute later; before,
+  INV-1 stopped it after about 150 s when it was larger than the backing allowed. Since round 20 (MON20-2) the public
+  is told meanwhile: from the first round the signal is not ok (`kUSDT minted for deposits not seen yet`), `/health`
+  answers 503 and the backing is not shown healthy; until rc.23 they said ok for those five minutes. An integrator that
+  honours the signal stops taking that kUSDT at once, while the pause waits for the clock. That pause comes well inside a
+  payout's 10-minute wait; the pool's sell cap (10 % of its KAS reserve an hour) refills by about 0.4 % of the
+  reserve in the extra two and a half minutes. That margin is the payout wait's: its kUSDT can be burnt, released and
+  queued within a minute or so of the mint, so with a wait the owner lowered (it may go down to 5 minutes) a pause at
+  `failClosedMs` could come seconds before the payout is paid (R17-PAY-2). `failClosedMs` must stay at most half the
+  wait, with a round, the pauses and a mined block (2.5 minutes) inside it too: the preflight check says so, a
+  mainnet monitor refuses to start on an announced `setPayoutDelay` it does not fit, and a running one says so on
+  `/health` when a vault's wait no longer fits. Lower `failClosedMs` first (RUNBOOK, "Changing the payout wait").
+- **A refund's skip older than a signer's own node keeps.** `kusdt record-skip` proves a skip on the signer's own node
+  (since run 21, R21-SIG-1), which keeps about four days once it has run that long and 30 to 42 hours after a fresh
+  sync. A signer that starts, or is rotated in or rebuilt, after that cannot record the skip from its own node; its
+  operator runs the command against an archival node (deploy/RUNBOOK.md, "A refund won't sign"). With fewer than three
+  signers whose followers saw the skip and no archival node, the refund cannot be signed.
+- **An RPC that reports a deposit under another transaction than before** is read again once a day at most, and a
+  second time within a day it is distrusted for a day: the chain fails closed after `failClosedMs` while that lasts,
+  and then the RPC's history is read again from the first block (since run 21, R21-SIG2-3). Take it out of `evmRpcs`.
+  That record is kept in memory, so a restart gives such an RPC its one reading again.
+- **Time away.** After more than 90 seconds without a round (a host that was off), each open mint's clock moves on by
+  the time away, so the time it went unjudged while the monitor ran still counts. Until rc.22 it started again at the
+  start, and a monitor that kept restarting, a few minutes up and more than 90 s away each time, never counted a
+  forged mint past the vault's count, on its clock or in INV-1 (R17-DIFF-1). The time from the monitor's last finished
+  round to its start counts as away, so one that dies inside long rounds and comes back each time delays the alarm by
+  the time it spends that way; one that finishes no round at all is a `crash-loop`. Since round 30 a catch-up after
+  time away, and a time offline, are held the same way: a mint seen then gets its whole clock once the monitor guards
+  again ([below](#a-monitor-whose-own-network-is-cut)).
+- **A reorg that drops a mint and accepts it again.** The mint comes back with the record it had: its first sighting,
+  its clock and its verdict (R17-MINT-1). Until rc.22 it came back as a mint just seen, so a miner who could reorg it
+  every four minutes kept a forged mint from any alarm. The records of dropped mints are kept for a day, 1,024 at
+  most; more than that at once is no honest network, and the monitor fails closed (`mints-dropped-full`) rather than
+  forget one.
+
+None of this was run against a real RPC; the tests use stand-in RPCs on a faked clock.
+
+## A governance action credits the mint allowance only up to the age its signers signed
+
+The mint allowance refills with the age of the minter's own UTXO, and every spend of the minter starts that age
+again. A mint signs the age it claims, so nobody can change it. Since rc.16 a governance action (an unpause, a
+change of limits or signers, a skip, a recovery proposal or veto) signs its age too. Before rc.16 it did not, and
+anyone who saw a governance transaction before it was accepted could send a copy that claimed a smaller age and
+threw the built-up allowance away. That is closed: a copy that claims another age fails the signature check.
+
+What remains is smaller:
+
+- **The time after the signed age is not credited.** The signers sign an age a little below the UTXO's age when they
+  sign (the tools leave a margin of 600 DAA, one minute), and the action lands later. The allowance that refills in
+  between, minutes to hours of it, is not credited. When the signed age already covers a full refill, nothing is
+  left out.
+- **An action signed for age 0 credits no refill.** A rotation of the signers, a recovery proposal and a veto are
+  signed for age 0 unless the signers say otherwise, and any other action can be: a signed age is also a wait,
+  because a transaction is valid only once the minter UTXO is that old, and a spend of the minter between signing
+  and sending makes a new UTXO at age zero. After an action at age 0, a large deposit can wait for the refill, up to
+  a day for a full allowance.
+- **An action signed for an age above 0 can be delayed.** Each spend of the minter starts the UTXO's age again, and
+  while spends keep landing closer together than the age signed, the action cannot be sent. It is not voided. The
+  spends can come from outside the team: every deposit leads to a mint and anyone can make a deposit (it costs a
+  deposit each time), and whoever holds three signer keys can mint one unit at a time, or propose and veto a
+  recovery in turn. That is why the actions that answer a theft of keys default to age 0, which nothing can delay.
+  For the others (an unpause, new limits, a skip, the minter's deposit) the signers pass `--age 0` when mints are
+  flowing. Holding mints on the coordinator stops only the coordinator's own new mints.
+- **A guardian pause credits nothing for the time before it**, and a recovery carried out credits nothing for its
+  72-hour wait. Those two steps claim no age at all: a pause must never wait on a clock, and a recovery has no
+  signers to sign an age.
+
+In each case mints wait until the allowance has refilled. Nothing is minted, moved or lost.
+
+## A lowering setValue pays its freed KAS to whoever sends it first
+
+The minter holds a deposit of the operators' own KAS (5 KAS at genesis), and a `setValue` signed by four signers sets
+its size. The minter's script pins only the new size, and the signers sign the action, not the transaction (run 20,
+RT-1, found with Kaspero Labs' red-team tool and reproduced under consensus; Daybreak [48]). So when a `setValue`
+lowers the deposit,
+the KAS it frees goes to whoever builds the first transaction a block takes with those signatures: anyone who sees
+the signed action before a block can send it with the freed KAS paid to themselves.
+
+The most this takes is the operators' own minter deposit: no user money, no kUSDT, and nothing else about the minter
+changes (its new size is the one signed). `govern-submit` sends a lowering straight to the nodes that build block
+templates named in its config's `kaspaSubmitRpcs` first, where it waits the least time for a block, and says what is
+at stake; a node that relays it still shows it to others, so this shortens the race and does not close it. The way to
+close it, signing where the freed KAS goes, is a change of the minter's covenant, and that is the owner's decision.
+Until then: lower the deposit rarely, and by little.
+
+## The coordinator keeps everything in memory
+
+The title is the old one, and no longer the whole truth (corrected in round 12). Since rc.16 the coordinator moves
+closed records out of its state file into an archive folder beside it (`<statePath>.archive`), which is on disk
+only: a redemption that was paid or can never be paid, and a deposit that was minted or refunded, once no reorg the
+journals cover could bring it back. And its index of kUSDT outputs for wallets holds at most 200,000 outputs: past
+that the smallest leave the index and are not listed by `GET /tokens`, though they stay spendable by a wallet that
+knows their state (`/health` says when the index is full). Mints and payouts never read that index.
+
+What still lives in memory, and grows with use:
+
+- **Open records.** A deposit not yet minted or refunded, a burn not yet paid, a refund record, and up to 2,000
+  burns too small to pay their own fee (past that the smallest are archived). Each open burn costs whoever makes
+  it the KAS under it, and they are paid and closed as fast as the release allowance lets them.
+- **The index of 200,000 outputs**, about 170 MB of the 768 MB the coordinator is given.
+- **The index of 50,000 liquidity positions** (since round 15), about 37 MB, in a file of its own beside the state
+  file. Anyone can make positions: every pool `add` makes one, of a single share if its sender likes, with about
+  0.2 KAS under it that `remove` gives back. Unbounded and in the state file, some 500,000 of them took the
+  coordinator's heap. Past 50,000 those with the fewest shares leave the index and are not listed by `GET /positions`,
+  which then says `truncated` with the shares at or below which positions may be missing, and `/health` warns. They
+  stay their holder's to redeem with a wallet that knows them; pushing a real position out takes 50,000 positions of
+  more shares each. Mints, payouts and the pool's own following never read the index.
+- **A look-up in the archive reads the last 8 MB of one file.** A record older than that in its file is on the disk
+  and no longer found by the API: by the project's own arithmetic that takes about two million redemptions. Nobody
+  outside can aim records at one file: which file a record lands in depends on a random salt in the folder's
+  `meta.json`. The API process has to read that salt to look records up, though (since round 14 it reads it again
+  whenever `meta.json` changes, so it follows a folder the coordinator set aside and started again). Whoever takes
+  over the API process can therefore choose burns, senders or Kaspa owners whose records all land in one file (some
+  256 tries each, offline), and with some ten thousand such burns or deposits, each paid for on chain and closed, push the
+  older records of that file out of the 8 MB a look-up reads. Those records are then answered as not found
+  (`pending` or 404) and a sender's or owner's archived list says it is `cut`; a paid burn reported again is looked
+  up in the vault once more, found paid, and nothing is paid twice. Nothing is minted, paid or stalled. What an
+  operator does after such a break-in, with the coordinator stopped: rebuild the API process's machine or container
+  as after any break-in, and to give the salt's protection back, move the archive folder aside; the coordinator starts
+  a new one with a new salt, and the old folder's records stay on the disk, found by hand (`grep` for the burn's
+  transaction id or the sender in its files) until it is put back.
+
+The earlier figure (about 250,000 burns of one base unit exhaust its memory) was the state before the archive. With
+it the figures above are the code's own bounds; none was measured under load on a running coordinator. No funds are
+at risk either way: the coordinator holds no key that moves them. Since rc.16 it no longer records burns that could
+never be paid (empty ones, and states with borrowing or an extension).
+
+The monitor has a smaller form of the same limit: it keeps a record of every real burn for good. A record of an
+output that only looked like a burn is dropped once that output is spent.
+
+A signer keeps its book of burns (at most 20,000 records, 6 to 8 MB) inside its state file, and that file is
+written whole. Until round 12 its follower wrote it every two seconds, changed or not. Now the follower writes it
+when what it read changed something (a burn, a move of the minter, a reorg) and otherwise every five minutes. A
+signature still writes the whole file before it leaves the signer, and so does every pass that read a burn: with a
+full book that is megabytes a write. The book stays in that file on purpose: the records and the follower's
+position must be on the disk as of one moment, which one file gives and two would have to be made to give.
+
+## An address that holds too many coins cannot be listed
+
+A Kaspa node (kaspad 2.1.0) answers the coins at an address all at once or not at all. It has no call that lists
+them a page at a time, and none that answers about one output. Anyone can send an address coins. The services take
+at most 100 MB of such an answer, about 246,000 coins, and refuse a longer one before any of it is in memory. So an
+address that holds more can no longer be read by them, for as long as the coins stay there. Filling one costs
+whoever does it the coins for good: by the project's own arithmetic at least 0.1 KAS a coin, some 25,000 KAS, and
+hours of the network's block space. That was not measured on a network.
+
+Since round 11 this no longer stops a payout or pauses the bridge:
+
+- **A burn at such an address is still paid.** The address of a burn is fixed by its amount, chain and recipient,
+  and nothing can ever be spent from it, so coins sent there stay for good. Each signer and the coordinator also
+  keep the burns their own followers read from the transactions the chain accepted, with the block that accepted
+  each, and take a burn from that record when its address cannot be listed. A signer still signs only for a burn
+  that is final on its own node, and checks on the spot that the block is still on its node's chain.
+- **The minter and the pool are still followed.** A monitor that cannot list the minter's or the pool's own address,
+  or since run 21 (R21-MON2-3) whose node does not answer a read of it in time once it has read it crowded (a hundred
+  thousand coins and more can take longer than a call's 20 seconds: up to rc.24 that failed the monitor's step and
+  paused everything after `failClosedMs`; a read that fails at an address the node has not read crowded still fails
+  closed, as for a node that is down),
+  says so on `/health`, with the address, and pauses nothing. It follows both through every accepted transaction
+  as before. A read that runs out of time where the monitor has not yet read the address crowded still counts as
+  failed, and pauses everything once reads have failed for `failClosedMs`: its first read after a restart, or a next
+  state someone filled in advance so that the node's very first read is already too slow (kept so on purpose: it looks
+  the same as a node that is down, R21-MON2-3).
+- **A refund is still signed** (since run 21, R21-SIG-2). A signer signs a refund once it sees its follower's minter
+  unspent on its own node, and until run 21 a minter address too full to list failed every refund, as no refusal,
+  until the minter moved; the address a skip at age 0 moves the minter to is known before it lands. The follower's
+  own record stands in then, as for a burn: the chain block it last read must be on its node's selected chain, and
+  so must the block of its newest minter move while the node holds it. No later move can undo the skip a refund
+  rests on: the minter takes each chain's deposit nonces in order.
+- **The coordinator's API no longer reads the pool's address** (since rc.18). Round 12 found that it still did, for
+  every `GET /pool`, in the line its mint and release loops' reads wait in: with the pool's address filled, one
+  request a second kept that line growing, and nothing was minted or released until an operator stepped in. `/pool`
+  now answers the pool output's age from what the coordinator's follower saw accepted, which it keeps in its state,
+  and everything else the API asks the node goes over connections of its own.
+
+**The launch check finds the genesis there too** (round 12). `mainnet:verify` used to list the whole address of
+the initial minter and of the initial pool, and about 158,000 coins sent to either made it fail for every operator,
+at the launch and in every later run. It now asks for the one output, and where the address cannot be listed it
+proves the output from the transactions the chain accepted since the launch's `scanFrom`: accepted with the
+expected script, covenant ID and value, and not spent by any accepted transaction up to the tip.
+
+**Execute finishes the launch there too** (round 13, R13-OWN-1). The genesis minter's address follows from
+`plan.json` alone, so it is public as soon as the plan goes to the operators and reviewers, days before the launch,
+and anyone can fill it first. `mainnet:execute` still listed each step's output address whole, and with the minter's
+address filled it never got past the genesis: every rerun waited for the same genesis and failed the same way. It
+now reads through the services' own node client and, where an address cannot be listed, proves the step's output
+from the transactions the chain accepted since a chain block it recorded before the send, as verify does. A deployer
+address filled past what can be read is the one case it cannot get past alone: it then sends nothing and asks the
+operator to name fresh coins (`--kaspa-funding`), each proven from the chain before it is spent.
+
+What is left, until a kaspad release has a paged read:
+
+- **Execute's proof needs the chain since the step's recorded block.** A node keeps about 30 hours. A stopped
+  execute rerun later than that, at a filled address, cannot prove its step: it says so and sends nothing new, and
+  the way on is a node that still keeps the block (an archival one). None of it was run against a node holding that
+  many coins.
+
+- **Verify's proof needs the chain since `scanFrom`.** A node keeps about 30 hours. An operator who runs the
+  launch check later than that on a filled address gets a line that says the output could not be looked for: a
+  FAIL at the launch, a warning in a later run (`--launched`), never a pass. The read takes about a minute per hour
+  of chain and is given 15 minutes unless told otherwise; none of it was run against a node holding that many
+  coins.
+- **A coordinator started from a checkpoint asks its node once for the minter's DAA score**, by listing the
+  minter's address. At a filled address it cannot, and it uses the checkpoint's own score, within what a full
+  refill needs. With a full allowance, as at genesis, that is no age at all and the mint goes through. A checkpoint
+  whose score is too low, or that has none, at an address filled past 246,000 coins, gives a coordinator no age to
+  count (or too much) until the minter moves, and a batch larger than the allowance left is refused for that long.
+  Until rc.18 the monitor's checkpoint, the usual one to rebuild a coordinator from, had no score at all, so this
+  took no wrong file, only a filled address at a rebuild (round 13, R13-MINT-2). Since round 13 the monitor keeps
+  the score the coordinator keeps (the DAA score of the block that accepted the minter's move), so both services'
+  checkpoints carry it; a coordinator that starts with no score and cannot read the address says so once in its
+  log, and `kusdt check` warns. What is left: a checkpoint taken from a monitor of rc.18 or older, or edited by
+  hand, while the minter has not moved since. The operator copies `initialMinter.utxo.blockDaaScore` from the
+  checkpoint of a monitor of this version that followed the minter's last move itself.
+
+- **A signer that never read the burn's block has only the UTXO set.** That is a signer started from a checkpoint
+  taken after the burn, one that went on from a checkpoint after more than about 30 hours away, or one whose book
+  of 20,000 records pushed the burn out. For a burn at a filled address it refuses, and never guesses. Three
+  signers that did read the block are enough. Operators keep it that way by restoring a signer from its state backup
+  (its records come with it) instead of starting it from a fresh checkpoint while burns wait unpaid.
+  Pushing a burn out is not one signer's bad luck: every follower reads the same transactions and trims its book by
+  the same rule, so an outsider who pushes a burn out of one book pushes it out of all of them at once (round 15,
+  R15-ST-1). Up to rc.19 any P2SH-owned kUSDT output counted, and 21,001 outputs of the outsider's own script, of the burn's
+  amount, spent back afterwards, were enough. Since round 15 a record whose transaction's payload names it as a burn
+  (its owner is the burn owner of the payload's chain and address) goes after every other record. Pushing such a burn
+  out takes 20,000 larger real burns, kUSDT destroyed for good, held unretired at the same time. The coordinator
+  never trims a record that a waiting claim names, by its first state or any other the claim's output has (since
+  run 21; a false first claim used to take that away, R21-IDENT-1, and as many larger burns could push it out,
+  Daybreak [40]). What is left: a burn with no payload (a wallet always writes one; a hand-made transaction or a
+  deposit that names a burn owner has none) is protected in the coordinator's book once its owner gives the
+  preimage, but not in the signers' books, which learn the chain and address only when asked to sign. Such a burn
+  at a filled address can still be pushed out of every signer's book by outputs of the burner's choosing, and then
+  waits for good (Daybreak [40]). Once a signer has signed a burn's release, its book keeps that burn with the named
+  ones until the
+  payout is paid (round 17, R17-PAY-1; up to rc.22 a release signed over a week before went first, paid or not).
+- **A monitor that has no record of the burn fails closed, and an outsider can make it.** A monitor looks for a
+  burn it has no record of in the UTXO set when the release is queued. If that address cannot be read for two
+  minutes it raises `unverifiable` and everything is paused: with three stolen keys an attacker chooses the address
+  a forged burn is looked for at, so "cannot read" must not pass. It takes no keys to set this off, though. Equal
+  burns (one amount, chain and recipient) share one address, so one filled address serves any number of burns.
+  Anyone can fill it once, make small burns of exactly that state with no payload now and then (they are real
+  burns, the signers keep them in their books, and nothing pays them until someone asks), and later ask for one to
+  be paid. The signers sign, as they should. A monitor without that burn's record then pauses the bridge: both
+  vaults for at least their unpause delay, the minter and the pool until 4 of 5 unpause them. One planted burn, one
+  pause, for a release fee each, until that monitor has the records.
+
+  Since round 12 a monitor gets them. A monitor's checkpoint, asked with its operator bearer, lists every burn it
+  knows that no vault has paid (`initialBurns`), and a monitor started from that checkpoint, or going on from it after a gap, takes the list in
+  and judges a release against it by owner, amount and depth without needing the address. It still asks the UTXO
+  set while the release waits: a node that answers "not there" ends the record, and the release is
+  `release-without-burn`. What is left:
+  - a monitor that already runs from an older checkpoint has no list. A list is taken only with its own
+    checkpoint: the operators rebuild that monitor from a fresh one, or restore its own state backup (the runbook);
+  - a checkpoint lists at most 20,000 burns, the largest first, and says how many it left out (`burnsLeftOut`).
+    Whoever holds that many larger unpaid P2SH-owned kUSDT outputs at one time pushes the small ones out of the
+    list. A monitor's own state backup leaves nothing out;
+  - in a running monitor's book (20,000 records) the listed burns, the burns a payload names and those a mint made
+    go last (since run 21); a burn made by hand with no payload can still be pushed out by more than 21,000 larger
+    outsider states, and its release, at a filled address too, then fails closed (`unverifiable`, a full pause);
+  - when every monitor was rebuilt after a burn was planted, no monitor has its record. The operators check such a
+    burn by hand and add it to the list themselves (the runbook);
+  - the list is the operators' word, like the list of skips: an entry that is not a real burn would let a forged
+    release for it pass that monitor while the address cannot be read. It comes from a monitor the operators run.
+- **A monitor that went on from a checkpoint after a long gap forgets the burns it had read last.** A reorg just
+  below its old position went by unread, so it keeps only the burns that were already deeper than the deepest
+  finality tier (an hour) when it stopped, and asks the UTXO set about those too while a release waits. The rest
+  come back with the checkpoint's list. The signers and the coordinator forget all of theirs in that case.
+- **A refund at a filled minter address rests on the signer's own record** (since run 21, R21-SIG-2: until then no
+  refund was signed while the minter rested there). A signer whose record cannot stand in (its follower's cursor a
+  block its node no longer keeps, a reorg not yet settled, or the block of the minter's last move off its node's
+  chain) refuses the refund until the minter moves to a new address, with any mint or governance action.
+- **A governance action at a filled minter address needs a node that still keeps the chain back to the coin.** A
+  paused minter moves only by governance, and its next address is known in advance, so anyone can fill it, and with
+  three stolen keys the address after their own recovery proposal. Until run 20 (D6-1) no unpause or veto could then
+  be submitted. Since then `govern-submit` and `recovery-execute` prove the coin from the transactions the operator's
+  own node accepted, read from a chain block before the coin was made, and build on nothing else. The operators' nodes
+  keep about 4 days of chain (30 to 42 hours without the packages' retention setting): an older coin needs an archival
+  node. A veto falls within the 72-hour wait; `recovery-execute`, whose coin is at least 72 hours old, needs to run
+  within about a day of the wait ending at a filled address, or an archival node. Veto at once.
+- **A service's own address.** The coordinator's funding address and a monitor's guardian address are read whole
+  once (the services keep their own coins from then on), and again when the coins kept are in doubt or run out.
+  Past about 246,000 coins no read takes the address, and nothing in the services or in a wallet can list those
+  coins, so nobody can compound them: below that, the operator can still compound them into a few with the key. A
+  monitor whose guardian address is filled before its first read has only the coins it sees paid to the key after
+  its cursor, and its operator funds it with a new payment (the coordinator's case is in the runbook, "can't be
+  read, so nothing is minted").
+  Until rc.18 a monitor whose list of guardian coins was in doubt paid a pause only from a read of the address,
+  and any pause the node refused for a missing input put the list in doubt, also when the missing input was the
+  pool or minter coin, which anyone can make happen by moving the pool. At a filled guardian address that stopped
+  every Kaspa pause of the minter and the pool, on every monitor, for good (round 13, R13-SURF-1). Since round 13
+  a read that fails falls back to the coins kept, a refusal whose state coin has moved on puts nothing in doubt,
+  and one whose state coin had not moved takes out only the guardian coins that pause spent. Since rc.22 not even
+  all of those: only a coin known to be gone (a block the monitor fetched spends it, or its follower read the spend)
+  leaves the list, and the others are set aside until the address is read or ten minutes pass, so two monitors on
+  one guardian key whose pauses race no longer forget each other's honest coins. What is left: a
+  monitor with no coins kept (none was ever paid to the key after its last good read) and a filled address sends
+  no Kaspa pause until its operator sends the guardian a coin. `/health` says the address could not be read once
+  a read failed; nothing reads it to find out sooner, as that read is the one the record exists to avoid. The
+  operator's way out for good is a fresh guardian key (deploy/RUNBOOK.md, "A filled guardian address").
+  The pool keeper's address is kept the same way since round 13. Until then the keeper read it for every tick, and
+  once anyone had filled it every tick stopped while its `/health` answered 200 (R13-SURF-3); since then its
+  `/health` answers 503 with the reason when a due tick cannot go out for a minute, or its rounds have failed for
+  that long. Its operator can also give it a new key.
+- **What a wallet is shown, and what it can spend.** kUSDT Wallet and the web app run in a browser, which takes a
+  node's answer whole: they read at most 64 MB of one, about 158,000 coins (some 16,000 KAS to fill an address, by
+  the same arithmetic), and on a slow line a list times out well before that. That is below the services' 100 MB.
+  The public resolvers that hand out a node only answer its address, and since run 21 (Daybreak [4]) that answer is
+  read up to 16 KB, never whole, so a resolver can't fill the page's or the wallet's memory; a node's own answers
+  still arrive whole, as no script in a browser can bound a WebSocket message before it is taken. A
+  kUSDT state's address follows from its owner and its amount, so an outsider can fill the address of a state a
+  holder has, or send a holder a dust state at an address filled beforehand.
+  Until rc.18 one such address took all of that owner's kUSDT out of kUSDT Wallet and out of the web app with
+  KasWare: they asked the node for all of the owner's state addresses in one call, it failed, and with it the
+  balance and every send, redemption and sale. No shipped wallet could spend a state its node could not list.
+  Since rc.18:
+  - **The rest of the holder's kUSDT is not affected.** When the one read fails for its length or for time, each
+    address is read on its own. An address that could not be listed is not asked about again for ten minutes (one
+    minute after a timeout), one look reads at most 64 addresses on their own, and at most 64 such addresses are
+    remembered: whoever fills addresses does not decide how much the wallet reads.
+  - **The kUSDT at the filled address is shown apart, as not checked,** and is not in the balance. In kUSDT Wallet's
+    Send a box spends it: the transaction is built on the wallet's own record of the state (what its node showed it
+    before the address was filled, or what its own transaction made) or, where it has none, on the coordinator's.
+    A wrong record costs nothing: every output is still built by the wallet from what you approve, and a Kaspa
+    signature commits to the spent output's script and amount, so the node refuses the transaction unless the state
+    is there exactly as recorded. What is kept from such a send goes to a state of another amount, so to another
+    address. The wallet never chooses such a state by itself, never builds the pool on an unchecked state, and
+    never offers a state the node says is absent.
+  - **The wallet keeps its own record of its states** and looks for them on the node beside the coordinator's
+    list. Since
+    rc.19 what the wallet's own transaction spends stays in the record, marked, so the input of a pool transaction
+    that lost the race is still there. Since the deep round of the second outside review of rc.22 (D4-1) it stays
+    until the node shows it spent (three looks a minute apart that do not find it), not only until its transaction
+    is seen accepted: a transaction a reorg drops for good gives the input back, and the wallet shows it again. One
+    the node still shows unspent an hour after it was marked is the user's again (its transaction never landed); one
+    the node cannot show at all goes after the hour, and is never offered as not checked while marked. Change that
+    waits in the mempool is kept while its transaction waits; and looks less than a minute apart count as one, so a
+    site asking for balances often does not age the record. The coordinator's token index undoes a dropped block's
+    changes too, since the same round: its journal is described in the Coordinator API page.
+  - **The coordinator answers past its own 100 MB too** (since rc.19). Above 100 MB at one address it cannot read
+    the address even coin by coin. Until rc.19 `GET /tokens` then failed for that owner, for good, since nothing
+    removes the coins, and a wallet with no record of its own (a new install, another device) showed none of that key's kUSDT and could send none of it. Now the coordinator reads
+    the owner's other addresses as before, answers their states, and lists its own records of the states at the
+    full address apart (`unread`: outpoint, state, the KAS the coin carries). It does not ask the node about such an
+    address again for ten minutes. A wallet treats those records as states its node cannot show: apart, not in the
+    balance, and in kUSDT Wallet spent only with Send's box ticked, when the node judges them.
+  - **What became of the wallet's own pool transaction is asked by its id** (since round 15, R15-CL-4). Until
+    then kUSDT Wallet listed the mempool at the addresses the transaction pays, its own among them, which anyone
+    can fill with transactions no block takes: every look was "not known", a swap that lost the race for the pool
+    was reported as sent and not tried again, and what it held stayed out of use for ten minutes. A mempool read
+    that fails no longer stops a look; a lost race is still believed only on two looks in a row. The UTXO set is
+    still read at those addresses: an address filled with real coins (which costs their KAS, paid to the holder)
+    still makes the outcome "sent, not confirmed", and the ten minute mark frees what it held.
+  What is left:
+  - **kUSDT received while the coordinator cannot answer at all is not shown** (its node down, or its budget
+    used up), because the wallet learns of new states from the coordinator. It is not lost: it shows once the
+    coordinator answers again. A full address no longer stops it from answering.
+  - **A sale or a liquidity deposit never takes an unchecked state.** Send a part of it to your own address first:
+    both new states then sit at other addresses.
+  - **A liquidity position at a filled address** is listed as not checked, from its record, and can be removed:
+    the node decides, as for a send.
+  - **The pool at a filled address** is not traded with by any wallet: they refuse a pool they could not check, and
+    say why, and a provider cannot withdraw through one either (Daybreak [45]). It ends when a transaction changes
+    the pool's state
+    (its address follows from the state alone), which a wallet's swap cannot do there. The keeper's tick does it
+    while the keeper is armed and more than half of the cap is in use: each tick then lowers the count. Since round
+    13 the keeper reads no address for that; until then it read the pool's address in every round while armed, and
+    past about 246,000 coins it sent nothing while its `/health` answered 200 (R13-ST-1). Otherwise an operator moves
+    it by hand (runbook, "An address holds too many coins"): a tick while more than half of the cap is in use, else a
+    small buy of an amount nobody can guess, built from the coordinator's view of the pool without reading the
+    address. A tick is no way off a pool whose breaker has settled (nothing in use, its reference at its reserve):
+    that pool comes out of a tick unchanged, at the same address, and whoever filled that one address holds the pool
+    there until someone sends the buy. A paused pool takes neither: only its admin moves it (an unpause, or a key
+    change to a new admin key). Until an operator acts, every swap, deposit and withdrawal waits. No funds are at
+    risk, and mints and payouts are not affected.
+  - **The pool's kUSDT reserve at a filled address** no longer stops a wallet (since run 21, R21-POOL-1). The
+    reserve is a kUSDT state at an address of its own, which follows from its amount alone. Up to rc.24 wallets and
+    the web app listed that address to check the reserve with the pool, so a filled one stopped them as a filled pool
+    address does, and neither a tick nor a trade ended it for good: a tick leaves the reserve as it is, and a buy
+    lowers the reserve's amount by exactly the kUSDT bought, a sell raises it by exactly the kUSDT sold. Anyone could
+    trade the reserve back to the filled address after every move of the operators, chained onto their move while it
+    was unconfirmed, and keep every wallet off the pool for as long as they liked, for about 0.07 KAS and the swap
+    fee a round (shown in the covenant engine, `bridge/kaspa/tests/r21_pool.rs`). The runbook's way off it, "a small
+    buy ... so the reserve gets an address nobody could fill in advance", did not hold. Now the coordinator serves the
+    body of the transaction that made the reserve (`GET /pool/made/:txid`, for the id `GET /pool` names, the payload's
+    digest in place of the payload), and kUSDT Wallet and the web app prove the reserve from that body, checked against
+    its id, and the pool coin found on their node, when that transaction also made the pool coin: then they do not list
+    the reserve's address. That is so after every trade and every change of liquidity, so after every trade back to
+    the filled address too. The proof rests on the pool covenant: kUSDT moves only beside a pool entry that observes
+    it, and that entry makes the reserve's successor as the transaction's first kUSDT output. After a tick or a pause
+    the reserve was made before the pool coin: its body says what that outpoint held, not that it is still there, so
+    the wallets list its address as before and take the body only when it cannot be listed. What is left:
+    - A coordinator that has not followed the reserve's last move (started from a checkpoint, or after a reorg that
+      undid the move) has no body for it: wallets list the address as before until the reserve next moves, and a
+      small buy by hand moves it (runbook, "An address holds too many coins").
+    - Wallets and web apps of rc.24 and older always list it. While someone keeps trading the reserve back, the
+      guardian's pause chained right behind the operators' buy keeps the reserve off the filled address: a paused pool
+      takes no swap and no new liquidity, so from the buy on the reserve only goes down, with withdrawals, which stay
+      open. Swaps then wait for the admin's unpause.
+    - While a reserve made before the pool coin sits at a filled address, its body is taken on the coordinator's
+      word that the outpoint is still there: a coordinator that lies can name a spent or never-made one, and the
+      wallet then builds and signs a transaction the node refuses. Nothing is lost.
+    - The covenant itself cannot keep the reserve off a filled address: the reserve's state holds nothing but its
+      amount. A per-move nonce in it (a hash of the pool outpoint it was made beside, say) needs a new pool covenant.
+
+    Up to rc.24 no service listed the reserve's address, so none warned of it: the first sign was the wallet's
+    message (second outside review of rc.22, D6-2). No funds are at risk, and mints and payouts are not affected.
+- **The pool's age, on a coordinator that did not see the pool's output accepted.** That is a coordinator on its
+  first start after an upgrade from before rc.18, one started from a checkpoint, or one after a reorg that undid a
+  pool move, and only until the pool next moves. It learns the age by one read of the pool's address. If that
+  address holds more coins than can be read, `/pool` answers `poolDaa: null`, which claims no age: a quote made
+  from it counts no refill of the breaker's room, and while more than half of the cap is in use a pool transaction
+  built from that answer alone cannot be sent (`readyAtDaa` is `null`). Any accepted pool transaction that changes
+  the pool's state moves it to a new address and ends it (above: not a wallet's swap there; the keeper's tick, or one
+  built by hand with the age the keeper's follower holds or an explorer shows). No funds are at risk, and mints and payouts are not affected. This case
+  was tested against a stand-in node only.
+- **A burn without a payload, on a coordinator that did not read its block,** is confirmed only from the UTXO set.
+  At a filled address its claim comes to nothing there. Wallets always attach the payload; a burn made by a deposit
+  that names a burn owner never has one (above, "A burn's payload can be missing").
+
+## A flood can take the public answers down, and the machine's network with them
+
+Until round 12 the coordinator's API and the monitor's status were answered by the same process, on the same
+thread, as the loops that mint and pay and the rounds that judge and pause. A flood from very many addresses at once
+cost those processes the handling of every request, whatever was counted per address, and a monitor that could not
+finish its rounds for five minutes failed closed and paused everything.
+
+Since the work after round 12 they are answered by processes of their own, each in its own container: `kusdt api`
+from the files the coordinator writes, `kusdt status` from the files the monitor writes, both through read-only
+mounts. The coordinator listens for nobody outside its own container and fetches the burn claims from the API
+process itself, at a rate it sets; the monitor's own listener takes the operator bearer for every request. A flood
+of requests now costs the API process or the status process, and at worst takes the public answers down. It costs
+the coordinator and the monitor nothing: no request is handled, parsed or refused by them. What is left:
+
+- **The machine's network.** The processes share a host, its network card and its bandwidth. A flood large enough to
+  fill the link to the machine also slows what the coordinator sends to the signers and the chains, and what the
+  monitor reads, as it would for any service on that machine. That is the hosting provider's protection to give (a
+  provider that absorbs floods, or a CDN in front of the public names), not the software's. The mainnet packages put
+  the coordinator and the monitor each on a machine of its own with their public process; the monitor's public name
+  can sit behind a CDN without changing anything for integrators.
+- **The machine's CPU and memory, with the shipped limits.** Each public process has a CPU and memory cap of its own
+  in the compose files, below the machine's, so it cannot take the money processes' share; an operator who removes the
+  caps removes that. That includes Caddy, which ends every public TLS connection: one CPU (run 21, I-5), with
+  `GOMAXPROCS` set to match so the Go runtime schedules no more threads than the cap lets run (round 18, R18-PUB-3;
+  until then Caddy had a memory cap only, and a flood of handshakes could take every spare core). The Kaspa node has
+  a cap too since run 21 (`KASPAD_CPUS`, 4 cores by default). Until round 15 the coordinator's package gave its
+  containers 16.25 GB in all on a 16 GB machine
+  (R15-PUB-4), so a flood could still reach the node through the host's memory. Now they add up to 15.25 GB (the node
+  12 GB, the coordinator 1 GB, the API process 1.5 GB, Caddy 768 MB for the bodies it holds whole since run 21), and the API process's share is sized for what
+  it holds at its bounds: the token index and the positions twice while it reads one again, the owners' answers and
+  two node answers. A node given more (`KASPAD_MEM`) on the same machine overcommits it again; the 12 GB for the node
+  is not yet measured on mainnet.
+- **What a wallet is told while the coordinator is away.** The API process says so rather than answer from an old
+  copy: past 15 seconds without a new copy `/health` is 503 and `/pool` refuses with `retryAt`, and a burn claim is
+  refused at once (a burn is still found on the chain). The other answers are as of the coordinator's last save,
+  which was always a few seconds behind what it knew. A fresh copy of a coordinator that is not following is judged
+  by the followers' own ages, which the copy carries since round 15: `/pool` refuses once the Kaspa follower has not
+  seen its node move on for 60 seconds or lags it by more than 600 DAA, and `/health` is 503 for that and for a chain
+  not read in full for five minutes. Since round 16 a scan counts as moving on only while the node calls itself
+  synced and keeps a tenth of the network's pace, and a chain whose reads go through is still said to be stuck once
+  its lowest head across the RPCs has not risen for five minutes or one RPC has trailed the best by over two minutes
+  for five. The node's own word on being synced allows a sink up to about ten minutes old (kaspad's rule): a node
+  catching up from less behind than that, with its peers, is counted as current, and `/pool` can then be that far
+  behind until it catches up (a swap built on it fails at the node, nothing more). Otherwise the pool state a wallet is handed can be up to about a minute behind the
+  chain at the worst (the 15 seconds of the copy and the 60 of the follower do not add up: the follower's age already
+  counts the copy's); a swap built on a state that moved meanwhile fails at the node, as one did before. The records
+  (`/status`, `/deposits`, `/redeems`) are not refused on these grounds: they say what the coordinator knows, which
+  is what a stalled coordinator acts on.
+- **The public answers' own limits, unchanged.** Each address gets 240 requests a minute, owners' reads and the
+  archive's are held to budgets of time, and a wallet can be shown a list of its outputs that is up to a minute old
+  (marked `stale`), or be told to ask again (`retryAt`). These now protect the API process's answers, not the money.
+- **The node the API process asks.** The API process reads the coordinator's Kaspa node over connections of its own,
+  in a line of its own, so a request never makes the coordinator's reads wait. A read of an owner's address still has
+  the node build the whole list of coins there (kaspad 2.1.0 has nothing narrower). The API process holds four
+  connections to the node at the most, whatever it is asked, and the shipped node takes 128 clients
+  (`--rpcmaxclients`, since round 15; it was 16). The node is shared, and no bound of the code holds a process someone
+  took over: from the API container it can open connections and ask the node for work up to what the node itself
+  bears (in kaspad 2.1.0's source `--rpcmaxclients` counts gRPC clients only, and nothing caps the wRPC JSON clients
+  the services are: read in the source, not run). That is more than a slowdown: a node kept busy, or out of
+  connections or file handles, can make the coordinator's own reads time out and its connections fail to come back,
+  and mints, payouts and burn confirmations then stop for as long as the container is held (Daybreak [58]). No money
+  is at risk. The
+  coordinator's `/health` says it within a minute (`the coordinator's Kaspa follower last saw its node move on N s
+  ago`). What the operator does: `docker compose stop api`, which closes every connection the API process holds; the
+  coordinator's connections come back by themselves; then find how it was taken over before it is started again from
+  the image (`docker compose up -d --force-recreate api`). An operator who wants that closed for good gives the API process a node of its own.
+  The API process sharing the coordinator's node is accepted for the launch (14 November 2026).
+- **Governance with the API process away.** The governance tools (`govern-submit`, `recovery-execute`,
+  `rotate-plan`) read the minter from the API's `/status` up to round 18, so a public process that was down, flooded,
+  withholding or stopped as above also held up the unpause after an alarm and the veto of a recovery proposal. Since
+  round 18 (R18-PUB-1) they take `state` in place of the API and read the coordinator's own state file, and they read
+  it too when the API does not answer. The operator's own node checks the minter either way (RUNBOOK, "The API
+  process is down or stale").
+
+The monitor's public checkpoint lists every deposit Kaspa skipped, and nothing caps that list. The monitor builds it
+for its file at most every ten seconds, and no sooner than twenty times what building it took, up to a minute, so a
+checkpoint can be that old. A
+checkpoint is a place to start from, and one a minute old is as good.
+
 ## Pool contention
 
 Each swap spends one exact pool state. When several users swap at once, all but one must re-quote and re-sign.
 This is the price of being immune to sandwich attacks. The wallet goes ahead on its own only when the new quote
-is at least as good as the one you confirmed; a worse one sends nothing and asks you again.
+is at least as good as the one you confirmed; a worse one sends nothing and asks you again (kUSDT Wallet in its own
+window).
+
+A node that takes a pool transaction has not accepted it: of two transactions spending the same pool state, each
+taken by a different node, only one is ever accepted. The wallet therefore waits (up to 30 seconds) to see which it
+was. It says "Swapped", "Added" or "Removed" only once its node shows the transaction accepted. If another
+transaction won, it frees the kUSDT and coins the lost one had set aside at once and goes again on the new pool
+state under the rule above. If neither is shown in time, it says "sent, not confirmed yet", keeps what the
+transaction spends set aside, and looks again at every refresh; Activity then says "did not go through" or drops
+the mark. What is left: the wallet learns this from one node. A node that is behind, or lies, can delay the answer
+or give a wrong one. A wrong "lost" cannot make a swap happen twice (the next try must spend one of the same coins
+or the same kUSDT state, so it is void if the first was accepted), but the wallet's words about the first try are
+then wrong until the next refresh shows the coins gone.
 
 ## The pool caps sells
 
@@ -132,19 +1054,444 @@ The net KAS sells take out of the pool, less what buys bring in, may be at most 
 a large honest sell, which must wait for buys or the next window. Buys are not limited. Because it counts the net
 flow, round trips (a buy, then a sell back) cannot use up the room; until 5 November 2026 they could.
 
+**After buys, a sell at age 0 can take up to two caps** (second outside review of rc.22, D8-1). A buy that leaves the
+count below zero gives sells credit, up to one cap, and only claimed time takes it back: it stays however long the pool
+stands with no spend. A sell that claims age 0 then has the credit and a whole cap, about 18 % of the reserve right
+after net buying of one cap, while a sell that claims the pool UTXO's age, as kUSDT Wallet builds every sell (the web
+app's too), has one cap, about 10 %. So forged kUSDT dumped by hand after a quiet period that followed buys takes up to the KAS
+those buys brought in on top of the usual cap, and an honest seller is offered up to a cap less than the covenant
+allows at that moment. The covenant is unchanged; the docs were corrected (they said the credit fades over a window).
+
+## Pool transactions wait a few seconds while more than half of the cap is in use
+
+The sell cap refills with the age of the pool's own UTXO, and time a pool transaction does not claim is lost. So
+while sells have used more than half of the cap, every pool transaction (a swap, a deposit, a withdrawal) must claim at
+least 50 DAA of that age, about 5 seconds: the pool can't be spent more often than that, and each spend refills at
+least that much. The wallet and the web app wait for it on their own and send at that moment, and a transaction right
+after another pool transaction can take a few seconds longer. At or below half of the cap there is no wait, and a
+withdrawal while the pool is paused never waits (the cap's clock stands still during a pause). Withdrawals are never
+refused for it.
+
+Each pool state then makes one slot every 5 seconds, which goes to whichever transaction the network takes first.
+A bot that always gets there first can keep every other pool transaction out while more than half of the cap is in
+use: for at most half an hour after a full cap was sold (an hour and a half if half the pool was also withdrawn),
+unless it also keeps selling about a whole cap an hour (Daybreak [13]). A seller who wins one race in two waits a
+slot or two.
+
+A bot can also let the pool's UTXO age and then spend it claiming only those 5 seconds, so the cap refills slowly. The
+operators run a keeper against this: once it sees such a spend, it settles the cap's clock in each slot for the next
+hour, 2.5 seconds after the wallets would, so a bot that lands late no longer lands at all. One that lands within those
+2.5 seconds wastes that much of each slot, and one that stays under the keeper's 5 second threshold is never caught and
+can halve the refill while nobody else trades. Either way no KAS leaves. Anyone may run a keeper.
+
+**What the keeper's float can be made to pay** (measured in run 21). Once armed, the keeper ticks while more than half
+of the cap is in use, so anyone who sells half a cap and then spends the pool late has it tick for about half a window
+of claimed time: about 280 ticks, 16 KAS at the relay floor, whatever the size of the pool. That sale costs its swap
+fee and the network fees, and a buy back costs as much again: about 0.7 KAS in a pool of 1,000 KAS (some 20 times
+less than the ticks), about 0.2 KAS in one of 10 KAS (some 80 times less), and in a pool of 100,000 KAS more than the
+ticks. Those ticks refill room real sellers then have, which is the keeper's job, so they stay; the keeper's
+`maxFeesPerHour` (30 KAS) caps what it pays in an hour, and its `/health` turns 503 when that holds a tick back or its
+coins run out. A team that would rather leave small pools to themselves can raise the keeper's `minCap`. A pool every
+provider has left, or a dust one, gets no tick at all since run 21 (its reserve allows a cap under `minCap`, 0.1 KAS):
+there a sell of 90 sompi and one late tick (0.15 KAS) had an armed keeper pay 45 ticks (2.5 KAS), for room nobody could
+use.
+
+A pool so small that its cap is under 720 sompi (under 0.0001 KAS of KAS reserve) refills nothing on the shortest
+claim, because the refill rounds down. The pool's first deposit takes its admin's signature, and so does the first
+deposit after every provider has left (which starts the cap again at the new reserve), so nobody can open it with dust.
+One case is left: if the last provider leaves while someone keeps a dust position in the pool, it is not empty, anyone
+may add to it, and its cap stays the dust's; a bot spending every slot can then keep it from growing, and a pause and
+a fresh start by the admin are the way out (Daybreak [17]).
+
+The admin's deposit into a pool that every provider has left is signed for one pool state, and the admin key is kept
+offline. While that pool is open anyone can move it to a new state for a small fee (a tick every 5 seconds, or a dust
+swap), and a deposit carried over from the offline computer then no longer fits. No money is at risk, and it costs
+whoever does it a fee each time. The operators' way through: the guardian pauses the pool, which nobody but the admin
+can then move, and the admin sends the unpause and the deposit together. A pool that was never opened can't be moved
+this way at all: until its first deposit only the admin and the guardian can spend it.
+
+**That way through works only while at most half of the pool's cap is in use, and an emptied pool usually starts
+above half** (found in round 12, and by Daybreak [18]; this page and the runbook said otherwise). An emptied pool
+holds about 1,000 sompi,
+so its cap is 100 sompi. The last withdrawal after net selling leaves the count at up to 200, and anyone can put it
+above half with a sell of 51 sompi. Above half every entry must claim 50 DAA, the admin's deposit included, so the
+deposit cannot follow the unpause at once; a pause does not lower the count; and the keeper does not tick such a pool
+(since run 21: its reserve allows a cap under `minCap`). Up to rc.24 an armed keeper ticked it every 75 DAA, claiming
+about 70 of the 360 DAA a cap of 100 sompi needs to refill one sompi, changed nothing and held the count where it was.
+Two things bring the count to half: one tick on a pool output that nobody has spent for 90 minutes, or a dust buy that pays in
+the difference and has the guardian's pause right behind it. Against someone who spends the pool in every 5-second
+slot the first is impossible and the second has to win one slot from them. Until it does, that pool cannot be
+reopened, for as long as they pay about 42 KAS an hour in fees. No money is in the pool then, and the way out that
+always works is a new pool. The steps are in the operators' runbook ("The pool admin's deposit won't land"). The
+next pool covenant is to let the admin's first deposit into an emptied pool claim no age.
+
+## A spend of the pool or the minter that no block can take
+
+> **Closed by the covenants since rc.22.** An outside review of rc.19 (12 November 2026) ran this on the Kaspa node
+> version mainnet uses: a node that builds blocks keeps such a transaction too, and refuses the pause, the mint or
+> the trade that would replace it, so the extra Kaspa nodes of earlier candidates did not end it, and neither did
+> sending a transaction straight to a node that builds blocks. rc.22 changes the pool's and the minter's covenants
+> so that a node accepts only spends of them that a block can take (below). The remedies of rc.21 and before,
+> described after that, stay as a second line.
+
+A Kaspa node accepts a transaction that spends an output still waiting in its mempool without checking the age that
+transaction claims for it. A block does check. So a transaction can be made that ordinary nodes keep for up to 24
+hours and that no block ever includes. If it spends the pool's coin, those nodes refuse every other pool transaction
+as a double spend for as long as they keep it. Anyone can do this to the pool, at any time, for the fee of one plain
+transaction, and again when it expires. The same can be done to the minter's coin by anyone who has seen a signed
+mint or governance action before a block took it: the signers sign what is minted or changed, not the transaction
+that carries it, so the same signatures fit into a transaction of anyone's making with a coin of their own. Every mint
+the coordinator sends is seen that way for the second or so before it is in a block. And it can be done by anyone at
+all while a recovery proposal stands. (Until round 12 this page named only the coordinator and a holder of three
+signer keys. That was too few.)
+
+What it costs while it stands: swaps, deposits and withdrawals of liquidity sent through ordinary nodes are refused
+or stay unconfirmed, mints wait, and a pause of the pool or the minter, or a veto, sent through an ordinary node does
+not land. The vaults' pauses on Ethereum and BNB Chain do not depend on it, and it ends as soon as any real spend of
+that coin reaches a block. It takes nothing, with one exception (run 20, RT-1; until then this page said nothing is
+taken by it): a copy of a signed `setValue` that lowers the minter's KAS deposit pays the KAS it frees to whoever made
+the copy. That is at most the operators' own minter deposit, never user money
+([below](#a-lowering-setvalue-pays-its-freed-kas-to-whoever-sends-it-first)).
+
+Since rc.22 the covenants refuse such transactions. Every `Pool` entry and every minter (`BridgeMint`) entry checks
+every input of its transaction (`require_settled_inputs` in `bridge_mint.ag`). A position's `transfer` does not, by
+design: it is signed by the position's owner, claims no age and never spends the pool's coin, so it cannot park it
+(`Pool.remove`, which burns a position, does check). The pool's or the minter's own coin asks exactly the
+age its entry claims, and claims an age above 0 only once that coin is in a block. Every other input asks no age, is
+a coin already in a block or another output of the transaction that made the pool's or the minter's coin, and is a
+plain Schnorr P2PK coin or a coin of the pool's or kUSDT's own covenants. A transaction has at most 8 inputs. A script
+can tell a coin in a block from one only in the node's mempool (the node gives the latter the DAA score u64::MAX,
+which reads as -1), so a pool or minter transaction a node accepts is one a block can take. This also closes a second
+way to park a spend, found in the design review of 12 November 2026, that the covenants before rc.22 and the checks
+below could not see: a funding coin whose own script passes only while its parent is unconfirmed (a P2SH script that
+reads its own DAA score), with no age claimed anywhere. The engine tests in
+`bridge/kaspa/tests/acceptance_parity.rs` build every pool and minter entry with these shapes and seeded random ones,
+as a node's mempool sees them and as a block does. The checks of waiting transactions described below stay, as a
+second line and for deployments made before rc.22.
+
+What that costs:
+
+- Every pool transaction shows the pool's whole program, which is about 7.8 KB larger; a minter transaction is about
+  2.8 KB larger. Their fees rise by about a third.
+- At most 8 inputs: a buy leaves room for 6 funding coins, a sale, a deposit or a withdrawal for 5. A wallet with
+  many small coins merges them first, also when the coins that fit would leave change too small for the network to
+  keep (round 17, R17-CL-1). Change too small to keep goes to the network fee wherever it comes from, so kUSDT
+  Wallet does not send a swap, a deposit or a withdrawal that would leave the network
+  more than 0.05 KAS of it beyond the fee shown, and say so; with Max the fee shown is the 0.3 KAS Max keeps. A
+  site's request whose amount falls in that band is refused in the approval window, and the site has to ask for
+  another amount. Not held to it: the pool's opening (the admin's, whose screen shows no fee).
+- Funding comes only from plain Schnorr P2PK coins, each already in a block or made by the pool's or the minter's own
+  last transaction.
+- kUSDT owned by a P2SH script or by another covenant can't trade with the pool directly: the input that authorizes
+  its owner is neither a plain coin nor one of the two families. It moves to a plain owner first.
+- New covenant ids: rc.22 needs a new kUSDT and a new pool. On the testnet, balances from before do not carry over.
+
+What is done about it since round 11 (11 November 2026). The services, the wallet and the web app check every such
+transaction and never build behind one. The monitor shows it on `/health`. The monitor, the coordinator, the keeper
+and `govern-submit` send their own transaction again at a higher fee where that can replace it, and through extra
+Kaspa nodes the operators configure (`kaspaSubmitRpcs`): a node that builds blocks has already dropped it. The monitor
+raises `pause-unlanded` when its pauses reach a node and no block.
+
+Since round 12 (11 November 2026, on rc.17):
+
+- Checking such a transaction costs the same whatever it holds. The check of round 11 asked the node for every coin
+  at an address that the checked transaction itself named, once for each of its inputs that claimed an age, and the
+  coordinator waited for it in the loop that follows mints and redemptions: one transaction written for the purpose
+  could hold mints and redemptions up for as long as its sender kept it fresh. Now no address is read that a checked
+  transaction names. An age is checked only for the coin the service or the client follows itself, a transaction that
+  claims an age for any other coin counts as one no block can take, and the coordinator's look at the mempool runs
+  beside that loop with a deadline of 8 seconds.
+- Every mint goes to the extra Kaspa nodes from its first try, so that it is already waiting where blocks are built
+  when a copy of it reaches the ordinary nodes. While a mint waits, the coordinator looks every few seconds at what
+  spends the minter's coin on its node, and tries again at once when a copy that no block can take has taken the
+  mint's place. It used to notice after two minutes.
+- A mint no longer takes the place of the guardian's pause, or of a governance action, in a node's mempool. It is
+  sent plainly; when the node refuses it because another transaction spends the minter's coin, the coordinator looks
+  at that transaction and replaces it only if no block can take it or if it is the same mint. The monitor sends its
+  next pause as soon as it sees that the coin its last pause was built on was spent by something else, and since run
+  21 (R21-CHAIN2-1) as soon as the pause itself is in no block and gone from its node's mempool with nothing left on
+  the coin: anyone can do that to a pool pause on kaspad 2.1.0 with two replacements, for about 0.1 KAS each time, and
+  until then the next pause waited out its 30 seconds. Every pause also goes to the extra nodes from its first try.
+
+What is left:
+
+- With no such extra node configured, or none that reaches a miner, and a parked fee above the services' bounds, the
+  pause of the pool or the minter, a mint, a tick or a governance action waits until the parked transaction expires.
+  The operators' runbook has the steps. For mints this is not a rare case to plan for later: anyone can try it at
+  every mint, for the fee of one plain transaction, by sending a copy of the mint with a fee above the coordinator's
+  bound (since round 13, twice the node's estimate at that nonce's first try; it was 1 600 sompi per gram, and the
+  copy, whose fee is never paid, set what every mint paid up to that). The copy has to reach the nodes before a block
+  takes the mint, which is a race of about a second and easier to win when the network is busy. A coordinator without
+  a working extra node can then be kept from minting for up to 24 hours at a time. The extra nodes are a condition for
+  minting through this, and the launch list treats them so.
+- The same copy can be made one that a block can take, funded by a coin of the sender's own at a higher feerate, and
+  then pushed out by a plain spend of that coin (round 13, R13-MINT-1). Nothing then spends the minter coin, and the
+  mint is in no mempool; until round 13 the coordinator sent nothing again for two minutes, and minting stopped on
+  both chains for each such pair, for a few hundredths of a KAS. Now the coordinator offers the mint to the extra
+  nodes for as long as the copy holds the coin, and sends the same signed mint again at once when it finds nothing on
+  the coin. What is left is a race per copy: the copy must take the mint's place before a block takes the mint, and
+  the plain spend the copy's before a block takes the copy, and the mint is back within one look (3 seconds). A copy
+  a block takes mints the same batch, so no kUSDT is lost either way. Its outputs may carry less KAS than the
+  coordinator's 1.5 each, down to the minter's floor of 1 KAS, paid by whoever sent the copy: the signatures name
+  each recipient's kUSDT, not the KAS under it (Daybreak [43]; SPEC §6). A new minter covenant would bind it:
+  accepted for the launch (14 November 2026), and planned for the next minter. The
+  operator does nothing; a coordinator whose log
+  keeps saying `the same signed mint was sent again` for one batch is being raced, and the extra nodes are what
+  shortens it.
+- A transaction of someone else's that spends the pool and puts an age on another of its inputs (its own funding
+  coin, say) is treated as one no block can take, although a block may take it: the services and the clients cannot
+  check that age without reading an address that transaction names. They do not build behind it for the seconds it
+  waits, and a keeper's tick or a pause may take its place in the mempool. No transaction of this project's wallet,
+  web app or services is built that way; other software that trades with the pool should not be either.
+- A wallet or a page judges a sale or a tick waiting in the mempool by the age of the confirmed pool, which it reads
+  at the pool's own address. When it has not found that coin (the coordinator named no confirmed pool, or named
+  another), it does not build on that transaction's output and asks again: a trade can take a few seconds longer to
+  start in a busy pool. A token the wallet's own waiting sale spends can show as still there for those seconds.
+- A governance action that waits two minutes in a node's mempool without being accepted counts as one no block will
+  take, like any spend that does (a spend parked with a short lock cannot be told apart from it). A mint may then
+  take its place if it pays more per gram. The action keeps its signatures and is sent again.
+- A wallet whose node keeps such a transaction is told so and sends nothing; setting another node in Settings, or
+  waiting, are the ways out. A transaction built behind one that the wallet could not recognise stays unconfirmed
+  until the parked one is dropped; its funds are not lost.
+- The services see what spends a coin by asking the node for that coin's address, and the node answers with every
+  waiting transaction that pays the address as well (round 14, R14-ST-1). Anyone can fill that answer with a chain
+  of transactions no block takes, each paying the address about 0.11 KAS, for one real fee: past 64 MB the answer is
+  refused. Until round 14 the keeper then sent no tick for as long as the chain stood (it asked for its own address
+  and the pool's, and a new key's address can be filled the same way), and the coordinator's look at a waiting mint
+  failed each time, so a mint whose place a copy had taken waited its 120 s again. Since round 14 the keeper asks
+  for its own transactions by their ids and reads only the pool's address; a read that fails, is refused or lists
+  more than 16 transactions paying the pool is not made again for 30 s, and meanwhile its ticks go out plainly. The
+  coordinator sends the same signed mint again at each look that fails, as when a look finds nothing. Both learn
+  what holds the coin from the node's refusal (a double spend names the one transaction that holds it) and judge
+  that transaction by its id. What is left: while such a flood stands, a tick or a resent mint goes out at most a
+  look after the coin is free, an honest spend on its way costs one refused tick, and a parked spend that also
+  holds the coin is found one round later than before (a second at the keeper, a look at the coordinator). The
+  operator does nothing; the keeper's log says `the node's mempool at the pool's address could not be read` once
+  when it starts and once when it ends. The monitor's own looks at these addresses were already allowed to fail (its
+  pause is then built without the mempool, as before), but while a coin's address is flooded its `/health` does not
+  show a parked spend of that coin; that was not changed in round 14. Not run on a node: the receiving side of the
+  node's answer was read in rusty-kaspa (mining/src/mempool/model/pool.rs).
+- The node rule was run on kaspad 2.1.0 by the outside review (12 November 2026, on rc.19): a spend with an age on
+  an unconfirmed parent's output was accepted, kept after the parent was mined, and could be replaced only at a higher
+  feerate. It is to be reported to the node's maintainers. What rc.22 closes rests on the node's mark for an
+  unconfirmed output (u64::MAX): a node version that changes that mark needs another look before the node pin moves.
+- What rc.22 does not change: a copy of a signed mint can still race the coordinator's mint (a block can now take the
+  copy, and it mints the same batch), a reorg that drops the block of a parent can still hold a spend back, and fees
+  still decide which of two valid spends a block takes.
+
 ## The pool can be paused
 
 On any alarm the guardian pauses the pool with the rest of the bridge. Swaps and new liquidity stop until the pool
-admin resumes it. Removing liquidity always works.
+admin resumes it. Removing liquidity works whatever the pause, unless a stolen admin key keeps moving the pool (below).
+
+## A stolen pool admin key can hold the pool up
+
+The pool admin key is kept offline. Whoever steals it can take the accrued fees, unpause the pool and hand the keys
+over, the guardian key included (after which no monitor can pause the pool; every monitor raises
+`pool-keys-changed`). It cannot touch the reserves or a position. What it can also do, for as long as its holder pays
+a network fee a spend, is keep every other pool transaction out, the withdrawals from a paused pool included:
+`set_keys` to the same two keys changes nothing but moves the pool to a new outpoint, and so do an `unpause` with a
+pause after it and a `collect`, so whatever was built on the outpoint before is a double spend. That outpoint-moving
+is what is left (found in round 13, R13-COV-L1; Daybreak [53]; this covenant is not changed for it). The thief cannot park the pool
+coin: since rc.22 the admin entries (`set_keys`, `unpause`, `collect`) ask sequence 0 of the pool input and take
+only inputs that are in a block or siblings of the pool coin, as every other pool entry does, so a spend with a
+sequence no block can meet, or with an input no block can take, is refused by the node's script check (as "A spend
+of the pool or the minter that no block can take" above; the covenant tests run these three entries with both and
+see them refused). Round 11 closed a repeated pause for the guardian's key, whose second pause of a paused pool is
+refused. Providers get out between the thief's spends, by paying more per gram than the thief, or through an extra
+node that reaches a miner.
+
+What the operators do: with the admin key still in their hands too, send `pool-set-keys` (`kusdt-tx`) to a new admin
+key and the same guardian, built on each new pool output, at a high fee and to several nodes (`kaspaSubmitRpcs`), until
+one lands: from then on the stolen key can sign nothing. If the thief has already handed the admin key to itself, the
+pool stays usable only as far as the thief lets it: deploy a new pool, point the web app and the wallets at it, and
+tell the providers to withdraw from the old one as their wallets find a slot. The runbook has the steps ("The pool
+admin key is stolen"). Not decided, for a later pool covenant: `unpause` only on a paused pool and `set_keys` only
+with a change narrow this (the admin can still alternate keys); a least age between the admin's spends closes it.
 
 ## The first deposit sets the pool's price
 
 Whoever makes the first deposit into a new pool sets its starting price. Arbitrage then moves it toward the market.
 
+## The KAS under the pool's kUSDT reserve can be taken down to its floor, once
+
+The pool's kUSDT reserve is a kUSDT state, and its coin carries KAS like any other: the token value, 1.5 KAS, which
+whoever opened the pool paid. The pool covenant binds the reserve's amount and owner, and of its KAS only a floor of
+1 KAS (`MIN_RESERVE_VALUE`, so that the state can always carry its storage mass): nothing else binds that KAS (SPEC
+§15). So anyone who builds a swap or a liquidity move by hand can give the reserve's next coin 1 KAS and keep the
+other 0.5 KAS as change (run 21, Daybreak [30], shown in the covenant engine). Accepted for the launch with the
+other pool rules on this page (14 November 2026); a new pool contract after the launch binds it. That can happen once: the reserve then
+sits at its floor, and the wallets, the web app and the services carry the reserve's KAS over as it is. It is the
+operators' 0.5 KAS, never a trader's or a provider's, and the pool works the same at the floor. Only a new pool
+covenant, binding the reserve's KAS to what it was, closes it.
+
+## A signer restored from an old backup
+
+A signer keeps a second record of what it signed, and of its daily limit, on storage of its own that a restore of the
+state does not touch. An old state file therefore forgets nothing, and the signer carries on with its limit intact.
+
+If that storage is lost too, a signer that has signed before cannot know what it signed since its state file, so it
+holds itself: its daily limits count as spent for 24 hours. The others carry on without it.
+
+What is left is a whole machine rolled back to a snapshot, which takes both records back together. A mint on the
+chain that carries the signer's signature and that its records lack makes it hold itself; otherwise the operators'
+restore steps set `fuseHoldUntil` by hand. A signer in that state still cannot mint alone: a mint takes 3 of the 5
+signers, each with its own limit, and the minter's on-chain allowance still applies.
+
+Such a signer has forgotten for good, not for 24 hours, which mints it signed: `fuseHoldUntil` only delays it. Its
+refunds are not made weaker by that, since every refund waits the deepest finality tier whatever its size and
+whatever the signer remembers (since round 14, R14-ONCE-L1).
+
+## A signer keeps about a day of mints and a week of releases
+
+A signer's records are held whole in memory and written whole at every save, so since round 16 (R16-ONCE-3) it lets
+go of what no signature needs any more. A mint record goes once the minter's move past it is a day deep, and the
+signer then signs no mint below that nonce at all, whoever asks: a mint there could only be used after a reorg of
+more than a day. A release record goes a week after it was signed at the earliest, once every RPC of its vault shows
+the payout paid at one finalized block (the id redeemed and nothing queued under it: the vault never pays it again),
+and the burn record of that release with it. A payout that is only queued is not paid: the vault marks the id
+redeemed when it queues it, and a cancel clears that. So the records of a payout held in a vault paused for longer
+than a week, or cancelled to be reinstated, stay until it is paid, and it is signed again from them after a reinstate,
+even at a burn address too full to list (round 17, R17-PAY-1, R17-ONCE-1, R17-ST-1; up to rc.22 they went once the
+payout was queued). A cancelled payout that is never reinstated keeps its records for good, a few hundred bytes each,
+asked about once a day. A machine rolled back to a snapshot still holds its fuse for a mint it
+signed after the snapshot: that mint's nonce is above where the snapshot's records stopped. What is given up: after a
+reorg of more than a day, which the bridge does not provide for in any case, every signer refuses the deposits it
+moved back until operators look at it. The monitors still keep every mint they have seen (not changed in round 16).
+
+## A cancelled forged payout holds the honest one of its id
+
+The vault marks the id of a cancelled payout, not the payout: `release` refuses that `redeemId`, and `refund` that
+nonce, until the owner reinstates it. Three stolen signer keys can queue a forged payout under the id of a real burn
+or a real skip that is still waiting, ahead of the honest one, for gas alone. Once it is cancelled after the alarm,
+that burn or deposit is not paid until the Safe reinstates the id, which it does only after `setSigners` has run
+(before, the forged payout's own signatures would queue it again): at least 48 hours after the rotation, plus the
+cancellers' window. Nothing leaves the vault meanwhile; the USDT stays there as backing. `kusdt cancel-plan` writes
+the cancels only: the coordinator's `/health` lists the ids of burns and skips it read that a cancel holds, and the
+runbook says how to reinstate them (round 16, R16-ONCE-2; Daybreak [42]).
+
+## How fast a frozen node is noticed
+
+The monitor pauses everything `failClosedMs` (5 minutes by default) after a chain's head stops moving, or after a
+Kaspa node stops keeping the network's pace. For a chain, the last 60 seconds of that must hold over consecutive
+rounds, so that one stale answer from an RPC does not pause the bridge. It cannot be much shorter: a pause takes
+hours to undo, so a brief outage at an RPC provider must not cause one.
+
+The preflight check holds `failClosedMs` to at most half a payout's wait, which leaves the other half for the pause
+to land: 5 of the 10 minutes on mainnet. Since round 17 (R17-PAY-2) the time from the alarm to a mined pause (a round,
+the pauses and a block, 2.5 minutes) must fit in the wait as well, a mainnet monitor refuses to start on an
+announced `setPayoutDelay` that breaks either rule, and a running one says on `/health` when a vault's wait, read
+every five minutes, no longer fits. That is a warning, not a pause: the owner sets the wait, behind its 48 hours.
+
+## A monitor whose own network is cut
+
+Since round 30 (the owner's decision of 13 November 2026) an outage of a monitor's own machine pauses nothing by
+itself: while its machine is back from being down and catching up, or has no network at all, the monitor is not
+guarding ([Monitor](/security/monitor/#when-its-own-machine-is-away-or-offline)). A pause stops everything and
+unpausing the vaults takes a 6-hour Safe delay, so a false pause from the monitor's own outage would cost the bridge
+far more than the outage does. The price:
+
+- **Someone who can cut all of a monitor's network can silence it**, for as long as the cut lasts, just as by taking
+  its machine down. "All" means every RPC of every chain without any answer and its Kaspa node stopped or out of
+  reach, in the same rounds. One chain's RPCs, or every RPC while its node still follows the network, or its node
+  alone, is not enough: those fail closed after `failClosedMs` as before. Nor is a cut that ends: a monitor back
+  online catches up, and judges what came meanwhile, paid payouts too.
+- **The other monitor and each payout's wait cover that time.** The monitor that is catching up pauses at once on
+  what it can see: a release, by its Kaspa node's UTXO set, in any round in which that node is at the network's tip
+  (since run 21, R21-MON2-1); a forged mint, a refund with no skip, unannounced governance and INV-1 short only once
+  its own reading of Kaspa has reached them; nothing on Kaspa while its node restarts or syncs. For those its time
+  away is its outage and its catch-up together, about a ninth longer at the reading pace measured on TN10: an hour
+  and more after a long outage. Since run 21's decision 12 (the owner's, 14 November 2026) a queued payout still
+  unjudged two thirds of the way through its wait pauses everything while catching up, as when guarding, so a refund
+  of a deposit minted in that time, or a release whose burn's address they filled so that no look at it answers, is
+  paused before it can be paid; an honest payout unjudged that long pauses too (the cost the owner accepts). And a
+  mint read late has its graces from when the chain accepted it, so a mint with no deposit is raised in the round
+  that reads it. Three stolen signer keys can still be paid a release of kUSDT minted for no deposit and burnt (the
+  UTXO set judges that burn good) if its wait ends before this monitor's reading reaches the mint, within each
+  vault's release allowance, unless the other monitor pauses first. So the
+  two monitors must not be away or catching up at the same time: on other machines, other networks, other providers,
+  not taken down for maintenance together, and with their Kaspa nodes upgraded, resynced or restarted one after the
+  other, a hard fork's upgrade too. Each says on `/health` when it is not guarding (`not guarding: ...`), so its
+  operators, and the other monitor's, can see it.
+- **A catch-up is bounded, and its bound is long.** One that makes no progress for `failClosedMs` fails closed, as does
+  one that lasts longer than the time away (at least 30 minutes, at most 6 hours). A node fed a chain that keeps
+  showing progress and never arrives keeps this monitor from guarding for up to that cap.
+- **What it cannot tell apart.** From inside the machine, a network cut by someone and a provider's outage look the
+  same: no answer from anywhere. An offline monitor could not have sent a pause in either case.
+- **A catching-up monitor cannot pause the minter or the pool** (run 21, R21-MON2-2). Hours behind, it holds minter
+  and pool coins that were spent long ago, and a Kaspa node cannot name a covenant's current coin without following
+  the chain, so its pauses of the minter and the pool fail until it has caught up. Its pauses of the vaults still
+  work, and they stop every payout. **Accepted for the launch** (14 November 2026): the other monitor, guarding
+  meanwhile, pauses the minter and the pool. Planned: the monitor asks the node for those coins directly with
+  `getUtxosByCovenantIds` once kaspad ships it.
+
+## A service that hangs is restarted after minutes, not at once
+
+Since rc.25 (the owner's decision #14 on run 21, 14 November 2026) a service that hangs while it still runs is ended
+and started again, as one that crashes always was: each kUSDT service watches its own loops from a thread of its own,
+and the Kaspa nodes and Caddy are ended by their containers' own checks (`deploy/RUNBOOK.md`, "A service that hangs").
+Docker would not have restarted any of them: its restart policy acts on a process that ends, not on one marked
+unhealthy. What that leaves:
+
+- **The bounds are long, on purpose.** A monitor whose rounds stop is restarted after 15 minutes (at least twice
+  `failClosedMs`), a coordinator loop after 60, a signer after 30. Until then that monitor guards nothing, as a stopped
+  one would, and the other monitor and each payout's wait cover that time. Shorter bounds would end services that are
+  only slow, and the monitor's restarts must stay more than `failClosedMs` apart, or three of them would pause
+  everything as a crash loop. They do: a monitor that hangs at every start is started again every bound and never
+  paused for it, so its outside uptime check, and its operators, must still see it.
+- **Liveness, not health.** The checks ask whether a process runs and its loops turn, never whether what it reads is
+  good. A Kaspa node whose RPC answers while its consensus is stuck is not restarted by its check; the services see
+  it (a head that does not move) and the monitor fails closed after `failClosedMs`, as before.
+- **A node is restarted by its check at most once a day**, and never before it has answered once since its start, so
+  that a slow start or an initial sync can never become a loop of restarts. A node that hangs twice in a day stays
+  unhealthy until its operator acts.
+- **A process stopped whole is not seen from inside.** The watchdog is a thread of the process it watches: a process
+  frozen whole (stopped by a signal, its machine suspended) stops the watchdog too. The container's check then shows it
+  unhealthy, and nothing restarts it.
+
+## The wallet's keys are the same on test networks and on mainnet
+
+kUSDT Wallet derives its Kaspa keys on one path (`m/44'/111111'/0'`) on every network, as Kaspa NG, KasWare and
+Kaspium do, so a recovery phrase shows the same coins in each of them. A Kaspa signature names no network, and
+which network a node serves is the node's own word. A public node that says "Testnet" and shows the mainnet coins
+of your keys as test coins could therefore have a plain send of "test KAS" move real KAS: the transaction is valid
+on mainnet (Daybreak [21]). The node cannot choose who is paid; the real KAS goes to the same key of whoever you sent
+test KAS to.
+kUSDT, pool and bridge transactions are not exposed: each spends a covenant coin that exists on one network only,
+and the EVM side signs its chain ID.
+
+What the wallet does: on Testnet with a node from the public node network, before it signs a plain KAS send it
+asks a mainnet node, on a connection of its own, whether the coins it is about to spend exist on mainnet. If they
+do, or if it cannot ask, nothing is signed. The Send review says that the keys are shared.
+
+What is left: this is a second source, not a proof. It fails if the mainnet node asked lies too (the same
+operator, or a resolver of the public node network that hands out both). It is not asked with a node you set
+yourself (Settings), nor on the Local network: there the node is yours to trust. What you can do: **keep test
+networks and real KAS on different recovery phrases**, or set your own Testnet node in Settings. Keys of their own
+for test networks would close this for good; that changes every Testnet address, so it is planned with a testnet
+reset, not done under funds people hold now. One wallet for test networks and mainnet is accepted for the launch
+(14 November 2026).
+
+## Someone at your unlocked computer
+
+kUSDT Wallet keeps its settings in the browser. What decides where money goes is not taken from there on trust: the
+contracts and chains are built in, a change to a network's servers counts only if this wallet saved it while
+unlocked, and a site is told the wallet's own address. That holds against something that can only write the
+browser's stored data. It does not hold against someone who sits at your unlocked computer and opens the browser's
+developer tools on the wallet itself: they can do what the wallet can, and read the recovery phrase while the wallet
+is unlocked. Lock the computer, and keep the wallet's auto-lock short.
+
 ## The testnet runs on one host
 
-The contracts are deployed on testnet (TN10, Sepolia and BSC testnet), and the public testnet is open at
-[testnet.trestly.io](https://testnet.trestly.io). Its five signers, the coordinator and the monitor run on one
-test host, in isolated containers, so it is not the federation of five independent operators that mainnet needs
-(see [Operations](/developers/operations/#the-testnet-deployment)). The wallet extension has a testnet build to
-download and is not in any store. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in those services, so they are only as good as their deployment. Those services run an image from before the third and fourth outside reviews, so those fixes are not live in them yet.
+The public testnet ran from 4 to 14 November 2026 on TN10, Sepolia and BSC testnet, at `testnet.trestly.io` (now a
+redirect to `trestly.io`). Its five signers, the coordinator and the monitor ran on one
+test host, in isolated containers, so it was not the federation of five independent operators that mainnet needs
+(see [Operations](/developers/operations/#the-testnet-deployment)). They also shared one source per chain: one EVM RPC
+for Sepolia and one for BSC testnet, the same for every signer, the coordinator and the monitor, and one TN10 node. A
+provider or a node that lied could therefore have had all five signers sign an unbacked mint for a deposit never made
+(Daybreak [34]), or a payout for a burn that never happened (Daybreak [39]), with the monitor, reading the same
+source, seeing nothing wrong. Mainnet refuses that layout: each signer reads at least two RPCs per chain from
+different providers (a mainnet signer does not start with fewer, and `kusdt check` fails it) and runs its own Kaspa
+node on its own machine ([What a signer needs](/developers/operations/#what-a-signer-needs)). Accepted for the testnet
+(14 November 2026): nothing about mainnet changes. The testnet's services and test coins are gone since it ended
+on 14 November 2026. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in the services, so they are only as good as their deployment.

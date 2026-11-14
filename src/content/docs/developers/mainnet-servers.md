@@ -66,4 +66,4 @@ Private keys stay on the machine that made them, with two exceptions: your offli
 - **Disk:** a pruned mainnet node's database is about 20 GB (November 2026). 100 GB leaves room for growth, the images and backups.
 - **Memory:** 16 GB is the figure the packages are set for (the node may use up to 14 GB, `KASPAD_MEM`). A monitor on an 8 GB machine needs `KASPAD_MEM` around `6g`; that has not been measured on mainnet, so watch its memory for a day before relying on it. Sync one mainnet node first, then order the rest.
 - **The guides set no bandwidth figure.** Avoid plans with a low traffic cap: a node moves a lot of data.
-- **Don't copy the testnet.** It runs on one host, which suits test coins and nothing else.
+- **Don't copy the testnet.** The public testnet (4 to 14 November 2026) ran on one host, which suits test coins and nothing else.

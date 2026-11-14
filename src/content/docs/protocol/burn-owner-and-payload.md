@@ -75,6 +75,12 @@ later give the coordinator the preimage: the transaction ID, output index, chain
 checks it against the burn owner. The [coordinator API](/protocol/coordinator-api/) accepts it on
 `POST /redeems`.
 
+A deposit on an EVM chain may name a burn owner as its Kaspa recipient. The mint then pays straight into a burn, and
+a mint never carries a payload. When the owner is the burn owner of the depositor's own address, on either chain, the
+coordinator records the redemption itself as it follows the mint (since run 21). Any other burn owner is paid only
+after its preimage is posted to `POST /redeems`, with the mint's transaction ID and the output's index. The web app
+and the wallet never build such a deposit.
+
 :::note
 The tag in `R` is `kUSDT/redeem/v1` (mixed case). The tag in the EVM redeem ID is `kusdt/redeem/v1` (lower case),
 and the payload magic is `KUSDT`. All three are exact byte strings; do not normalise them.

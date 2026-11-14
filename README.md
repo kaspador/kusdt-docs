@@ -1,29 +1,62 @@
-# kUSDT documentation
+# kUSDT documentation site
 
-kUSDT is USDT locked on Ethereum and BNB Chain and issued 1:1 on Kaspa Layer 1 as a KCC-20
-covenant token, with a KAS ⇄ kUSDT pool on Kaspa L1.
+The public documentation for kUSDT, built with [Astro Starlight](https://starlight.astro.build). The output is
+plain static files (HTML, CSS, a little JavaScript, and a Pagefind search index) that any web server or static
+host can serve.
 
-**Read the documentation: https://kaspador.github.io/kusdt-docs/** (also at
-https://trestly.io/docs/, next to the testnet itself)
+The content follows `../SPEC.md` (the protocol), `../PROGRESS.md` (status and decisions) and the contract
+sources. When they change, update the matching pages.
 
-It covers how the bridge and the pool work, the security model (trust, threats and attack
-vectors, the monitor, known limits) and how to operate and build on them.
+## Requirements
 
-**Status:** a public testnet at https://kusdt.pearlchain.live (Ethereum Sepolia, BSC testnet,
-Kaspa testnet-10), with test coins only; start with
-[Test on the public testnet](https://kaspador.github.io/kusdt-docs/getting-started/public-testnet/).
-Not audited. Nothing is deployed on any mainnet, and no real funds are involved.
+- Node.js 22.12 or newer and npm.
+- This is a standalone npm project with its own `package.json` and `package-lock.json`; it does not use the
+  repository's root workspace.
 
-## This repository
+## Commands
 
-The source of the site, built with [Astro Starlight](https://starlight.astro.build). The pages
-are Markdown files under `src/content/docs/`.
+Run from this folder (`docs/`).
 
 | Command | Does |
 |---|---|
-| `npm ci` | Installs the dependencies from the lockfile (use `npm install --legacy-peer-deps` if npm reports an "edgesOut" error) |
-| `npm run dev` | Local preview at `http://localhost:4321` |
-| `npm run build` | Builds the site into `dist/` for the root of a domain, and fails on any broken internal link |
-| `npm run build:pages` | Builds for a sub-path: set `SITE_URL` and `BASE_PATH` (for this site `https://kaspador.github.io` and `/kusdt-docs`) |
+| `npm ci` | Installs the exact dependencies from the lockfile. If npm fails with an "edgesOut" error, use `npm install --legacy-peer-deps` |
+| `npm run dev` | Local preview with live reload at `http://localhost:4321` |
+| `npm run build` | Builds the static site into `dist/`. Fails on any broken internal link (`starlight-links-validator`) |
+| `npm run preview` | Serves the built `dist/` locally |
+| `npm run check:colors` | After a build: fails if any green, teal or mint colour appears in `dist/` (the design rule) |
 
-The published site is the `gh-pages` branch.
+## Deploying
+
+1. Set the public origin, so the build can write the sitemap and canonical URLs:
+
+   ```sh
+   SITE_URL=https://docs.example.org npm run build      # bash
+   $env:SITE_URL="https://docs.example.org"; npm run build   # PowerShell
+   ```
+
+   Without `SITE_URL` the site still builds; only the sitemap is skipped.
+2. Upload the contents of `dist/` to the web root of that origin. The site is built for the **root** of a domain
+   or subdomain (internal links start with `/`), not for a sub-path.
+3. Serve `404.html` for unknown paths. Most static hosts do this automatically.
+
+Any static host works: nginx, Caddy, an object store with a CDN, GitHub Pages or Cloudflare Pages (build command
+`npm run build`, output directory `dist`, root directory `docs`).
+
+## Layout
+
+| Path | What |
+|---|---|
+| `astro.config.mjs` | Site configuration and the sidebar |
+| `src/content/docs/` | The pages (Markdown and MDX). The file path is the URL |
+| `src/components/diagrams/` | The diagrams, as inline SVG Astro components (architecture, bridge in, bridge out, pool swap) |
+| `src/styles/trestly.css` | The theme: the Trestly palette, the web app's, for dark (the default) and light mode |
+| `src/themes/` | Code-block colour themes in the same palette |
+| `public/` | Static files copied as is: the favicon, and `media/`, the media kit's downloads (byte-for-byte copies of the art files in `bridge/web` and `wallet/extension`: copy again when those change) |
+| `scripts/check-colors.mjs` | The colour check |
+
+## Writing rules
+
+- Never invent a fact: every number, rule and name comes from the specification or the code.
+- Where an address or URL is not known yet, write "to be published".
+- Plain, short sentences; define a term before using it; numbers go in tables.
+- Only the palette's colours (`npm run check:colors`). Use the CSS variables in `trestly.css`, which switch between dark and light mode.

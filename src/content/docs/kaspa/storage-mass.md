@@ -95,7 +95,7 @@ some 0.46 KAS per redemption, against about 1.55 KAS with a 1.5 KAS burn (SPEC Â
 
 | UTXO | KAS in the simnet run |
 |---|---|
-| BridgeMint | 5 KAS (changeable by `set_value`, 3 of 5) |
+| BridgeMint | 5 KAS (changeable by `set_value`, 4 of 5) |
 | TokenSeed | 1 KAS |
 | kUSDT state | 1.5 KAS |
 | KasPool Position | 2 KAS |

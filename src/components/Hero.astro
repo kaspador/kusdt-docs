@@ -1,0 +1,27 @@
+---
+// Starlight's hero, with the web app's live ribbon in place of its picture (the landing page's `.ribbon`).
+import Default from '@astrojs/starlight/components/Hero.astro';
+---
+
+<Default />
+
+<script>
+	// The same drawing as the main page, so the two never differ. The dark theme draws it live; the light theme
+	// keeps the picture (the ribbon is lit for a dark background), and so does a browser without WebGL 2.
+	import { startRibbon } from '../../../bridge/web/src/lib/ribbon';
+
+	const art = document.querySelector<HTMLElement>('.hero .ribbon');
+	const canvas = art?.querySelector('canvas');
+	if (art && canvas) {
+		let stop = () => {};
+		const sync = () => {
+			stop();
+			art.classList.remove('live');
+			stop = document.documentElement.dataset.theme === 'light'
+				? () => {}
+				: startRibbon(canvas, { drawn: () => art.classList.add('live'), failed: () => {}, begin: Promise.resolve() });
+		};
+		new MutationObserver(sync).observe(document.documentElement, { attributeFilter: ['data-theme'] });
+		sync();
+	}
+</script>

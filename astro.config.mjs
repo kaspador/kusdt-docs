@@ -28,11 +28,17 @@ export default defineConfig({
         'Trestly documentation. kUSDT: USDT locked on Ethereum and BNB Chain, issued 1:1 on Kaspa Layer 1 as a KCC-20 covenant token.',
       favicon: '/favicon.svg',
       customCss: ['@fontsource-variable/figtree/wght.css', './src/styles/trestly.css'],
-      components: { ThemeProvider: './src/components/ThemeProvider.astro', ThemeSelect: './src/components/ThemeSelect.astro' },
+      components: {
+        Hero: './src/components/Hero.astro',
+        MarkdownContent: './src/components/MarkdownContent.astro',
+        ThemeProvider: './src/components/ThemeProvider.astro',
+        ThemeSelect: './src/components/ThemeSelect.astro',
+      },
       social: [
-        { icon: 'external', label: 'Open the app', href: 'https://testnet.trestly.io/' },
+        { icon: 'external', label: 'Open the app', href: 'https://trestly.io/' },
         { icon: 'x.com', label: 'Trestly on X', href: 'https://x.com/trestly_io' },
         { icon: 'telegram', label: 'Trestly on Telegram', href: 'https://t.me/trestly' },
+        { icon: 'github', label: 'The open code on GitHub', href: 'https://github.com/kaspador/kusdt-open' },
       ],
       // Starlight writes each page's title and description; the picture is the same on all.
       head: site
@@ -71,12 +77,22 @@ export default defineConfig({
         {
           label: 'Getting started',
           items: [
-            'getting-started/public-testnet',
             'getting-started/web-app',
             'getting-started/bridge-in',
             'getting-started/swap',
             'getting-started/redeem',
             'getting-started/wallet',
+          ],
+        },
+        {
+          label: 'Integrate',
+          items: [
+            'integrate/overview',
+            'integrate/wallets',
+            'integrate/websites',
+            'integrate/exchanges',
+            'integrate/bridge-state',
+            'integrate/risks',
           ],
         },
         {
@@ -157,7 +173,7 @@ export default defineConfig({
         },
         {
           label: 'Reference',
-          items: ['reference/faq', 'reference/glossary', 'reference/roadmap'],
+          items: ['reference/faq', 'reference/glossary', 'reference/roadmap', 'reference/terms', 'reference/privacy', 'reference/media-kit'],
         },
       ],
     }),

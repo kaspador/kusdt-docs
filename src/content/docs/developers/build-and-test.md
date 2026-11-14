@@ -7,7 +7,7 @@ description: How to build the contracts and run every test suite.
 
 | Tool | For |
 |---|---|
-| Docker | All Rust work runs in the pinned `rust:1.94.1` container through `tools/rust.sh` |
+| Docker | All Rust work runs in the pinned `rust:1.94.1` container through `tools/rust.sh` (the image named by its digest) |
 | Node.js and npm | The EVM tests, the TypeScript packages and the simnet run |
 | Bash | The scripts in `tools/` (Git Bash works on Windows) |
 
@@ -24,8 +24,7 @@ bash tools/rust.sh bridge/kaspa cargo test                            # contract
 bash tools/rust.sh bridge/kaspa cargo run --example build_artifacts   # after editing a .ag file
 node tools/check-artifacts.mjs --write                                # then record what built them
 bash tools/rust.sh bridge/kaspa cargo build --release --bin kusdt-tx  # the CLI
-docker build -t kusdt-rust-wasm:1 -f tools/docker/rust-wasm.Dockerfile tools/docker   # once: the WebAssembly toolchain
-bash tools/wasm.sh                                                    # the WebAssembly core
+bash tools/wasm.sh                                                    # the WebAssembly core (it builds its image first)
 npm install --legacy-peer-deps                                        # repository root
 cd bridge/evm && npm ci && npx hardhat test                           # the vault
 cd bridge/devnet && npm run simnet:e2e                                # the Kaspa side on a simnet node
@@ -50,19 +49,21 @@ The end-to-end runs and the stack need the kaspad simnet container; see [Run the
 
 | Suite | Count | Where |
 |---|---|---|
-| BridgeMint VM tests | 22 | `bridge/kaspa/tests/bridge_mint.rs` |
-| KasPool VM tests | 23 | `bridge/kaspa/tests/pool.rs` |
-| KCC20 template | 1 | `bridge/kaspa/tests/template.rs` |
-| Checked-in artifacts (kUSDT and KasPool) | 2 | `bridge/kaspa/tests/artifacts.rs` |
-| Relay standardness of the real builders at their largest shapes | 4 | `bridge/kaspa/tests/standard.rs` |
-| Followers ignore decoy outputs | 3 | `bridge/kaspa/tests/decoy_outputs.rs` (and `bridge/packages/protocol/src/decoys.test.ts`) |
-| Web app | 133 unit, 160 + 25 end to end | `bridge/web` (`npm test`, `npm run e2e`, `npm run e2e:wallet`) |
-| Wallet extension | 123 unit, plus 6 simnet, 7 stack and the smoke suite | `wallet/extension` |
-| Protocol and request-parsing unit tests | 6 | `bridge/kaspa/src/protocol.rs`, `src/model.rs` |
-| Vault (Hardhat) | 121 | `bridge/evm/test/` |
-| Services | 119 | `bridge/services/src/**/*.test.ts` |
-| Kaspa client, protocol, core | 59, 28, 4 | `bridge/packages/*` |
-| Mainnet deployer | 16 | `bridge/devnet/src/mainnet-deploy.test.ts` |
+| All Rust tests (the rows below, the pool's attack and slot tests, and the rest) | 175 | `bridge/kaspa` |
+| BridgeMint VM tests | | `bridge/kaspa/tests/bridge_mint.rs` |
+| KasPool VM tests | | `bridge/kaspa/tests/pool.rs` |
+| Covenant attacks | | `bridge/kaspa/tests/adversarial.rs` |
+| KCC20 template | | `bridge/kaspa/tests/template.rs` |
+| Checked-in artifacts (kUSDT and KasPool) | | `bridge/kaspa/tests/artifacts.rs` |
+| Relay standardness of the real builders at their largest shapes | | `bridge/kaspa/tests/standard.rs` |
+| Followers ignore decoy outputs | | `bridge/kaspa/tests/decoy_outputs.rs` (and `bridge/packages/protocol/src/decoys.test.ts`) |
+| Protocol and request-parsing unit tests | | `bridge/kaspa/src/protocol.rs`, `src/model.rs` |
+| Web app | 249 unit, plus the end-to-end suites | `bridge/web` (`npm test`, `npm run e2e`, `npm run e2e:wallet`) |
+| Wallet extension | 227 unit, plus the simnet, stack and smoke suites | `wallet/extension` |
+| Vault (Hardhat) | 209 | `bridge/evm/test/` |
+| Services | 672, one of them an expected failure | `bridge/services/src/**/*.test.ts` |
+| Kaspa client, protocol | 60, 57 | `bridge/packages/*` |
+| Deployer and test tools | 118 | `bridge/devnet/src/*.test.ts` |
 | Mainnet rehearsal | 49 checks | `npm run mainnet:rehearse` |
 | Signer rotation | 16 checks | `npm run local:rotate` |
 
@@ -87,6 +88,27 @@ bash tools/wasm.sh && git diff --stat -- bridge/packages/core                   
 ```
 
 The compiler and its dependencies still come from the network the first time; only the `.ag` sources needed no fetching. `bridge/kaspa/artifacts/PROVENANCE.json` records the compiler, the toolchain, and the hash of each source, artifact, WebAssembly core and contract's bytecode. The artifacts name the reference by its path in the container (`/kusdt/vendor/kcc20-reference/...`), so rebuild with `tools/rust.sh`. The `covenant bytecode` CI job runs these on every change to them.
+
+The builders are pinned (since run 21, Daybreak [6]). `tools/rust.sh` runs `docker.io/library/rust:1.94.1` by its
+digest, and `tools/docker/rust-wasm.Dockerfile` starts from the same image and installs each package at an exact
+version: a tag, and whatever apt serves that day, would let a registry or a package mirror change what compiles the
+covenants and the core. The name is in full because podman takes a short one (`rust:1.94.1`) only through an alias.
+The digest is the tag's multi-platform index, not one platform's image: it names the linux/amd64 and the linux/arm64
+builds among others, so an arm64 machine runs its own build of the same pin, and Debian serves each pinned package at
+the same version for both. The committed WebAssembly core was rebuilt and compared on linux/amd64 only: an arm64
+builder's output has not been compared with it. `tools/wasm.sh` builds that image itself and runs it by the ID the
+build gives, never by a tag. `node tools/check-artifacts.mjs` fails a builder named by a tag or by a short name, or a
+package with no version. The price of exact versions: the day Debian replaces one of them (a stable update of
+`llvm-toolchain-19`, say), apt no longer finds it, the image stops building and the CI job fails, until the successor
+is pinned on purpose and the core rebuilt and compared. Debian's snapshot archive keeps the old packages (the pinned
+`clang-19`, `1:19.1.7-3+b1`, since 15 June 2025): to rebuild an older release with its own pins, point the image's apt
+sources at `snapshot.debian.org` for a date when Debian served them. The CI job builds in a copy of the tree
+(`git archive`) and compares the copy's artifacts and WebAssembly core with the checkout (`diff -r`), which no
+builder mounts: before, it compared the very tree the builder had written. To move to another toolchain or package
+version, pin the new index's digest or version in both files, rebuild, and compare. After
+`docker pull docker.io/library/rust:<tag>`, this shows the digest:
+`docker image inspect docker.io/library/rust:<tag> --format '{{index .RepoDigests 0}}'`.
+
 ## After editing a contract
 
 The builders embed the compiled artifacts. After you change a `.ag` file:

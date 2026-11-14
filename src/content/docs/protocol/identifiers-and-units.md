@@ -8,13 +8,19 @@ them is a bug.
 
 ## Networks
 
-| | Testnet | Mainnet |
+kUSDT runs on mainnet from 14 November 2026. The public testnet ran from 4 November to 14 November 2026 and has
+ended; the code still accepts the test networks, for development.
+
+| | Mainnet | Test networks (development only) |
 |---|---|---|
-| Kaspa | testnet-10 | mainnet |
-| Ethereum | Sepolia (chain ID 11155111) | Ethereum (chain ID 1) |
-| BNB Chain | BSC testnet (chain ID 97) | BNB Smart Chain (chain ID 56) |
-| Ethereum USDT | `MockUSDT`, 6 decimals (kUSDT's own test token) | `0xdAC17F958D2ee523a2206206994597C13D831ec7` |
-| BNB Chain USDT | `MockUSDT`, 18 decimals (kUSDT's own test token) | `0x55d398326f99059fF775485246999027B3197955` (BSC-USD) |
+| Kaspa | mainnet (`kaspa:` addresses) | testnet-10 |
+| Ethereum | Ethereum (chain ID 1) | Sepolia (chain ID 11155111) |
+| BNB Chain | BNB Smart Chain (chain ID 56) | BSC testnet (chain ID 97) |
+| Ethereum USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7`, 6 decimals | `MockUSDT`, 6 decimals (kUSDT's own test token) |
+| BNB Chain USDT | `0x55d398326f99059fF775485246999027B3197955` (BSC-USD), 18 decimals | `MockUSDT`, 18 decimals (kUSDT's own test token) |
+
+The mainnet deployment's vault addresses, covenant ID and pool ID are published on
+[Status: Addresses](/overview/status/#addresses) once the launch is verified.
 
 ## Chain codes
 

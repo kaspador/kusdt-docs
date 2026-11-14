@@ -9,11 +9,12 @@ Redeeming turns kUSDT on Kaspa back into USDT on Ethereum, or BSC-USD on BNB Cha
 **burn owner** that names the chain and the EVM address to pay. After the burn is final, the signers approve a
 release and the vault pays you.
 
-:::note[Testnet only]
-kUSDT runs on testnet: TN10, Sepolia and BSC testnet (addresses on [Status](/overview/status/#addresses)). The
-public testnet web app is [testnet.trestly.io](https://testnet.trestly.io), and the testnet wallet can be
-downloaded; see [Test on the public testnet](/getting-started/public-testnet/). Nothing is on mainnet. Do not send
-real USDT to any address.
+:::caution[Mainnet, launching today, not audited]
+kUSDT launches on mainnet on 14 November 2026. The web app is [trestly.io](https://trestly.io); it shows a
+"Launching today" page until the launch is verified. The kUSDT covenant ID and the vault addresses are published on
+[Status](/overview/status/#addresses) once the launch is verified. You redeem with
+[kUSDT Wallet](/getting-started/wallet/), whose mainnet version is published right after the launch. No independent
+audit has been done ([Audit status](/security/audit-status/)).
 :::
 
 ## Before you start
@@ -23,23 +24,35 @@ The burn owner commits to the payout chain and address. Tokens sent to it can ne
 change where they are paid, including you. Check the chain and the address before you sign.
 :::
 
-- Burns of an amount at or below the release fee are **never paid**. On mainnet that is 5 USDT on Ethereum and
-  0.50 USDT on BNB Chain (or 0.20 % of the amount if that is higher); on the testnet both vaults charge at least
-  0.50 USDT.
-- Just above the fee, a burn is paid but the minimum fee takes most of it: on the testnet, 0.58 kUSDT pays
+- Burns of an amount at or below the release fee are **never paid**. That is 5 USDT on Ethereum and
+  0.50 USDT on BNB Chain (or 0.50 % of the amount if that is higher).
+- Just above the fee, a burn is paid but the minimum fee takes most of it: on BNB Chain, 0.58 kUSDT pays
   0.08 USDT. When the fee is more than 20 % of the amount, the wallet and the web app say so and name the amount
-  from which it is 20 % or less (five times the minimum fee: 2.50 kUSDT on the testnet). The burn stays
-  allowed.
+  from which it is 20 % or less (five times the minimum fee: 25 kUSDT on Ethereum, 2.50 kUSDT on BNB Chain). The
+  burn stays allowed.
 - One burn output is paid in one release, and a vault pays only from its own backing. The wallet and the web app
-  refuse a burn the named vault cannot pay now: a payout above its release capacity (250 000 USDT by default) or
-  its current `releaseAvailable`, an amount above its backing, or a vault that is paused. They offer the other
-  chain when that one can pay.
+  refuse a burn the named vault cannot pay now: an amount, fee included, above what one burn may take of its release
+  capacity (the capacity less what is queued and 1 % kept free, since run 21 round 2; the capacity is 50 000 USDT at
+  the launch), its current `releaseAvailable` or its backing, or a vault that is paused. They offer the other
+  chain when that one can pay. They read all of this from the vault itself, over the chain's RPCs, right before
+  the burn (in kUSDT Wallet after any merge the burn needs first); the bridge server's figures alone are not enough,
+  and when they disagree with the vault nothing is burnt and the wallet says so.
+- The release fee the review shows is the most the burn goes out at: should the vault ask more by the time it is
+  sent, kUSDT Wallet burns nothing and says so (a lower fee goes ahead). The vault charges the fee of the moment it
+  queues the payout, after the burn, so a fee raised after that is still charged.
 - The address must be one the vault would pay. Ethereum USDT keeps a blacklist; BSC-USD keeps none. The bridge
   never pays an address the token blocks (see [Blocked recipients](/security/known-limits/#blocked-recipients)).
   Before every burn, the wallet and the web app ask the coordinator (`GET /recipients/:chain/:address`) and refuse
-  an address it would not pay, with the reason. If they cannot ask, they refuse too, and offer to check again: a
-  burn cannot be undone. The wallet asks once more right before it sends. It offers the other chain only when that
-  vault would pay the address.
+  an address it would not pay, with the reason. kUSDT Wallet also asks the token itself, over the chain's RPCs,
+  and burns nothing to an address it blocks. If they cannot ask, they refuse too, and offer to check again: a
+  burn cannot be undone. The wallet asks once more right before it sends, after any merge. It offers the other chain
+  only when that vault would pay the address.
+- **The payout address on the web app.** When your EVM wallet is connected, the page fills in its address, and the
+  field is read-only while it shows that address. To pay another address, press "Choose a different destination
+  wallet": the field empties, you type the address, and the page warns that it is not your connected wallet's. A
+  WalletConnect session that the page finds stored from an earlier visit never counts as your own address: the page
+  shows "Connect again to use my wallet address", and your phone wallet has to approve the connection again before
+  its address is filled in. You can also type the address.
 - You need KAS as well as kUSDT: the burn output carries KAS (below), and the transaction pays a network fee.
 - Only a **plain** burn is paid: borrow scheme, borrow guard and extension commitment must all be zero. Signers
   refuse any other burn state, and its kUSDT is lost. Wallets never build one.
@@ -47,8 +60,7 @@ change where they are paid, including you. Check the chain and the address befor
   good, and it is part of a redemption's cost. An ordinary kUSDT state carries 1.5 KAS instead, which comes back
   when it is spent.
 - What that means for your KAS balance:
-  - **Burning a whole kUSDT state:** its 1.5 KAS comes back less the 0.3 KAS burn and the network fee. On the
-    testnet that is about +1.08 KAS.
+  - **Burning a whole kUSDT state:** its 1.5 KAS comes back less the 0.3 KAS burn and the network fee.
   - **Burning part of a state:** the kUSDT you keep stays in a change state, which keeps carrying 1.5 KAS. That
     KAS is still yours. Your balance pays only the 0.3 KAS burn and the network fee.
 
@@ -64,7 +76,7 @@ change where they are paid, including you. Check the chain and the address befor
    bridge can read them. See [Burn owner and payload](/protocol/burn-owner-and-payload/).
 2. **The burn state exists on Kaspa.** Its owner is a hash of a script that starts with `OP_RETURN`, which no
    transaction can ever satisfy.
-3. **Finality.** The bridge waits until the burn's accepting block is deep enough below the current virtual DAA score. On mainnet that is 1 000 DAA scores (about 100 seconds), 6 000 (about 10 minutes) above 10 000 kUSDT, and 36 000 (about an hour) above 100 000 kUSDT. On testnet it is 300 DAA scores for every burn. See [Finality](/protocol/finality/).
+3. **Finality.** The bridge waits until the burn's accepting block is deep enough below the current virtual DAA score. On mainnet that is 1 000 DAA scores (about 100 seconds), 6 000 (about 10 minutes) above 10 000 kUSDT, and 36 000 (about an hour) above 100 000 kUSDT. See [Finality](/protocol/finality/).
 4. **Each signer reads the burn** from its own Kaspa node.
 5. **Each signer checks and signs.** It checks that the burn owner matches the chain and address, and that the
    amount is above the release fee. It then signs an EIP-712 `Release` message.
@@ -78,21 +90,21 @@ change where they are paid, including you. Check the chain and the address befor
 
 ## What you receive
 
-The release fee is 0.20 % of the amount, with a minimum of 5 USDT on Ethereum and 0.50 USDT on BNB Chain
-(mainnet; on the testnet the minimum is 0.50 USDT on both chains).
+The release fee is 0.50 % of the amount, with a minimum of 5 USDT on Ethereum and 0.50 USDT on BNB Chain. It is a
+flat fee: the
+[rising deposit fee](/protocol/fees/#the-rising-deposit-fee) applies to deposits only, never to a bridge back.
 
 | kUSDT burned | Ethereum: fee | Ethereum: you receive | BNB Chain: fee | BNB Chain: you receive |
 |---|---|---|---|---|
 | 10 | 5.00 | 5.00 | 0.50 | 9.50 |
 | 100 | 5.00 | 95.00 | 0.50 | 99.50 |
-| 1 000 | 5.00 | 995.00 | 2.00 | 998.00 |
-| 2 500 | 5.00 | 2 495.00 | 5.00 | 2 495.00 |
-| 10 000 | 20.00 | 9 980.00 | 20.00 | 9 980.00 |
-| 100 000 | 200.00 | 99 800.00 | 200.00 | 99 800.00 |
+| 1 000 | 5.00 | 995.00 | 5.00 | 995.00 |
+| 2 500 | 12.50 | 2 487.50 | 12.50 | 2 487.50 |
+| 10 000 | 50.00 | 9 950.00 | 50.00 | 9 950.00 |
 
 ## How long it takes
 
-Kaspa finality (about 100 seconds; about 10 minutes above 10 000 kUSDT and about an hour above 100 000 kUSDT on mainnet), then the signers and an EVM transaction, the 10-minute safety wait, and one more EVM transaction. So a typical redemption on mainnet takes about 13 minutes. If the vault is paused the payout waits until it runs again. If the vault's release allowance
+Kaspa finality (about 100 seconds; about 10 minutes above 10 000 kUSDT and about an hour above 100 000 kUSDT), then the signers and an EVM transaction, the 10-minute safety wait, and one more EVM transaction. So a typical redemption takes about 13 minutes. If the vault is paused the payout waits until it runs again. If the vault's release allowance
 is used up, your release waits until it refills. See [Limits](/protocol/limits/).
 
 ## If something goes wrong
@@ -107,5 +119,5 @@ is used up, your release waits until it refills. See [Limits](/protocol/limits/)
 - **The vault cannot pay yet.** If a burn lands that the vault cannot pay now, the relayer retries it with a backoff
   of its own until the allowance refills or the backing arrives. It never holds up other burns. Its status shows
   `attempts`, `nextTry` and `lastError` (see the [coordinator API](/protocol/coordinator-api/)).
-- **The vault can never pay it.** A burn at or below the release fee, or naming the zero address or the vault
-  itself, is marked `unpayable`. Its kUSDT is lost.
+- **The vault can't pay it out.** A burn at or below the release fee is marked `unpayable`: it is looked at again
+  about once a minute, and paid if the fee falls below it. A burn naming the zero address or the vault itself is lost for good.

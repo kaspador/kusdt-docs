@@ -22,7 +22,7 @@ well-known development accounts.
    ```sh
    docker run -d --name kusdt-simnet \
      -p 127.0.0.1:18610:18610 -p 127.0.0.1:17610:17610 \
-     kaspanet/rusty-kaspad:v2.1.0 kaspad --simnet --appdir=/app/data --utxoindex \
+     docker.io/kaspanet/rusty-kaspad:v2.1.0 kaspad --simnet --appdir=/app/data --utxoindex \
      --enable-unsynced-mining --nologfiles --disable-upnp \
      --rpclisten-json=0.0.0.0:18610 --rpclisten-borsh=0.0.0.0:17610 --rpcmaxclients=128
    ```
@@ -30,7 +30,7 @@ well-known development accounts.
    Later runs need only `docker start kusdt-simnet`. A coinbase output matures after about 1 000 DAA, so each run
    first mines about 1 100 blocks to its own addresses (a few seconds).
 2. **Dependencies**: `npm install --legacy-peer-deps` at the repository root.
-3. **The builders**: the WebAssembly core (`@kusdt/core`), which the runs use in-process by default, is checked in. To rebuild it after a Rust change, build the image once (`docker build -t kusdt-rust-wasm:1 -f tools/docker/rust-wasm.Dockerfile tools/docker`), then run `bash tools/wasm.sh`. Set `KUSDT_CORE=cli` to use the native `kusdt-tx` instead: in the pinned Rust container
+3. **The builders**: the WebAssembly core (`@kusdt/core`), which the runs use in-process by default, is checked in. To rebuild it after a Rust change, run `bash tools/wasm.sh` (it builds its pinned image first). Set `KUSDT_CORE=cli` to use the native `kusdt-tx` instead: in the pinned Rust container
    against the release build, or the binary named by `KUSDT_TX`.
 4. **For `local:e2e`, `local:load` and `local:stack`**: the EVM build, `npm ci` and `npx hardhat compile` in `bridge/evm`.
 
@@ -113,9 +113,10 @@ default ports, for the wallet extension and the web app. Ctrl+C stops it.
 | Service | Address |
 |---|---|
 | EVM chains (Hardhat, chain IDs 31337 and 31338) | `http://127.0.0.1:8545`, `http://127.0.0.1:8546` |
-| Coordinator API | `http://127.0.0.1:9100/api/v1` |
+| Coordinator API (its API process) | `http://127.0.0.1:9100/api/v1` |
 | Signers | ports 9101 to 9105 |
-| Monitor | port 9200 |
+| Monitor's status (its status process) | port 9200 |
+| The coordinator's health, the claims channel, the monitor's operator listener | ports 9110, 9111 and 9210 (not for the wallet or the web app) |
 | Dev faucet | `http://127.0.0.1:9099` |
 
 The faucet answers:
@@ -126,6 +127,12 @@ The faucet answers:
 | `POST /faucet` with `{kaspa?, evm?, kas?, usdt?}` | Sends KAS to a Kaspa address, and mock USDT on both chains plus gas to an EVM address |
 | `POST /mine` with `{blocks}` | Mines simnet blocks |
 | `POST /blacklist` with `{chain, address, blocked}` | Puts an address on the chain's mock USDT blacklist (`blocked` true, the default) or takes it off. Only chain 1's deployment honours it, as on mainnet; the answer's `honoured` says so |
+| `POST /shutdown` | Stops the stack, as Ctrl+C does |
+
+The `POST` calls are for scripts and tools on your computer. Since run 21 (Daybreak [31]) they refuse a request from a
+web page (any request that names an `Origin`, which a browser always does on a `POST`): before, any site you opened
+could stop the stack or fund and blacklist addresses on it. Its answers stay readable from any origin, so the local
+web app (`npm run dev`, whose `deploymentUrl` is `GET /stack`) and kUSDT Wallet still read the stack.
 
 Every key in the stack is a development key derived from a public name, or one of Hardhat's published accounts.
 Never use them with real funds.

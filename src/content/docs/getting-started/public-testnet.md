@@ -1,135 +1,33 @@
 ---
-title: Test on the public testnet
-description: Try kUSDT end to end on the public testnet with test coins. Install the wallet, get test tokens, bridge in, swap, provide liquidity, redeem, and report what you find.
+title: The public testnet (ended)
+description: The kUSDT public testnet ran from 4 to 14 November 2026 on Kaspa testnet-10, Sepolia and BSC testnet. It has ended; kUSDT is on mainnet.
 ---
 
-The public testnet opened on 4 November 2026. It runs the whole bridge and the pool on Kaspa testnet-10 (TN10),
-Sepolia and BSC testnet.
+The public testnet ran from 4 November to 14 November 2026. It has ended. kUSDT launches on mainnet on
+14 November 2026.
 
-:::caution[Test coins only]
-Everything here uses test coins with no real value: TN10 KAS, Sepolia ETH, tBNB and MockUSDT. Nothing is on
-mainnet. Never send real USDT, ETH, BNB or KAS to any testnet address. Nothing has been audited
-([Audit status](/security/audit-status/)).
-:::
+## What it was
 
-| Item | Where |
+The whole bridge and the pool ran on test networks: Kaspa testnet-10 (TN10), Sepolia and BSC testnet, with test
+coins that had no value. Anyone could install a testnet build of kUSDT Wallet, take test USDT from a faucet, bridge
+it in, swap, add liquidity and redeem. It was there to try every flow end to end, with real wallets and real
+networks, before mainnet, and to find what the local tests had missed.
+
+## What no longer works
+
+- The testnet site, its API, its monitor and its faucet are gone. `testnet.trestly.io` now redirects to
+  [trestly.io](https://trestly.io).
+- Test kUSDT, MockUSDT and the testnet vaults and pool are no longer served by anything. Test coins have no value,
+  and nothing will exchange them.
+- The testnet build of kUSDT Wallet no longer has a bridge or a pool to talk to. Remove it, and never put a recovery
+  phrase that holds real KAS into a test build.
+
+## Where to go now
+
+| For | Go to |
 |---|---|
-| Web app | [testnet.trestly.io](https://testnet.trestly.io) |
-| Wallet (testnet build) | [kusdt-wallet-testnet.zip](https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip) |
-| Coordinator API | `https://testnet.trestly.io/api/v1` ([Coordinator API](/protocol/coordinator-api/)) |
-| Monitor status (read-only) | `https://testnet.trestly.io/monitor/health`, `https://testnet.trestly.io/monitor/api/v1/monitor`, `https://testnet.trestly.io/monitor/api/v1/signal` |
-| Covenant IDs, vaults, MockUSDT | [Status: Addresses](/overview/status/#addresses), from `deployments/testnet.json` |
-
-All the services run on one public test host, each in its own isolated container. That is a testnet
-convenience: on mainnet each signer is a different operator on its own machine
-([Operations](/developers/operations/#the-testnet-deployment)).
-
-## 1. Install the wallet
-
-kUSDT Wallet is a browser extension for Chromium browsers on a computer: Chrome, Brave and Edge. It is not in any store yet, and there is no phone version. On a phone you can still bridge USDT in to any Kaspa address.
-
-1. Download [kusdt-wallet-testnet.zip](https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip).
-2. Unzip it.
-3. Open `chrome://extensions`.
-4. Turn on **Developer mode**.
-5. Click **Load unpacked** and pick the unzipped folder.
-6. Pin the extension.
-
-It starts on Testnet. Its Kaspa addresses start with `kaspatest:`. See [The wallet](/getting-started/wallet/).
-
-For deposits from the web app you also need an EVM wallet: one in the same browser, or a phone wallet through WalletConnect. Or use kUSDT Wallet's own EVM side.
-
-## 2. Get gas and test USDT
-
-| You need | For | Where |
-|---|---|---|
-| Sepolia ETH | Gas on Sepolia | [Google Cloud Web3 faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) |
-| tBNB | Gas on BSC testnet | [BNB Chain faucet](https://www.bnbchain.org/en/testnet-faucet) |
-| TN10 KAS | Kaspa network fees, the KAS each kUSDT state carries, buying kUSDT | [faucet-tn10.kaspanet.io](https://faucet-tn10.kaspanet.io) (listed on [wiki.kaspa.org](https://wiki.kaspa.org/en/testnets)), or ask in the Kaspa Discord `#testnet` channel |
-| Test USDT | Bridging in | "Get 1,000 test USDT" on the web app's Bridge page or the wallet's Bridge tab |
-| Test kUSDT, without bridging | Swapping, liquidity and redeeming right away | "Get 25 test kUSDT" on the web app's Bridge page: once a day per address, no EVM wallet or gas needed |
-
-Faucets set their own limits.
-
-"Get 1,000 test USDT" calls MockUSDT's open mint on the chosen chain. You pay its gas from your own EVM account, so
-get Sepolia ETH or tBNB first. MockUSDT has the same address on both chains,
-`0x5bF185d9ce3A194b7090f069398580A66fb1F8a1`.
-
-## 3. Bridge USDT in
-
-Deposit test USDT from Sepolia or BSC testnet to your wallet's Kaspa address, on the web app's **Bridge** page ([testnet.trestly.io/bridge](https://testnet.trestly.io/bridge)), with From set to your chain and To set to Kaspa, or in the wallet's Bridge tab. A deposit is between 10 and 100 000 USDT, and pays the deposit fee (0.20 %, at least
-0.50 USDT).
-
-The kUSDT arrives after the deposit's block is finalized on its chain and 3 of the 5 signers approve it. On
-Sepolia that takes about 13 minutes. The web app shows each step in its own window. You can close it: the bridge keeps going, a tag stays in the corner of the page until it is done, and **Activity** lists it too.
-
-Details: [Bridge USDT in](/getting-started/bridge-in/), [Finality](/protocol/finality/), [Fees](/protocol/fees/).
-
-## 4. Swap
-
-Swap KAS for kUSDT and back in the web app's **Swap** page or the wallet. Every swap pays 0.30 % of its input.
-
-Testnet liquidity is thin: expect price impact, and check
-it in the quote before you sign. Net of buys, sells may take at most 10 % of the pool's KAS per hour: that is the circuit
-breaker (SPEC §15), and a larger sell is refused until the window opens again.
-
-The pool was replaced on 5 November 2026 by one whose breaker counts the net flow (sells less buys), so round trips
-cannot use up the hour's room. Use the wallet from the link above (0.9.8 today): 0.9.2 and older know only the retired pool.
-
-Details: [Swap KAS and kUSDT](/getting-started/swap/), [The sell limit](/getting-started/swap/#the-sell-limit),
-[KasPool: the circuit breaker](/contracts/kaspool/#the-circuit-breaker).
-
-## 5. Add and remove liquidity
-
-In the web app's **Pool** page, add KAS and kUSDT at the pool's current ratio. You receive a position, a Kaspa
-UTXO named `txid:index`, which the page lists. Remove it to get your share of both reserves back.
-
-The guardian can pause the pool. While it is paused, swaps and new liquidity stop, but withdrawals stay open.
-
-Details: [Providing liquidity](/getting-started/swap/#providing-liquidity),
-[When the pool is paused](/getting-started/swap/#when-the-pool-is-paused), [The guardian](/security/guardian/).
-
-## 6. Redeem back to an EVM address
-
-The public testnet's vaults predate the [safety wait](/protocol/redemptions-and-releases/#the-wait), so payouts here
-don't wait yet. On mainnet each one waits 10 minutes.
-
-On the web app's **Bridge** page, set From to Kaspa and To to Sepolia or BSC testnet (the arrow between them flips the direction), or use the wallet's Bridge tab, and burn kUSDT to an EVM address on that chain. The vault
-pays it once the burn is final and 3 signers approve the release.
-
-- A burn cannot be undone, and nobody can redirect its payout. Check the chain and the address.
-- An amount at or below the release fee is never paid. Both testnet vaults were deployed with a 0.50 USDT minimum
-  release fee, or 0.20 % if that is higher (on mainnet, Ethereum's minimum is 5 USDT).
-- The burn output carries 0.3 KAS, gone for good since nothing can spend a burn, and the transaction pays a network
-  fee. Keep some KAS next to your kUSDT.
-- Sepolia's MockUSDT keeps a Tether-style blacklist. The wallet and the web app refuse a blocked address before
-  any burn.
-
-Details: [Redeem kUSDT](/getting-started/redeem/),
-[Blocked recipients](/security/known-limits/#blocked-recipients).
-
-## 7. Check the status
-
-| Where | Shows |
-|---|---|
-| The web app's **Reserves** page | Proof of reserves (INV-1): the coordinator's figures next to the page's own reads of the vaults and the minter, and the monitor's check |
-| The web app's **Network** page | The pinned deployment, whether the coordinator serves it, the vaults and the minter (paused or not), the signers |
-| `https://testnet.trestly.io/monitor/health` | 200 only while the monitor is healthy and its last check is fresh |
-| `https://testnet.trestly.io/monitor/api/v1/monitor` | Minted, released, owed and backing per chain, every alarm and every pause |
-| `https://testnet.trestly.io/monitor/api/v1/signal` | The integrators' answer: `ok` false means stop taking new kUSDT |
-
-All three monitor routes are read-only. See [The monitor](/security/monitor/) and [Invariants](/security/invariants/).
-
-## Reporting what you find
-
-There is no public reporting channel yet. When you report a problem, include:
-
-| Include | Example |
-|---|---|
-| The network and chain | TN10, Sepolia or BSC testnet |
-| Your addresses | Your Kaspa address and your EVM address |
-| Transaction IDs | The deposit's EVM transaction hash, the Kaspa transaction ID of the mint, swap or burn, and the release hash if there is one |
-| Screenshots | The web app or the wallet, with any error message |
-| The time | The date and time, with your time zone |
-
-Never share a seed phrase or a private key, not even a testnet one.
+| The web app | [trestly.io](https://trestly.io): it shows a "Launching today" page until the launch is verified, then the Bridge, Swap, Pool and Reserves pages |
+| The mainnet addresses | [Status: Addresses](/overview/status/#addresses), published once the launch is verified |
+| Bridging in and out | [Bridge USDT in](/getting-started/bridge-in/) and [Redeem kUSDT](/getting-started/redeem/) |
+| The wallet | [The wallet](/getting-started/wallet/): its mainnet version is published right after the launch |
+| The risks | [Audit status](/security/audit-status/) and [Known limits](/security/known-limits/). No independent audit has been done |

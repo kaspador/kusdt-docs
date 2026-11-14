@@ -9,17 +9,17 @@ KasPool is a KAS⇄kUSDT pool on Kaspa L1. It holds a reserve of KAS and a reser
 by the *constant-product* rule: after a swap, the product of the two reserves may not shrink. Each swap is a
 single Kaspa transaction.
 
-:::note[Testnet only]
-The KasPool covenants are tested in Kaspa's script engine and run on testnet (TN10). The testnet pool's covenant ID
-is `102a59644f81734faa6e7870a694ee8da047b02b8bc21945576f535f94f5efb4`, with the net-flow circuit breaker, since 5 November 2026. It replaced `0b2028d0d96d0858051fa633ae0b80ad459a9b33415065a9174a8a0b07b492c9`
-(its breaker counted gross sells), which had replaced `f762a53e3bdfc680bb8bd55d4e64094021ea2d1c1ccc807c1772485dfe477a8b` (no circuit breaker). Testnet
-liquidity is thin: expect price impact. Swap in the public
-testnet web app at [testnet.trestly.io](https://testnet.trestly.io). Nothing is on mainnet.
+:::caution[Mainnet, launching today, not audited]
+KasPool launches on Kaspa mainnet with kUSDT on 14 November 2026. Swap in the web app at
+[trestly.io](https://trestly.io) once the launch is verified; until then it shows a "Launching today" page. The
+pool's covenant ID is published on [Status](/overview/status/#addresses) at the same time: check it before you
+swap. A new pool can be thin, so check the price impact in the quote before you sign. No
+independent audit has been done ([Audit status](/security/audit-status/)).
 :::
 
 :::tip[In the web app]
 The [web app](/getting-started/web-app/)'s Swap page quotes with the same core the covenant checks against, and
-shows the 0.30 % fee, the price impact and your slippage setting. The wallet then builds and signs the swap.
+shows the 0.50 % fee, the price impact and your slippage setting. The wallet then builds and signs the swap.
 :::
 
 ## How a swap works
@@ -34,11 +34,11 @@ shows the 0.30 % fee, the price impact and your slippage setting. The wallet the
 
 ## Price and fee
 
-Every swap pays **0.30 %** of its input: 0.25 % stays in the pool for liquidity providers, 0.05 % accrues to
+Every swap pays **0.50 %** of its input: 0.45 % stays in the pool for liquidity providers, 0.05 % accrues to
 the protocol. The best amount a swap can return is:
 
 ```text
-effective = floor(input × 9 970 / 10 000)
+effective = floor(input × 9 950 / 10 000)
 output    = floor(reserve_out × effective / (reserve_in + effective))
 ```
 
@@ -47,10 +47,14 @@ For a buy, the input is KAS, `reserve_in` is *X* and `reserve_out` is *Y*. For a
 
 | Pool | You send | You receive (quote) |
 |---|---|---|
-| 10 000 KAS and 1 000 kUSDT | 100 KAS | about 9.87 kUSDT |
+| 10 000 KAS and 1 000 kUSDT | 100 KAS | about 9.85 kUSDT |
 
-A round trip (KAS to kUSDT and back) returns a little less than you started with, about the 0.6 % paid in
-fees. You also pay the normal Kaspa network fee in KAS.
+A round trip (KAS to kUSDT and back) returns a little less than you started with, about the 1 % paid in
+fees. You also pay the normal Kaspa network fee in KAS. The wallet shows about how much before you swap, at the
+feerate its Kaspa node names, and sends nothing if the node names more than half as much again by the time the
+swap is built. Nor does it send a swap that would leave the network change too small to keep (under 0.2 KAS, more
+at a high feerate) beyond what was shown: it tries other coins, or asks you to merge your KAS or change the amount
+a little. A buy of Max keeps 0.3 KAS for the fee, and the fee row then says "up to 0.3 KAS".
 
 ## No sandwiching, no slippage after signing
 
@@ -61,12 +65,19 @@ A swap transaction spends the exact pool UTXO it was built on and names the exac
 - **You may need to retry.** In a busy moment your app may have to re-quote and re-sign against the new pool
   state.
 - **The wallet asks before a worse price.** It goes ahead on its own only if the new quote is at least as good as
-  the one you confirmed. Your slippage minimum stays the hard floor.
+  the one you confirmed. Your slippage minimum stays the hard floor. kUSDT Wallet asks in its own window.
 
 ## Selling kUSDT
 
 A sell is the mirror image. Your kUSDT state is an input, any remaining kUSDT returns to you as change, and the
 KAS goes to an output you choose.
+
+A very small sale can be refused. The network keeps change only from 0.2 KAS up, and the wallet's builders leave
+less than that to the network fee. When you sell a part of a kUSDT state and hold no other KAS, what the sale
+brings is that change: if less than 0.2 KAS of it is left after the network fee, all of it would go to the fee. The
+wallet refuses such a sale before it signs anything and says why. Sell more, sell all of that kUSDT (the 1.5 KAS
+under it then comes back with the proceeds), or hold some KAS first. It also refuses a sale whose network fee is
+as large as what the sale brings.
 
 <PoolSwap kind="sell" />
 

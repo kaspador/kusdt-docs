@@ -1,0 +1,27 @@
+---
+// The Terms of Service and the Privacy Policy, from the one approved text of each
+// that the web app shows at /terms and /privacy (bridge/web/src/terms/terms.md and
+// bridge/web/src/privacy/privacy.md), read through the web app's own reader of them,
+// so the docs never carry a copy that could drift. The text's title is the page's
+// title (reference/terms.mdx, reference/privacy.mdx), so it is left out here;
+// everything under it is shown as written.
+import terms from '../../../bridge/web/src/terms/terms.md?raw';
+import privacy from '../../../bridge/web/src/privacy/privacy.md?raw';
+import { termsBlocks, termsPieces } from '../../../bridge/web/src/terms/blocks';
+
+interface Props { text: 'terms' | 'privacy' }
+const { text } = Astro.props;
+
+// A list item or a paragraph, as its pieces: plain text, a link, or bold words.
+const blocks = termsBlocks(text === 'privacy' ? privacy : terms)
+  .filter((b) => b.kind !== 'title')
+  .map((b) => (b.kind === 'list' ? { ...b, pieces: b.items.map(termsPieces) } : b.kind === 'para' ? { ...b, pieces: [termsPieces(b.text)] } : { ...b, pieces: [] }));
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+---
+
+{blocks.map((b) =>
+  b.kind === 'heading' ? <h2 id={slug(b.text)}>{b.text}</h2>
+  : b.kind === 'list' ? <ul>{b.pieces.map((line) => <li>{line.map((p) => (p.href ? <a href={p.href}>{p.text}</a> : p.strong ? <strong>{p.text}</strong> : p.text))}</li>)}</ul>
+  : b.kind === 'para' ? <p>{b.pieces[0].map((p) => (p.href ? <a href={p.href}>{p.text}</a> : p.strong ? <strong>{p.text}</strong> : p.text))}</p>
+  : null,
+)}

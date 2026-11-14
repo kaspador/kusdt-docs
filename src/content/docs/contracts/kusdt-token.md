@@ -29,8 +29,10 @@ app KUSDT {
 The genesis transaction's covenant ID **is** kUSDT's identity. Wallets and the web app pin it. Because the ID
 commits to the preparation outpoint, it also commits to the metadata. See [Token metadata](/concepts/metadata/).
 
-On testnet (TN10) kUSDT's covenant ID is `6711958e2bc51c590426037020d9683ebd5daf42593de1797b65d25b92566314`. The
-mainnet one is **to be published**.
+kUSDT launches on Kaspa mainnet on 14 November 2026. Its mainnet covenant ID is published on
+[Status: Addresses](/overview/status/#addresses) once the launch is verified; take it from there or from the API's
+`GET /status` (`kaspa.covenantId`), never from a copy elsewhere. The public testnet's token ended with the public
+testnet on 14 November 2026.
 
 ## Rules every kUSDT state follows
 
