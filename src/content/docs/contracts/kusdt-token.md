@@ -31,8 +31,8 @@ commits to the preparation outpoint, it also commits to the metadata. See [Token
 
 kUSDT launches on Kaspa mainnet on 14 November 2026. Its mainnet covenant ID is published on
 [Status: Addresses](/overview/status/#addresses) once the launch is verified; take it from there or from the API's
-`GET /status` (`kaspa.covenantId`), never from a copy elsewhere. The public testnet's token ended with the public
-testnet on 14 November 2026.
+`GET /status` (`kaspa.covenantId`), never from a copy elsewhere. The public testnet has its own test token, covenant ID
+`a1d9fd1347128011ad0036b077949d63274d5d3b8ac8351776c30c945ef2c2fb` ([Test on the public testnet](/getting-started/public-testnet/)).
 
 ## Rules every kUSDT state follows
 

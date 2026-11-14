@@ -6,8 +6,8 @@ description: The monitor and guardian service. What it checks, which alarms it r
 The **monitor** watches every chain kUSDT touches and holds the **guardian** keys. When something is wrong, it
 pauses both vaults, the minter and the pool. It is written (`bridge/services/src/monitor/`), has run in the local
 end-to-end test, and ran for the public testnet (4 to 14 November 2026). On mainnet two monitors run, each able to
-pause; their read-only status URLs are published on the [Status](/overview/status/) page once the launch is verified.
-The acknowledge route is never public.
+pause, on separate machines with no public address: their alarms go to their operators, and their status is not
+published. The public testnet's monitor status is public, for testing. The acknowledge route is never public.
 
 ## Principles
 

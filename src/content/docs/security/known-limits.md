@@ -1483,8 +1483,8 @@ is unlocked. Lock the computer, and keep the wallet's auto-lock short.
 
 ## The testnet runs on one host
 
-The public testnet ran from 4 to 14 November 2026 on TN10, Sepolia and BSC testnet, at `testnet.trestly.io` (now a
-redirect to `trestly.io`). Its five signers, the coordinator and the monitor ran on one
+The public testnet has run since 4 November 2026 on TN10, Sepolia and BSC testnet, at `testnet.trestly.io` (paused on 14 November 2026,
+back that evening). Its five signers, the coordinator and the monitor ran on one
 test host, in isolated containers, so it was not the federation of five independent operators that mainnet needs
 (see [Operations](/developers/operations/#the-testnet-deployment)). They also shared one source per chain: one EVM RPC
 for Sepolia and one for BSC testnet, the same for every signer, the coordinator and the monitor, and one TN10 node. A
@@ -1493,5 +1493,5 @@ provider or a node that lied could therefore have had all five signers sign an u
 source, seeing nothing wrong. Mainnet refuses that layout: each signer reads at least two RPCs per chain from
 different providers (a mainnet signer does not start with fewer, and `kusdt check` fails it) and runs its own Kaspa
 node on its own machine ([What a signer needs](/developers/operations/#what-a-signer-needs)). Accepted for the testnet
-(14 November 2026): nothing about mainnet changes. The testnet's services and test coins are gone since it ended
-on 14 November 2026. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in the services, so they are only as good as their deployment.
+(14 November 2026): nothing about mainnet changes. The testnet has run again since the evening of 14 November 2026,
+with test coins only. Several protections on this site (finality checks, signer-side rules, the monitor's alarms) live in the services, so they are only as good as their deployment.

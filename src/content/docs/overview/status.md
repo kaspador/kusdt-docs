@@ -6,8 +6,9 @@ description: What exists today, what is tested, and what is not built yet.
 As of 14 November 2026. kUSDT **launches on mainnet today** (Kaspa, Ethereum and BNB Chain), from the release
 `mainnet-v0.9.8-rc.25`. Until the launch is verified, [trestly.io](https://trestly.io) shows a "Launching today"
 page; the web app (Bridge, Swap, Pool, Reserves) opens there once the launch is verified. The mainnet addresses are
-published [below](#addresses) at the same time. The public testnet ran from 4 to 14 November 2026 and has ended
-([The public testnet](/getting-started/public-testnet/)).
+published [below](#addresses) at the same time. The public testnet runs at [testnet.trestly.io](https://testnet.trestly.io), from the
+same release, for developers and integrators to test against. It ran from 4 November 2026, paused on 14 November
+and came back that evening ([Test on the public testnet](/getting-started/public-testnet/)).
 
 :::danger[Not audited]
 No independent audit has been done, and the legal review is still open. Internal attack rounds and outside
@@ -27,7 +28,7 @@ are on the [mainnet checklist](/security/mainnet-checklist/). Bridge only what y
 | Transaction builders | Rust CLI (`kusdt-tx`) and WebAssembly | Written | The simnet run uses them |
 | Signer and coordinator services | Off-chain | Written | The local end-to-end run (below) |
 | Monitor and guardian service | Off-chain | Written | Caught and paused a forged mint in the local end-to-end run (below) |
-| Web app | Browser | Built (`bridge/web`); ran on the public testnet, 4 to 14 November 2026; on mainnet at [trestly.io](https://trestly.io) once the launch is verified | 249 unit tests, end-to-end tests on the live stack, and a suite driving the real wallet extension |
+| Web app | Browser | Built (`bridge/web`); on the public testnet at [testnet.trestly.io](https://testnet.trestly.io) since 4 November 2026; on mainnet at [trestly.io](https://trestly.io) once the launch is verified | 249 unit tests, end-to-end tests on the live stack, and a suite driving the real wallet extension |
 | Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack and on the public testnet. Its mainnet version is published right after the launch | 227 unit tests, simnet and smoke suites, and tests against the live stack. Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
 | Refunds | Services and vault | Working | `local:load`: a deposit skipped and refunded 14.5 USDT |
 | Mainnet fork rehearsal | Forks of Ethereum and BNB Chain | Passed | The vault against the real USDT and BSC-USD |
@@ -36,10 +37,10 @@ are on the [mainnet checklist](/security/mainnet-checklist/). Bridge only what y
 | Vault owner: AccessManager under a Safe | Ethereum, BNB Chain | Built and rehearsed; each mainnet vault is owned this way (a 2-of-3 Safe, 48-hour delays, a 6-hour emergency delay, two cancellers). The testnet vaults kept a plain owner | 17 Hardhat tests; `mainnet:rehearse` |
 | Mainnet packages: signer, coordinator, monitor, deployer, web app | Off-chain | Built; launching today from `mainnet-v0.9.8-rc.25` | `mainnet:rehearse` on forks and simnet, 49 checks; `local:rotate`, 16 checks |
 | Signer keys in an HSM or KMS | Off-chain | Built, as an option | See [Operations](/developers/operations/#signer-keys-in-an-hsm-or-kms) |
-| Proof of reserves | Browser | The web app's Reserves page: ran on the public testnet, 4 to 14 November 2026; on mainnet once the launch is verified | Reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check |
+| Proof of reserves | Browser | The web app's Reserves page: on the public testnet since 4 November 2026; on mainnet once the launch is verified | Reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check |
 | Reproducible covenant bytecode | CI | Built | `tools/check-artifacts.mjs` and a CI job recompile and compare, byte for byte |
 | Outside reviews | Code and services | Four so far, each finding answered. Not an audit | See [Audit status](/security/audit-status/) |
-| Public testnet | TN10, Sepolia, BSC testnet | Ran on the public testnet, 4 to 14 November 2026; ended | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. It ran on one test host in isolated containers (see [Operations](/developers/operations/#the-testnet-deployment)) |
+| Public testnet | TN10, Sepolia, BSC testnet | Running at [testnet.trestly.io](https://testnet.trestly.io) since 4 November 2026 (paused on 14 November, back that evening), for testing integrations ([Test on the public testnet](/getting-started/public-testnet/)) | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. It ran on one test host in isolated containers (see [Operations](/developers/operations/#the-testnet-deployment)) |
 | Mainnet deployment | Kaspa, Ethereum, BNB Chain | Launching today, 14 November 2026, from `mainnet-v0.9.8-rc.25` | Addresses published [here](#addresses) once the launch is verified. See the [mainnet checklist](/security/mainnet-checklist/) |
 | Signer operators | Mainnet | Five independent operators; any 3 approve a mint or a payout, 4 for Kaspa governance | The [mainnet checklist](/security/mainnet-checklist/), item 1 |
 
@@ -81,11 +82,15 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 
 ## Addresses
 
-No mainnet address is published yet. The kUSDT covenant ID, the KasPool covenant ID, the two vault addresses, the
-coordinator API and the monitor's status URLs will be listed here once the launch is verified. Until then, trust
-no address, covenant ID or API that claims to be kUSDT's.
+No mainnet address is published yet. The kUSDT covenant ID, the KasPool covenant ID, the two vault addresses and the
+coordinator API will be listed here once the launch is verified. Until then, trust no address, covenant ID or API
+that claims to be kUSDT's.
 
-The public testnet's addresses no longer work: it ended on 14 November 2026.
+The two mainnet monitors are private: they publish no status, and the pause they set on any alarm shows on chain
+([Is the bridge paused?](/integrate/developer-guide/#is-the-bridge-paused)).
+
+The public testnet has its own addresses, for test coins only: see
+[Test on the public testnet](/getting-started/public-testnet/#networks-and-addresses). They are not mainnet's.
 
 The USDT contracts that the mainnet vaults hold are fixed by the specification:
 

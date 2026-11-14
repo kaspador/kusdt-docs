@@ -4,7 +4,8 @@ description: "Trestly, the web app: what each section does, the two wallets it n
 ---
 
 Trestly is the web app: the public front end of the bridge and the pool, a static single-page app in `bridge/web`.
-It is built and tested against the local stack, and it ran on the public testnet from 4 to 14 November 2026. On
+It is built and tested against the local stack, and it runs on the public testnet at [testnet.trestly.io](https://testnet.trestly.io), with a faucet for test coins
+([Test on the public testnet](/getting-started/public-testnet/)). On
 mainnet it is at [trestly.io](https://trestly.io). Until the launch on 14 November 2026 is verified, trestly.io
 shows a "Launching today" page; the Bridge, Swap, Pool and Reserves pages open there once it is. The addresses it
 uses are published on [Status](/overview/status/#addresses) at the same time.
@@ -58,7 +59,7 @@ Where the page can check something, it does not take the coordinator's word for 
 - **The pool** answer must hash to its UTXO's script, the UTXO must hold `base_value + X + protocol_kas`, and the
   reserve must be the kUSDT state that pool state implies. A pool answer that fails a check is shown, explained,
   and not offered for swaps.
-- **The covenant states**: on the public testnet the page also asked a public Kaspa node whether the pool, reserve and minter states were unspent, instead of taking the coordinator's word.
+- **The covenant states**: on the public testnet the page also asks a public Kaspa node whether the pool, reserve and minter states are unspent, instead of taking the coordinator's word.
 - **The deployment**: the coordinator must name the page's covenant ID, pool ID, vaults, chains, tokens, decimals
   and KAS values, or the page says plainly that it serves another deployment and sends nothing: every action is off
   until they agree, and one already on its way asks your wallet for nothing more. On mainnet the page also starts only

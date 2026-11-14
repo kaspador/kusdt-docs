@@ -82,12 +82,16 @@ export default defineConfig({
             'getting-started/swap',
             'getting-started/redeem',
             'getting-started/wallet',
+            'getting-started/public-testnet',
           ],
         },
         {
           label: 'Integrate',
           items: [
             'integrate/overview',
+            'integrate/developer-guide',
+            'integrate/kusdt-wallet',
+            'integrate/kusdt-token',
             'integrate/wallets',
             'integrate/websites',
             'integrate/exchanges',

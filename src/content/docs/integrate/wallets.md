@@ -7,7 +7,8 @@ description: How a Kaspa wallet shows and sends kUSDT, how a site talks to kUSDT
 kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. The
 deployment's vaults, covenant ID, pool ID and API address are published on [Status](/overview/status/#addresses)
 once the launch is verified. Nothing has been independently audited, and a legal review is open
-([Audit status](/security/audit-status/)). The public testnet ended on 14 November 2026.
+([Audit status](/security/audit-status/)). To test first, use the public testnet at
+[testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
 
 ## The token
@@ -74,8 +75,10 @@ submits it. The page never sees a key. Methods, errors and events: [Wallet provi
 
 kUSDT Wallet gets its mainnet version right after the launch ([Install](/getting-started/wallet/#install)).
 KasWare is not supported. On the EVM side, the web app works with MetaMask and WalletConnect.
-The public testnet ended on 14 November 2026: to try a wallet integration before mainnet, run the whole stack
-locally ([Run the simnet flow](/developers/simnet/)).
+To try a wallet integration before mainnet, use the public testnet at
+[testnet.trestly.io](https://testnet.trestly.io), with the testnet build of kUSDT Wallet and its faucet
+([Test on the public testnet](/getting-started/public-testnet/)), or run the whole stack locally
+([Run the simnet flow](/developers/simnet/)).
 
 ## Input rules for pool and minter transactions
 

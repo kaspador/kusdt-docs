@@ -4,7 +4,7 @@ description: The window.kusdt interface that the kUSDT wallet extension injects 
 ---
 
 :::note[Mainnet version after the launch]
-The wallet extension (`wallet/extension`) implements this interface and was tested against the local stack and the public testnet, which ended on 14 November 2026. Its mainnet version comes right after the mainnet launch.
+The wallet extension (`wallet/extension`) implements this interface and was tested against the local stack and the public testnet. Its testnet build is at [testnet.trestly.io](https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip), for testing pages against this interface ([Test on the public testnet](/getting-started/public-testnet/)). Its mainnet version comes right after the mainnet launch.
 :::
 
 The extension injects `window.kusdt`, an EIP-1193-style object:

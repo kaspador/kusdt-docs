@@ -3,9 +3,9 @@ title: Operations
 description: How the bridge is deployed and run. What runs where, the testnet steps, the mainnet packages, publishing, watching, alarms and keys.
 ---
 
-This page follows the runbook in `deploy/README.md`. The public testnet ran from 4 November 2026 on one test host
-and was taken down on 14 November 2026; its services and test coins are gone, and `testnet.trestly.io` redirects to
-`trestly.io`. kUSDT launches on mainnet on 14 November 2026 from release `mainnet-v0.9.8-rc.25`; the mainnet
+This page follows the runbook in `deploy/README.md`. The public testnet has run since 4 November 2026 on one test host
+and was paused on 14 November 2026; it came back that evening, at `testnet.trestly.io`, for developers and
+integrators to test against ([Test on the public testnet](/getting-started/public-testnet/)). kUSDT launches on mainnet on 14 November 2026 from release `mainnet-v0.9.8-rc.25`; the mainnet
 addresses are published on the [Status](/overview/status/) page once the launch is verified.
 
 ## What runs where
@@ -228,7 +228,7 @@ Two more changes in the coordinator:
 
 ## The testnet deployment
 
-Taken down on 14 November 2026: these addresses and URLs no longer serve anything. `deployments/testnet.json`, deployed 9 November 2026:
+Running again since the evening of 14 November 2026, after a pause that day ([Test on the public testnet](/getting-started/public-testnet/)). `deployments/testnet.json`, deployed 9 November 2026:
 
 | Item | Value |
 |---|---|
@@ -262,8 +262,8 @@ points a local build at services on `127.0.0.1`.
 The coordinator API and the monitor's status are public, read-only JSON. Since the work after round 12 they are
 answered by processes of their own, `kusdt api` and `kusdt status`, from the files the coordinator and the monitor
 write (each mounted read-only); the coordinator and the monitor answer nobody from outside. On the public testnet
-(4 to 14 November 2026) the host's Caddy served `testnet.trestly.io` (`deploy/kusdt.caddy`) with TLS, and routed by path. Until the mainnet launch, `trestly.io` and the
-old names, `kastools.com` and `kusdt.pearlchain.live`, redirected to it, so wallets already installed kept working. Since 14 November 2026 `testnet.trestly.io` redirects to `trestly.io`. The testnet's routes were:
+(since 4 November 2026) the host's Caddy serves `testnet.trestly.io` (`deploy/kusdt.caddy`) with TLS, and routes by path. Until the mainnet launch, `trestly.io` and the
+old names, `kastools.com` and `kusdt.pearlchain.live`, redirected to it, so wallets already installed kept working. Since 14 November 2026 `trestly.io` shows the mainnet launch page instead, and `testnet.trestly.io` has served the testnet again since that evening. The testnet's routes were:
 
 | Path | Goes to |
 |---|---|

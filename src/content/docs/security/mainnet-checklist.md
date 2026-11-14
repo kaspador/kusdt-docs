@@ -20,7 +20,7 @@ owner's explicit approval.
 | 8 | A decision on redemptions to a blocked recipient | Ethereum USDT can blacklist an address, and a payout there would be frozen | Done (4 November 2026): a blocked recipient is never paid; the burn is held and paid if the address is unblocked. No re-target power exists. See [Blocked recipients](/security/known-limits/#blocked-recipients) |
 | 9 | Burn finality scaled to the payout | A release cannot be undone | Done (5 November 2026): 6 000 DAA above 10 000 kUSDT, 36 000 above 100 000; the preflight refuses shallower tiers |
 | 10 | Every payout waits in the vault, so a pause can stop it | Stolen signer keys could otherwise drain a vault's allowance in small payouts before anyone reacts | Built (7 November 2026): 10 minutes, the deployer and the preflight refuse less than 5. A change to the vault itself, so item 2's audit must cover it. Every mainnet vault has it from the launch |
-| 11 | `trestly.io` serves mainnet | Before the launch it redirected to the testnet | Done (14 November 2026): `trestly.io` no longer redirects to the testnet. It shows the launch page until the launch is verified, then the mainnet app. The public testnet has ended, and `testnet.trestly.io` redirects to `trestly.io` |
+| 11 | `trestly.io` serves mainnet | Before the launch it redirected to the testnet | Done (14 November 2026): `trestly.io` no longer redirects to the testnet. It shows the launch page until the launch is verified, then the mainnet app. The public testnet has run again at `testnet.trestly.io` since the evening of 14 November 2026, for testing |
 
 ## Operations
 

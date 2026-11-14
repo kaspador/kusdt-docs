@@ -19,8 +19,9 @@ the issuers of those tokens. kUSDT's own rules are the covenants and contracts d
 
 kUSDT launches on mainnet on 14 November 2026: Kaspa, Ethereum and BNB Chain. Until the launch is verified,
 [trestly.io](https://trestly.io) shows a "Launching today" page; the web app opens there once it is, and the
-addresses are published on [Status](/overview/status/#addresses). The public testnet ran from 4 to 14 November 2026
-and has ended ([The public testnet](/getting-started/public-testnet/)).
+addresses are published on [Status](/overview/status/#addresses). The public testnet runs at
+[testnet.trestly.io](https://testnet.trestly.io), with test coins, for testing: it ran from 4 November 2026, paused
+on 14 November and came back that evening ([Test on the public testnet](/getting-started/public-testnet/)).
 
 ### Where are the mainnet addresses?
 

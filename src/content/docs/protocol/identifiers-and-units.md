@@ -8,10 +8,11 @@ them is a bug.
 
 ## Networks
 
-kUSDT runs on mainnet from 14 November 2026. The public testnet ran from 4 November to 14 November 2026 and has
-ended; the code still accepts the test networks, for development.
+kUSDT runs on mainnet from 14 November 2026. The public testnet runs on the test networks at
+[testnet.trestly.io](https://testnet.trestly.io), for testing integrations
+([Test on the public testnet](/getting-started/public-testnet/)).
 
-| | Mainnet | Test networks (development only) |
+| | Mainnet | Test networks (public testnet and development) |
 |---|---|---|
 | Kaspa | mainnet (`kaspa:` addresses) | testnet-10 |
 | Ethereum | Ethereum (chain ID 1) | Sepolia (chain ID 11155111) |

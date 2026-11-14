@@ -7,7 +7,8 @@ description: Crediting kUSDT deposits on Kaspa, sending kUSDT out, checking the 
 kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. The
 deployment's vaults, covenant ID, pool ID and API address are published on [Status](/overview/status/#addresses)
 once the launch is verified. Nothing has been independently audited, and a legal review is open
-([Audit status](/security/audit-status/)). The public testnet ended on 14 November 2026.
+([Audit status](/security/audit-status/)). To test first, use the public testnet at
+[testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
 
 ## Know what you are listing
@@ -21,8 +22,10 @@ once the launch is verified. Nothing has been independently audited, and a legal
 - It has 6 decimals ([Units](/protocol/identifiers-and-units/#units)).
 - It is a KCC-20 token with the standard token code, so tools that read KCC-20 read it
   ([Wallets](/integrate/wallets/)).
-- The public testnet ended on 14 November 2026. To test your deposit and withdrawal flow before mainnet, run the
-  whole stack locally ([Run the simnet flow](/developers/simnet/)).
+- To test your deposit and withdrawal flow before mainnet, use the public testnet: the web app and faucet at
+  [testnet.trestly.io](https://testnet.trestly.io), the API at `https://testnet.trestly.io/api/v1`
+  ([Test on the public testnet](/getting-started/public-testnet/)). Or run the whole stack locally
+  ([Run the simnet flow](/developers/simnet/)).
 
 ## Crediting kUSDT deposits
 
@@ -35,8 +38,9 @@ A kUSDT deposit to your exchange is an ordinary KCC-20 transfer to an address yo
    once its accepting block is at least 1 000 DAA scores below the virtual DAA score (about 100 seconds), and wait
    deeper for larger amounts: 6 000 DAA scores above 10 000 kUSDT, 36 000 above
    100 000 kUSDT ([Finality](/protocol/finality/)).
-3. **Check the signal** before you credit (below). kUSDT transfers cannot be paused, and forged kUSDT looks exactly
-   like the real token, so the monitor's signal is how you learn that something is wrong.
+3. **Check that the bridge is not paused** before you credit (below). kUSDT transfers cannot be paused, and forged
+   kUSDT looks exactly like the real token, so the pause, which the monitors set on any alarm, is how you learn that
+   something is wrong.
 
 ## Sending kUSDT out
 
@@ -60,20 +64,21 @@ Before you take kUSDT, and while you hold it:
 
 | Check | Where | Healthy when |
 |---|---|---|
-| The monitor's signal | `GET /api/v1/signal` on the monitor's status (its address is on [Status: Addresses](/overview/status/#addresses)) | `ok` is true |
-| The monitor's health | `GET /health` on the same host | 200 |
 | The coordinator's reserves | `GET /reserves` on the API | `healthy` is true: backing ≥ minted − released (INV-1) |
-| Proof of reserves, read in your browser | The web app's Reserves page (`https://trestly.io/reserves`, once the launch is verified) | It reads the vaults and the minter itself, next to `GET /reserves` and the monitor's check |
-| On-chain flags | The minter's `paused` flag, each vault's `paused()`, the pool's `paused` | All false |
+| Proof of reserves, read in your browser | The web app's Reserves page (`https://trestly.io/reserves`, once the launch is verified) | It reads the vaults and the minter itself, next to `GET /reserves` |
+| On-chain flags | The minter's `paused` flag, each vault's `paused()`, the pool's `paused` ([how to read them](/integrate/developer-guide/#is-the-bridge-paused)) | All false |
+| The same flags, from the API | `GET /status` (each vault's `paused`, the minter's state) and `GET /pool` (`paused`) | All false, and the same as on chain |
 
-Treat no answer from the monitor as `ok: false`. Read the signal from more than one monitor once more than one is
-published. The answers and their fields: [Reading the bridge's state](/integrate/bridge-state/).
+The mainnet monitors are private: their alarms go to their operators, and what you see is the pause they set. Treat
+no answer, or an answer you cannot read, as paused. The answers and their fields:
+[Reading the bridge's state](/integrate/bridge-state/). On the public testnet the monitor's signal is public too
+(`https://testnet.trestly.io/monitor/api/v1/signal`), to test against.
 
 ## When the bridge is paused
 
-On any alarm the guardian pauses both vaults, the minter and the pool, and the signal says `ok: false`. Then:
+On any alarm the guardian pauses both vaults, the minter and the pool. Then:
 
-- **Stop crediting new kUSDT deposits** and stop accepting kUSDT as payment, until the signal is `ok` again.
+- **Stop crediting new kUSDT deposits** and stop accepting kUSDT as payment, until nothing is paused again.
 - **Don't send users to bridge.** A paused vault refuses new deposits.
 - **Payouts wait.** A burn made while a vault is paused is paid once it runs again
   ([How long it takes](/getting-started/redeem/#how-long-it-takes)).

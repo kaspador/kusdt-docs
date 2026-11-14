@@ -3,14 +3,18 @@ title: The wallet
 description: The kUSDT wallet extension, what it does, how it verifies what it shows, and how to hold kUSDT in any KCC-20 wallet.
 ---
 
-kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the local stack, and it ran on the public testnet from 4 to 14 November 2026. Its **mainnet version is published right after the launch** on 14 November 2026, and this page will link it then.
+kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the local stack, and it runs on the public testnet at [testnet.trestly.io](https://testnet.trestly.io). Its **mainnet version is published right after the launch** on 14 November 2026, and this page will link it then.
 
 ## Install
 
 For Chromium browsers on a computer: Chrome, Brave and Edge. There is no phone version, and the web app says so on a phone.
 
-The mainnet version is not linked yet: it is published right after the launch, and the link will be here. Until then, install no build that claims to be kUSDT Wallet from anywhere else. The
-testnet build no longer has a bridge or a pool to talk to ([The public testnet](/getting-started/public-testnet/)).
+The mainnet version is not linked yet: it is published right after the launch, and the link will be here. Until then, install no build that claims to be kUSDT Wallet from anywhere else.
+
+To test, the testnet build is at
+[testnet.trestly.io/downloads/kusdt-wallet-testnet.zip](https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip),
+with a `.sha256` beside it. Load it in Chrome with developer mode, "Load unpacked". It works with test coins only;
+never put a recovery phrase that holds real KAS into it ([Test on the public testnet](/getting-started/public-testnet/)).
 
 kUSDT Wallet is the only Kaspa wallet the web app works with. KasWare is not supported. On the Ethereum and BNB
 Chain side, the web app works with MetaMask and with WalletConnect.

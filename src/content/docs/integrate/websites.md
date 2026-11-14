@@ -7,7 +7,8 @@ description: Sending users to the Trestly web app, using kUSDT Wallet from a pag
 kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. The
 deployment's vaults, covenant ID, pool ID and API address are published on [Status](/overview/status/#addresses)
 once the launch is verified. Nothing has been independently audited, and a legal review is open
-([Audit status](/security/audit-status/)). The public testnet ended on 14 November 2026.
+([Audit status](/security/audit-status/)). To test first, use the public testnet at
+[testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
 
 ## Linking to the web app
@@ -76,8 +77,10 @@ If you build the bridge into your own page instead of linking to the web app, fo
 
 Read the vault addresses and their parameters (fees, minimum and maximum deposit, `paused`) from `GET /status`, or
 from the vaults themselves, and check them against [Status: Addresses](/overview/status/#addresses), where they are
-published once the launch is verified. Make them a setting rather than code. The public testnet ended on 14 November
-2026; to try your page before mainnet, run the whole stack locally ([Run the simnet flow](/developers/simnet/)).
+published once the launch is verified. Make them a setting rather than code. To try your page before mainnet, point it at
+the public testnet (`https://testnet.trestly.io/api/v1` and the testnet addresses, see
+[Test on the public testnet](/getting-started/public-testnet/)), or run the whole stack locally
+([Run the simnet flow](/developers/simnet/)).
 
 ## Pool swaps
 
