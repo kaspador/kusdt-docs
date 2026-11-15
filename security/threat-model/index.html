@@ -147,7 +147,7 @@ in that window as well, so just under three times its ceiling can leave a vault.
 </tr>
 <tr>
 <td>3 of 5 signer keys pay out without burns</td>
-<td>Every payout waits in the vault, 10 minutes on mainnet. The monitor raises <code dir="auto">release-without-burn</code> when one is queued, as soon as its Kaspa view has caught up, and pauses: nothing leaves, however small the theft is split, as long as every forged payout is cancelled before the unpause (one call each; <code dir="auto">kusdt cancel-plan</code> builds them from the monitors’ lists: <a href="/kusdt-docs/security/known-limits/#forged-payouts-are-cancelled-one-by-one">Known limits</a>). If no pause comes within the wait (every monitor down, or the pause not mined in time), each vault’s release allowance is the bound: 250 000 at once, so about 250 000 per vault</td>
+<td>Every payout waits in the vault, 10 minutes on mainnet. The monitor raises <code dir="auto">release-without-burn</code> when one is queued, as soon as its Kaspa view has caught up, and pauses: nothing leaves, however small the theft is split, as long as every forged payout is cancelled before the unpause (one call each; <code dir="auto">kusdt cancel-plan</code> builds them from the monitors’ lists: <a href="/kusdt-docs/security/known-limits/#forged-payouts-are-cancelled-one-by-one">Known limits</a>). If no pause comes within the wait (every monitor down, or the pause not mined in time), each vault’s release allowance is the bound: 50 000 at once at the launch, so about 50 000 per vault</td>
 <td>Tested: the small forged payout in <code dir="auto">local:load</code></td>
 </tr>
 <tr>

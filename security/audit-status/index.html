@@ -168,8 +168,8 @@ mainnet release candidates since commit <code dir="auto">1e3f969</code> (the cur
 <tbody>
 <tr>
 <td>1</td>
-<td>3 of 5 signers can release USDT without a burn, up to 250 000 per vault at once</td>
-<td>True, and the largest risk in v1. Bounded by each vault’s release allowance (under 750 000 per vault in any 24 hours, see <a href="/kusdt-docs/protocol/limits/#most-that-can-move-in-a-window">Limits</a>). The monitor alarms on a release with no burn at once and pauses. Signers can now keep their keys in an HSM or KMS (<a href="/kusdt-docs/developers/operations/#signer-keys-in-an-hsm-or-kms">Operations</a>), which stops a key being copied, not a signer host someone took over from having any mint, governance action, release or refund signed: the HSM is given only a 32-byte digest (run 21, R21-CRYPTO-6), and checking what it signs would need the message’s fields. The zero-knowledge upgrade covers deposits only; releases stay federated until the EVM side can verify Kaspa (<a href="/kusdt-docs/security/known-limits/#the-bridge-is-federated">Known limits</a>)</td>
+<td>3 of 5 signers can release USDT without a burn, up to a vault’s release allowance at once (50 000 USDT at the launch)</td>
+<td>True, and the largest risk in v1. Bounded by each vault’s release allowance (under 150 000 per vault in any 24 hours at the launch, see <a href="/kusdt-docs/protocol/limits/#most-that-can-move-in-a-window">Limits</a>). The monitor alarms on a release with no burn at once and pauses. Signers can now keep their keys in an HSM or KMS (<a href="/kusdt-docs/developers/operations/#signer-keys-in-an-hsm-or-kms">Operations</a>), which stops a key being copied, not a signer host someone took over from having any mint, governance action, release or refund signed: the HSM is given only a 32-byte digest (run 21, R21-CRYPTO-6), and checking what it signs would need the message’s fields. The zero-knowledge upgrade covers deposits only; releases stay federated until the EVM side can verify Kaspa (<a href="/kusdt-docs/security/known-limits/#the-bridge-is-federated">Known limits</a>)</td>
 </tr>
 <tr>
 <td>2</td>
@@ -188,7 +188,7 @@ mainnet release candidates since commit <code dir="auto">1e3f969</code> (the cur
 </tr>
 <tr>
 <td>5</td>
-<td>A burn is final after about 100 seconds, before a payout of up to 250 000</td>
+<td>A burn is final after about 100 seconds, before a payout of up to 50 000 (a vault’s release allowance at the launch)</td>
 <td>Larger burns now wait longer: 10 minutes above 10 000 kUSDT, an hour above 100 000 (<a href="/kusdt-docs/protocol/finality/#larger-burns-wait-longer">Finality</a>)</td>
 </tr>
 <tr>
