@@ -53,8 +53,8 @@ Faucets set their own limits. The test USDT contracts are in the table below.
 
 ## Networks and addresses
 
-These are testnet addresses only. They are not mainnet's: no mainnet address is published until the launch is
-verified ([Status: Addresses](/overview/status/#addresses)).
+These are testnet addresses only. They are not mainnet's: the mainnet addresses are on
+[Status: Addresses](/overview/status/#addresses).
 
 | Network | Item | Value |
 |---|---|---|
@@ -77,7 +77,7 @@ The same values are in the repository, in `deployments/testnet.json`.
 | The monitor's status (read-only) | `https://testnet.trestly.io/monitor/api/v1/monitor` |
 
 The mainnet monitors run on closed machines: each publishes only its read-only status, through a Cloudflare tunnel,
-at the addresses on [Status: Addresses](/overview/status/#addresses) once the launch is verified.
+at the addresses on [Status: Addresses](/overview/status/#addresses) once they run.
 
 ## Test your integration here
 

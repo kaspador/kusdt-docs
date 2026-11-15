@@ -6,8 +6,8 @@ description: The coordinator's public, read-mostly JSON API. Nothing in it moves
 :::note[Where it runs]
 The coordinator's API process (`kusdt api`, `bridge/services/src/api/`) serves this API for mainnet at
 `https://<the API address on the Status page>/api/v1`, and in the local stack at `http://127.0.0.1:9100/api/v1` (see
-[Run the simnet flow](/developers/simnet/#a-stack-that-keeps-running)). The mainnet address is published on
-[Status: Addresses](/overview/status/#addresses) once the launch is verified. The public testnet serves it at
+[Run the simnet flow](/developers/simnet/#a-stack-that-keeps-running)). The mainnet address is on
+[Status: Addresses](/overview/status/#addresses). The public testnet serves it at
 `https://testnet.trestly.io/api/v1`, for testing integrations
 ([Test on the public testnet](/getting-started/public-testnet/)).
 :::

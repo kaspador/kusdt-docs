@@ -17,16 +17,15 @@ the issuers of those tokens. kUSDT's own rules are the covenants and contracts d
 
 ### Is it live?
 
-kUSDT launches on mainnet on 14 November 2026: Kaspa, Ethereum and BNB Chain. Until the launch is verified,
-[trestly.io](https://trestly.io) shows a "Launching today" page; the web app opens there once it is, and the
-addresses are published on [Status](/overview/status/#addresses). The public testnet runs at
+kUSDT launched on mainnet on 15 November 2026: Kaspa, Ethereum and BNB Chain. The contracts are deployed and their
+addresses are on [Status](/overview/status/#addresses). The launch is in progress: the web app opens at
+[trestly.io](https://trestly.io) after the final checks. The public testnet runs at
 [testnet.trestly.io](https://testnet.trestly.io), with test coins, for testing: it ran from 4 November 2026, paused
 on 14 November and came back that evening ([Test on the public testnet](/getting-started/public-testnet/)).
 
 ### Where are the mainnet addresses?
 
-On [Status](/overview/status/#addresses), once the launch is verified. Until then no mainnet address is published.
-Trust no vault address, covenant ID or API that claims to be kUSDT's and is not listed there.
+On [Status](/overview/status/#addresses). Trust no vault address, covenant ID or API that claims to be kUSDT's and is not listed there.
 
 ### Who runs the bridge?
 
@@ -93,8 +92,8 @@ If such a burn lands anyway, it is held and paid if Tether unblocks the address.
 ### Which wallets support kUSDT?
 
 Any wallet with KCC-20 support can read kUSDT states, because kUSDT uses the standard template. The mainnet
-version of the kUSDT Wallet extension is published right after the launch, and [The wallet](/getting-started/wallet/#install)
-will link it then. Always check the covenant ID.
+version of the kUSDT Wallet extension is 1.0.0 ([The wallet](/getting-started/wallet/#install)). Always check the
+covenant ID.
 
 On the web app, kUSDT Wallet is the only Kaspa wallet. KasWare and Kastle are not supported: they signed transactions the
 page built and showed neither the amounts nor the network fee in their own windows.

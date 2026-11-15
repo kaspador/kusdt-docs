@@ -4,10 +4,9 @@ description: How to build kUSDT and kUSDT Wallet into your own site, wallet or s
 ---
 
 :::caution[Mainnet, not audited]
-kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. Nothing has
+kUSDT launched on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 15 November 2026, with real USDT. Nothing has
 been independently audited, and a legal review is open ([Audit status](/security/audit-status/)). The mainnet
-covenant ID, pool ID, vault addresses and API address are published on [Status](/overview/status/#addresses) once
-the launch is verified. These pages never give them: make them settings in your code and check them against Status.
+covenant ID, pool ID, vault addresses and API address are on [Status](/overview/status/#addresses). These pages never give them: make them settings in your code and check them against Status.
 :::
 
 This guide is for developers who want their site, wallet or service to work with **kUSDT** (the token) or with
@@ -73,7 +72,7 @@ testnet-10, Sepolia and BSC testnet, with test coins only.
 3. Point your code at the testnet API and the testnet IDs, kept in a setting.
 4. Try every flow you support: connect, read balances, send, redeem to both chains, what happens while a payout
    waits, and what happens while the bridge is paused.
-5. Switch the setting to mainnet once the launch is verified on [Status](/overview/status/#addresses).
+5. Switch the setting to mainnet, with the values on [Status](/overview/status/#addresses), once the bridge opens.
 
 The full steps are on [Test on the public testnet](/getting-started/public-testnet/). To run everything on your own
 machine instead, see [Run the simnet flow](/developers/simnet/).

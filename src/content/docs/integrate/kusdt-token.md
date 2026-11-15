@@ -4,9 +4,9 @@ description: For wallets, exchanges and services with their own keys - identify 
 ---
 
 :::caution[Mainnet, not audited]
-kUSDT launches on mainnet on 14 November 2026, with real USDT. Nothing has been independently audited, and a legal
+kUSDT launched on mainnet on 15 November 2026, with real USDT. Nothing has been independently audited, and a legal
 review is open ([Audit status](/security/audit-status/)). The mainnet covenant ID, pool ID and API address are
-published on [Status](/overview/status/#addresses) once the launch is verified: make them settings, and test on the
+on [Status](/overview/status/#addresses): make them settings, and test on the
 public testnet first ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
 
@@ -23,7 +23,7 @@ identity.** The name, the symbol and the metadata prove nothing: anyone can depl
 | Item | Value |
 |---|---|
 | Decimals | 6. Every amount is an integer of base units, 10⁶ in 1 kUSDT |
-| Covenant ID, mainnet | On [Status: Addresses](/overview/status/#addresses), once the launch is verified |
+| Covenant ID, mainnet | On [Status: Addresses](/overview/status/#addresses) |
 | Covenant ID, testnet-10 | On [Test on the public testnet](/getting-started/public-testnet/#networks-and-addresses) |
 | Where the API says it | `GET /status`, `kaspa.covenantId` |
 | Token template | The standard KCC20 template, hash `9703112ee6e3555107cd168858992b77d3b74f655205b2b463b1f9ec2ec73cf7` ([The kUSDT token family](/contracts/kusdt-token/#rules-every-kusdt-state-follows)) |

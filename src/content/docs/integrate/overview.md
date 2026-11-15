@@ -4,9 +4,8 @@ description: What a wallet, a website, an exchange or a custodian can integrate 
 ---
 
 :::caution[Mainnet, not audited]
-kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. The
-deployment's vaults, covenant ID, pool ID and API address are published on [Status](/overview/status/#addresses)
-once the launch is verified. Nothing has been independently audited, and a legal review is open
+kUSDT launched on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 15 November 2026, with real USDT. The
+deployment's vaults, covenant ID, pool ID and API address are on [Status](/overview/status/#addresses). Nothing has been independently audited, and a legal review is open
 ([Audit status](/security/audit-status/)). Test on the public testnet first
 ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
@@ -60,9 +59,9 @@ integrate and what to test on the public testnet, and leads to two step-by-step 
 | Item | Where |
 |---|---|
 | Networks | Kaspa mainnet, Ethereum (chain ID 1) and BNB Chain (chain ID 56) ([Networks](/protocol/identifiers-and-units/#networks)) |
-| Web app | `https://trestly.io`, which opens once the launch is verified |
-| Coordinator API | The address on [Status: Addresses](/overview/status/#addresses), published once the launch is verified |
-| Monitor status | Two, read-only, at the addresses on [Status: Addresses](/overview/status/#addresses) once the launch is verified (their machines are closed; the status goes out through Cloudflare tunnels). Read both, and the vaults' `paused()` and the minter's and the pool's state. The public testnet's is at `https://testnet.trestly.io/monitor/health` |
+| Web app | `https://trestly.io`, which opens after the final checks |
+| Coordinator API | The address on [Status: Addresses](/overview/status/#addresses) |
+| Monitor status | Two, read-only, at the addresses on [Status: Addresses](/overview/status/#addresses) once they run (their machines are closed; the status goes out through Cloudflare tunnels). Read both, and the vaults' `paused()` and the minter's and the pool's state. The public testnet's is at `https://testnet.trestly.io/monitor/health` |
 | Covenant IDs, the pool, the vaults | [Status: Addresses](/overview/status/#addresses), the API's [`GET /status`](/protocol/coordinator-api/#calls), and the web app's Bridge status (`/network`) |
 
 No mainnet address is written into these pages. Don't copy one into your code from anywhere else: read the IDs and

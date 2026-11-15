@@ -5,8 +5,8 @@ description: How the bridge is deployed and run. What runs where, the testnet st
 
 This page follows the runbook in `deploy/README.md`. The public testnet has run since 4 November 2026 on one test host
 and was paused on 14 November 2026; it came back that evening, at `testnet.trestly.io`, for developers and
-integrators to test against ([Test on the public testnet](/getting-started/public-testnet/)). kUSDT launches on mainnet on 14 November 2026 from release `mainnet-v0.9.8-rc.25`; the mainnet
-addresses are published on the [Status](/overview/status/) page once the launch is verified.
+integrators to test against ([Test on the public testnet](/getting-started/public-testnet/)). kUSDT launched on mainnet on 15 November 2026 from release `mainnet-v0.9.8-rc.25`; the mainnet
+addresses are on the [Status](/overview/status/#addresses) page.
 
 ## What runs where
 

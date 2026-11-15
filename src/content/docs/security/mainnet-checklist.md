@@ -3,7 +3,7 @@ title: Mainnet checklist
 description: The steps the specification requires before kUSDT can launch on mainnet.
 ---
 
-kUSDT launches on mainnet on 14 November 2026 with the items marked **Open** below still open: in particular, no
+kUSDT launched on mainnet on 15 November 2026 with the items marked **Open** below still open: in particular, no
 external audit and no legal review have been done. Read [Known limits](/security/known-limits/) and the
 [trust model](/security/trust-model/) before you use it. The launch also needed a funded deployer and the project
 owner's explicit approval.
@@ -14,13 +14,13 @@ owner's explicit approval.
 | 2 | External audits of `BridgeMint` and `KasPool` (and the SilverScript they compile to) and of the vault | No part is audited yet | Open |
 | 3 | The vault owner is an AccessManager whose admin is a Safe: 48-hour delays, about 6 for the guardian and unpause, and independent cancellers, who can cancel the Safe's queued vault calls and its power-adding calls on the manager itself | The owner is the one role not capped by the release allowance | Launch day (14 November 2026): the deployer builds it (`mainnet:plan` refuses anything else on mainnet), the cancellers' say over the manager included since rc.16; the Safe is 2 of 3 on each chain, with two cancellers |
 | 4 | Legal review of holding users' USDT | The vaults custody user funds | Open |
-| 5 | Proof of reserves published live (INV-1) | Anyone should be able to see that backing covers circulation | Open until mainnet: built, and live on the public testnet (4 to 14 November 2026), reading the vaults and the minter itself, next to `GET /reserves` and the monitor's check. The mainnet web package carries the same page; its URL goes on the [Status](/overview/status/) page once the launch is verified |
+| 5 | Proof of reserves published live (INV-1) | Anyone should be able to see that backing covers circulation | Open until mainnet: built, and live on the public testnet (4 to 14 November 2026), reading the vaults and the minter itself, next to `GET /reserves` and the monitor's check. The mainnet web package carries the same page; it opens with the bridge, at `https://trestly.io/reserves` |
 | 6 | kUSDT's genesis reviewed by kascov.io | Wallets mark unreviewed tokens "unvalidated" | Open |
 | 7 | The pool admin key held offline by the operator | It can take only the accrued protocol fees, unpause the pool and hand the keys over, and only its signature opens the pool or reopens an emptied one ([KasPool](/contracts/kaspool/#protocol-fees-and-the-admin)) | Open |
 | 8 | A decision on redemptions to a blocked recipient | Ethereum USDT can blacklist an address, and a payout there would be frozen | Done (4 November 2026): a blocked recipient is never paid; the burn is held and paid if the address is unblocked. No re-target power exists. See [Blocked recipients](/security/known-limits/#blocked-recipients) |
 | 9 | Burn finality scaled to the payout | A release cannot be undone | Done (5 November 2026): 6 000 DAA above 10 000 kUSDT, 36 000 above 100 000; the preflight refuses shallower tiers |
 | 10 | Every payout waits in the vault, so a pause can stop it | Stolen signer keys could otherwise drain a vault's allowance in small payouts before anyone reacts | Built (7 November 2026): 10 minutes, the deployer and the preflight refuse less than 5. A change to the vault itself, so item 2's audit must cover it. Every mainnet vault has it from the launch |
-| 11 | `trestly.io` serves mainnet | Before the launch it redirected to the testnet | Done (14 November 2026): `trestly.io` no longer redirects to the testnet. It shows the launch page until the launch is verified, then the mainnet app. The public testnet has run again at `testnet.trestly.io` since the evening of 14 November 2026, for testing |
+| 11 | `trestly.io` serves mainnet | Before the launch it redirected to the testnet | Done (14 November 2026): `trestly.io` no longer redirects to the testnet. It shows the launch page until the bridge opens, then the mainnet app. The public testnet has run again at `testnet.trestly.io` since the evening of 14 November 2026, for testing |
 
 ## Operations
 

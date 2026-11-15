@@ -103,7 +103,7 @@ output is paid at most once (INV-3).
 | `units ≤ fee` | Not paid: marked `unpayable`, looked at again about once a minute, and paid if the fee falls below `units`. Wallets never build one |
 | A zero or vault recipient | Never paid: marked `unpayable`, and its kUSDT is lost. Wallets never build one |
 | `units` above what the allowance holds now, or a paused vault | Reverts; the relayer retries it with its own backoff, without holding up other burns |
-| `units` above `releaseCapacity` (250 000 USDT by default) | Cannot be paid until the owner raises the capacity (within its hard bound). Wallets refuse to build such a burn |
+| `units` above `releaseCapacity` (50 000 USDT at the launch) | Cannot be paid until the owner raises the capacity (within its hard bound). Wallets refuse to build such a burn |
 | `units` above that vault's backing | Reverts; waits until deposits on that chain bring the backing. Wallets refuse to build such a burn |
 | Recipient blocked by the token | Never signed. The burn is held as `blocked`, checked again every hour, and paid if the token unblocks the address. Its USDT stays in the vault as backing, and it holds up no other burn. Wallets refuse to build such a burn (see [Blocked recipients](/security/known-limits/#blocked-recipients)) |
 | The token blocks the vault itself | The vault can pay nothing out, while deposits still go in. The monitor raises `vault-blocked` and the guardian pauses everything (see [The monitor](/security/monitor/)) |

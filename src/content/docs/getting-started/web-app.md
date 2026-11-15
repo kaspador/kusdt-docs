@@ -6,9 +6,9 @@ description: "Trestly, the web app: what each section does, the two wallets it n
 Trestly is the web app: the public front end of the bridge and the pool, a static single-page app in `bridge/web`.
 It is built and tested against the local stack, and it runs on the public testnet at [testnet.trestly.io](https://testnet.trestly.io), with a faucet for test coins
 ([Test on the public testnet](/getting-started/public-testnet/)). On
-mainnet it is at [trestly.io](https://trestly.io). Until the launch on 14 November 2026 is verified, trestly.io
-shows a "Launching today" page; the Bridge, Swap, Pool and Reserves pages open there once it is. The addresses it
-uses are published on [Status](/overview/status/#addresses) at the same time.
+mainnet it is at [trestly.io](https://trestly.io). kUSDT launched on 15 November 2026; until the final checks are
+done, trestly.io says the launch is in progress, and the Bridge, Swap, Pool and Reserves pages open there after them.
+The addresses it uses are on [Status](/overview/status/#addresses).
 
 ## Terms of Service
 

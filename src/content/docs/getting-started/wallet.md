@@ -3,13 +3,18 @@ title: The wallet
 description: The kUSDT wallet extension, what it does, how it verifies what it shows, and how to hold kUSDT in any KCC-20 wallet.
 ---
 
-kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the local stack, and it runs on the public testnet at [testnet.trestly.io](https://testnet.trestly.io). Its **mainnet version is published right after the launch** on 14 November 2026, and this page will link it then.
+kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the local stack, and it runs on the public testnet at [testnet.trestly.io](https://testnet.trestly.io). Its **mainnet version is 1.0.0**, out since the launch on 15 November 2026 ([Install](#install)).
 
 ## Install
 
 For Chromium browsers on a computer: Chrome, Brave and Edge. There is no phone version, and the web app says so on a phone.
 
-The mainnet version is not linked yet: it is published right after the launch, and the link will be here. Until then, install no build that claims to be kUSDT Wallet from anywhere else.
+**Mainnet: kUSDT Wallet 1.0.0.** Download it from [trestly.io/wallet](https://trestly.io/wallet)
+(`kusdt-wallet-1.0.0.zip`, SHA-256 `4cb69598f030fdc265f3f782f8fd01c523d1445df1ab2cf987d2cb7b2c413f09`), unzip it into a folder you keep, and load
+that folder in your browser's extensions page with developer mode on, "Load unpacked". It is in review at the Chrome
+Web Store. The copy from trestly.io doesn't update itself: once the store version is out, install that one instead
+and restore your wallet in it with your recovery phrase. Install no build that claims to be kUSDT Wallet from
+anywhere else.
 
 To test, the testnet build is at
 [testnet.trestly.io/downloads/kusdt-wallet-testnet.zip](https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip),
@@ -113,8 +118,8 @@ kUSDT's token code is the standard KCC-20 reference, compiled to the same bytes.
 can therefore read kUSDT states without any kUSDT-specific code. See [The KCC20 template](/kaspa/kcc20-template/).
 
 :::caution[Check the covenant ID]
-Any token can call itself "kUSDT". What identifies kUSDT is its **covenant ID**. The mainnet one is published on
-[Status](/overview/status/#addresses) once the launch is verified. Compare it before you accept or buy tokens
+Any token can call itself "kUSDT". What identifies kUSDT is its **covenant ID**. The mainnet one is on
+[Status](/overview/status/#addresses). Compare it before you accept or buy tokens
 labelled kUSDT.
 :::
 

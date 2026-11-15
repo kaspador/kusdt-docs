@@ -4,9 +4,8 @@ description: The coordinator's public API, the pause state on chain, what each a
 ---
 
 :::caution[Mainnet, not audited]
-kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. The
-deployment's vaults, covenant ID, pool ID and API address are published on [Status](/overview/status/#addresses)
-once the launch is verified. Nothing has been independently audited, and a legal review is open
+kUSDT launched on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 15 November 2026, with real USDT. The
+deployment's vaults, covenant ID, pool ID and API address are on [Status](/overview/status/#addresses). Nothing has been independently audited, and a legal review is open
 ([Audit status](/security/audit-status/)). To test first, use the public testnet at
 [testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
@@ -17,8 +16,8 @@ tunnels. Neither service can move funds.
 
 | Service | Mainnet | Public testnet | Reference |
 |---|---|---|---|
-| The coordinator's API | The address on [Status: Addresses](/overview/status/#addresses), once the launch is verified | `https://testnet.trestly.io/api/v1` | [Coordinator API](/protocol/coordinator-api/) |
-| The monitors' status | Two, at the addresses on [Status: Addresses](/overview/status/#addresses), once the launch is verified | `https://testnet.trestly.io/monitor` | [The monitor](/security/monitor/) |
+| The coordinator's API | The address on [Status: Addresses](/overview/status/#addresses) | `https://testnet.trestly.io/api/v1` | [Coordinator API](/protocol/coordinator-api/) |
+| The monitors' status | Two, at the addresses on [Status: Addresses](/overview/status/#addresses), once they run | `https://testnet.trestly.io/monitor` | [The monitor](/security/monitor/) |
 
 The API is answered from what the coordinator writes. A monitor reads every chain from its own nodes and takes
 nothing from the coordinator, so the two are separate views.

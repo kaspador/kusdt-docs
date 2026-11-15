@@ -4,9 +4,8 @@ description: How a Kaspa wallet shows and sends kUSDT, how a site talks to kUSDT
 ---
 
 :::caution[Mainnet, not audited]
-kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. The
-deployment's vaults, covenant ID, pool ID and API address are published on [Status](/overview/status/#addresses)
-once the launch is verified. Nothing has been independently audited, and a legal review is open
+kUSDT launched on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 15 November 2026, with real USDT. The
+deployment's vaults, covenant ID, pool ID and API address are on [Status](/overview/status/#addresses). Nothing has been independently audited, and a legal review is open
 ([Audit status](/security/audit-status/)). To test first, use the public testnet at
 [testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
@@ -25,8 +24,8 @@ Because the token code is the standard template, a wallet that supports KCC-20 c
 kUSDT-specific code. What it must add is the check of the covenant ID: anyone can deploy a token named "kUSDT"
 ([Holding kUSDT in another wallet](/getting-started/wallet/#holding-kusdt-in-another-wallet)).
 
-Don't copy a covenant ID from anywhere but the deployment's own record. The mainnet one is published on
-[Status](/overview/status/#addresses) once the launch is verified, and is in the API's `GET /status` answer
+Don't copy a covenant ID from anywhere but the deployment's own record. The mainnet one is on
+[Status](/overview/status/#addresses), and is in the API's `GET /status` answer
 (`kaspa.covenantId`). Make it a setting rather than code.
 
 ## Showing a holder's kUSDT
@@ -73,7 +72,7 @@ kUSDT Wallet injects `window.kusdt`, an EIP-1193-style object. A site asks it to
 redeem, swap or add and remove liquidity. The wallet builds every transaction, shows it to the user, signs and
 submits it. The page never sees a key. Methods, errors and events: [Wallet provider](/protocol/wallet-provider/).
 
-kUSDT Wallet gets its mainnet version right after the launch ([Install](/getting-started/wallet/#install)).
+kUSDT Wallet's mainnet version is 1.0.0 ([Install](/getting-started/wallet/#install)).
 KasWare is not supported. On the EVM side, the web app works with MetaMask and WalletConnect.
 To try a wallet integration before mainnet, use the public testnet at
 [testnet.trestly.io](https://testnet.trestly.io), with the testnet build of kUSDT Wallet and its faucet

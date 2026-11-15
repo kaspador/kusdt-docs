@@ -3,7 +3,7 @@ title: Roadmap
 description: What is done, the mainnet launch, and what comes next.
 ---
 
-As of 14 November 2026. Order follows the project's working plan; apart from the launch there are no dates.
+As of 15 November 2026. Order follows the project's working plan; apart from the launch there are no dates.
 
 ## Done
 
@@ -35,15 +35,15 @@ As of 14 November 2026. Order follows the project's working plan; apart from the
 
 ## Now: the mainnet launch
 
-kUSDT launches on mainnet on 14 November 2026 (Kaspa, Ethereum and BNB Chain), from the release
-`mainnet-v0.9.8-rc.25`. The web app opens at [trestly.io](https://trestly.io) once the launch is verified, and the
-addresses are published on [Status](/overview/status/#addresses) at the same time.
+kUSDT launched on mainnet on 15 November 2026 (Kaspa, Ethereum and BNB Chain), from the release
+`mainnet-v0.9.8-rc.25`, and the addresses are on [Status](/overview/status/#addresses). The launch is in progress: the
+web app opens at [trestly.io](https://trestly.io) after the final checks.
 
 ## Next
 
 | # | Work |
 |---|---|
-| 1 | The mainnet version of kUSDT Wallet, published right after the launch |
+| 1 | kUSDT Wallet in the Chrome Web Store (its mainnet version, 1.0.0, is on [trestly.io/wallet](https://trestly.io/wallet) since 15 November 2026) |
 | 2 | The open items of the [mainnet checklist](/security/mainnet-checklist/), among them an external audit, the legal review and a genesis review by kascov.io |
 
 No independent audit has been done, and the legal review is still open ([Audit status](/security/audit-status/)).

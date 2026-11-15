@@ -49,7 +49,7 @@ its share of them within its hour, so the last one it signed counted all the oth
 signatures among five signers, so one signer signed at least three fifths of their total. One of them must therefore
 be as deep as the tier of three fifths of their total, or `release-before-finality` (`refund-before-finality`) is
 raised. A payout that is already deep enough for a tier is left out of that tier's count, so one deep payout does not
-hide a shallow split. Three keys that split a 250 000 redemption into 25 releases of 10 000 and sign each at the
+hide a shallow split. Three keys that split a 50 000 redemption into 5 releases of 10 000 and sign each at the
 shallow tier raise it from the second release on. A relay that fails and is tried again later, a payout signed again
 after another one, and a payoutDelay the owner changes move none of these bounds, so none of them raises it for honest
 payouts (round 16: R16-ST-2, R16-FIX-2, R16-FIX-3). What the monitor does not count (payouts on the other vault,

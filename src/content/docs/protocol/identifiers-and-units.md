@@ -8,7 +8,7 @@ them is a bug.
 
 ## Networks
 
-kUSDT runs on mainnet from 14 November 2026. The public testnet runs on the test networks at
+kUSDT runs on mainnet from 15 November 2026. The public testnet runs on the test networks at
 [testnet.trestly.io](https://testnet.trestly.io), for testing integrations
 ([Test on the public testnet](/getting-started/public-testnet/)).
 
@@ -20,8 +20,8 @@ kUSDT runs on mainnet from 14 November 2026. The public testnet runs on the test
 | Ethereum USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7`, 6 decimals | `MockUSDT`, 6 decimals (kUSDT's own test token) |
 | BNB Chain USDT | `0x55d398326f99059fF775485246999027B3197955` (BSC-USD), 18 decimals | `MockUSDT`, 18 decimals (kUSDT's own test token) |
 
-The mainnet deployment's vault addresses, covenant ID and pool ID are published on
-[Status: Addresses](/overview/status/#addresses) once the launch is verified.
+The mainnet deployment's vault addresses, covenant ID and pool ID are on
+[Status: Addresses](/overview/status/#addresses).
 
 ## Chain codes
 

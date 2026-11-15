@@ -22,11 +22,10 @@ hero:
       variant: minimal
 ---
 
-:::caution[Launching today, not audited]
-kUSDT launches on mainnet on 14 November 2026: Kaspa, Ethereum and BNB Chain. Until the launch is verified,
-[trestly.io](https://trestly.io) shows a "Launching today" page, and no mainnet address is published. The vault
-addresses, the covenant IDs and the API appear on [Status](/overview/status/#addresses) once the launch is verified.
-Trust no address that claims to be kUSDT and is not listed there. No independent audit has been done, and the legal
+:::caution[Launch in progress, not audited]
+kUSDT launched on mainnet on 15 November 2026: Kaspa, Ethereum and BNB Chain. The contracts are deployed, and the
+vault addresses, the covenant IDs and the API are on [Status](/overview/status/#addresses). The bridge opens at
+[trestly.io](https://trestly.io) after the final checks. Trust no address that claims to be kUSDT and is not listed there. No independent audit has been done, and the legal
 review is still open ([Audit status](/security/audit-status/)). Bridge only what you can afford to lose.
 :::
 
@@ -44,7 +43,7 @@ Ethereum or on BNB Chain. kUSDT has 6 decimals, like USDT on Ethereum.
 - **KasPool**, a constant-product pool, lets anyone swap KAS for kUSDT and back. It also runs as covenants on
   Kaspa L1.
 - **kUSDT Wallet**, a browser extension with KCC-20 support, signs everything on the Kaspa side. Its mainnet
-  version is published right after the launch, and these docs will link it then.
+  version is 1.0.0 ([Install](/getting-started/wallet/#install)).
 
 ## Why Kaspa L1
 
@@ -84,9 +83,9 @@ These are the mainnet defaults from the specification, with the values at the la
 | Signers | 5; any 3 approve a mint or a payout; 4 unpause, change limits or replace signers on Kaspa |
 | Bridge fee | 0.50 % each way; a deposit pays more, up to 2.50 %, while many deposits were made that day ([Fees](/protocol/fees/#the-rising-deposit-fee)) |
 | Minimum fee | 0.50 USDT per deposit; 5 USDT per release on Ethereum, 0.50 USDT on BNB Chain |
-| Deposit size | 10 to 100 000 USDT (8 000 at the mainnet launch) |
+| Deposit size | 10 to 8 000 USDT at the mainnet launch |
 | Kaspa mint allowance | Twice the signers' daily limit, refills fully in 24 hours (100 000 USDT at the mainnet launch) |
-| Vault release allowance | 250 000 USDT per vault, refills fully in 24 hours (50 000 at the mainnet launch) |
+| Vault release allowance | 50 000 USDT per vault at the mainnet launch, refills fully in 24 hours |
 | Kaspa hard cap | 1 000 000 000 kUSDT; it can only go down |
 | Pool fee | 0.50 % per swap (0.45 % to liquidity providers, 0.05 % to the protocol) |
 
@@ -94,7 +93,7 @@ These are the mainnet defaults from the specification, with the values at the la
 
 | Part | Status |
 |---|---|
-| Mainnet | Launching on 14 November 2026 from the release `mainnet-v0.9.8-rc.25`. The web app opens at [trestly.io](https://trestly.io) once the launch is verified; the addresses are published on [Status](/overview/status/#addresses) then |
+| Mainnet | Launched on 15 November 2026 from the release `mainnet-v0.9.8-rc.25`; the addresses are on [Status](/overview/status/#addresses). The web app opens at [trestly.io](https://trestly.io) after the final checks |
 | Public testnet | Runs at [testnet.trestly.io](https://testnet.trestly.io) on Kaspa testnet-10, Sepolia and BSC testnet, with test coins, for testing integrations. It ran from 4 November 2026, paused on 14 November and came back that evening ([Test on the public testnet](/getting-started/public-testnet/)) |
 | Signers | 5 independent operators; any 3 approve a mint or a payout, 4 for Kaspa governance |
 | Monitors | Two, and either can pause the bridge ([The monitor](/security/monitor/)) |

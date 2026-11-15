@@ -12,8 +12,8 @@ and they are enforced by the contracts themselves.
 |---|---|---|
 | Kaspa mint allowance | A ceiling of twice the signers' daily limit, refills fully in 24 h | BridgeMint |
 | Kaspa hard cap | 1 000 000 000 USDT; it can only fall | BridgeMint |
-| Vault release allowance | 250 000 USDT per vault, refills fully in 24 h | KusdtVault |
-| Deposit size | 10 to 100 000 USDT | KusdtVault |
+| Vault release allowance | 50 000 USDT per vault, refills fully in 24 h | KusdtVault |
+| Deposit size | 10 to 8 000 USDT | KusdtVault |
 | KasPool sells | 10 % of the KAS reserve at once, refilling at that much per hour (net of buys) | KasPool |
 
 The vaults' `maxDeposit` must stay at or below the Kaspa allowance ceiling, so that every deposit can be minted.
@@ -75,9 +75,9 @@ so the bridge's limit is the third highest). The vaults' limits change through t
 | `remaining` (start) | BridgeMint | 1 000 000 000 000 000 |
 | `capacity` | BridgeMint | twice the signers' daily limit: 100 000 000 000 at the launch |
 | `refill_per_daa` | BridgeMint | `capacity / 864 000` = 115 740 per DAA score at the launch |
-| `minDeposit` / `maxDeposit` | KusdtVault | 10 000 000 / 100 000 000 000 |
-| `releaseCapacity` | KusdtVault | 250 000 000 000 |
-| `releaseRefillPerSecond` | KusdtVault | 2 893 518 (capacity / 86 400, rounded down) |
+| `minDeposit` / `maxDeposit` | KusdtVault | 10 000 000 / 8 000 000 000 at the launch |
+| `releaseCapacity` | KusdtVault | 50 000 000 000 at the launch |
+| `releaseRefillPerSecond` | KusdtVault | 578 703 (capacity / 86 400, rounded down) |
 
 Kaspa's DAA score rises about 10 times per second, so 864 000 DAA scores is about 24 hours.
 

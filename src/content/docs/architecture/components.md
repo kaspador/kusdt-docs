@@ -85,12 +85,12 @@ See [The monitor](/security/monitor/) and [Guardian and pause](/security/guardia
 
 ### Public API
 
-The coordinator serves the public [API](/protocol/coordinator-api/), including `GET /reserves` for INV-1. The web app's Reserves page showed proof of reserves live on the public testnet (4 to 14 November 2026); on mainnet it is to be published live at launch. The URL is **to be published** on the [Status](/overview/status/) page once the launch is verified.
+The coordinator serves the public [API](/protocol/coordinator-api/), including `GET /reserves` for INV-1. The web app's Reserves page showed proof of reserves live on the public testnet (4 to 14 November 2026); on mainnet it opens with the bridge, at `https://trestly.io/reserves`, and the API is on the [Status](/overview/status/#addresses) page.
 
 ## On the user's device
 
 ### Web app and wallet extension
 
-The [web app](/getting-started/web-app/) (bridge, swap, pool, reserves) and the wallet extension, both built (the web app is served at trestly.io for the mainnet launch, 14 November 2026; during the public testnet, 4 to 14 November 2026, it ran on testnet and a testnet wallet build could be downloaded), hold the user's keys and sign
+The [web app](/getting-started/web-app/) (bridge, swap, pool, reserves) and the wallet extension, both built (the web app opens at trestly.io on mainnet, launched on 15 November 2026; during the public testnet, 4 to 14 November 2026, it ran on testnet and a testnet wallet build could be downloaded), hold the user's keys and sign
 locally. Both pin the deployment, meaning the kUSDT covenant ID and the vault addresses, so they cannot be pointed
 at a look-alike. See [The wallet](/getting-started/wallet/).

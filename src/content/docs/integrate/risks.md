@@ -4,9 +4,8 @@ description: What an integrator should tell users about kUSDT and the bridge bef
 ---
 
 :::caution[Mainnet, not audited]
-kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. The
-deployment's vaults, covenant ID, pool ID and API address are published on [Status](/overview/status/#addresses)
-once the launch is verified. Nothing has been independently audited, and a legal review is open
+kUSDT launched on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 15 November 2026, with real USDT. The
+deployment's vaults, covenant ID, pool ID and API address are on [Status](/overview/status/#addresses). Nothing has been independently audited, and a legal review is open
 ([Audit status](/security/audit-status/)). To test first, use the public testnet at
 [testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
@@ -27,7 +26,7 @@ security pages are the full account, and they change as the project does: link t
 - **Not audited.** kUSDT is on mainnet with real USDT, and no part of it has had an independent audit: not the
   Kaspa covenants, not the vault, not the transaction builders. Internal and outside reviews are not audits. An
   independent audit and a legal review are open items of the [mainnet checklist](/security/mainnet-checklist/).
-- **Real money.** From 14 November 2026 kUSDT runs on Kaspa mainnet, Ethereum and BNB Chain. A mistake costs real
+- **Real money.** From 15 November 2026 kUSDT runs on Kaspa mainnet, Ethereum and BNB Chain. A mistake costs real
   USDT. Try your flow first with test coins on the public testnet at
   [testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 - **kUSDT is not USDT.** It is not issued by Tether. It is backed by USDT held in the bridge's vaults

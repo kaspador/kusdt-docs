@@ -202,7 +202,7 @@ kUSDT is one fungible token, whichever chain its USDT came from. A release, howe
 
 - A release must not exceed that vault's backing. kUSDT minted from Ethereum deposits can be redeemed on BNB
   Chain only if the BNB Chain vault holds enough.
-- A single burn output, fee included, must fit in that vault's release capacity, 250 000 USDT by default. The vault
+- A single burn output, fee included, must fit in that vault's release capacity, 50 000 USDT at the launch. The vault
   queues a payout only while the queue and it fit the capacity together, so a burn of all the room left waits for as long
   as any payout waits, and anyone can keep one tiny payout always waiting (run 21 round 2, R21-ECON-2). Wallets leave 1 %
   of the capacity free beside what is queued, so keeping a burn out takes more than that always queued; the coordinator

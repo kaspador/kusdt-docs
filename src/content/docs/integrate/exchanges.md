@@ -4,9 +4,8 @@ description: Crediting kUSDT deposits on Kaspa, sending kUSDT out, checking the 
 ---
 
 :::caution[Mainnet, not audited]
-kUSDT launches on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 14 November 2026, with real USDT. The
-deployment's vaults, covenant ID, pool ID and API address are published on [Status](/overview/status/#addresses)
-once the launch is verified. Nothing has been independently audited, and a legal review is open
+kUSDT launched on mainnet (Kaspa mainnet, Ethereum and BNB Chain) on 15 November 2026, with real USDT. The
+deployment's vaults, covenant ID, pool ID and API address are on [Status](/overview/status/#addresses). Nothing has been independently audited, and a legal review is open
 ([Audit status](/security/audit-status/)). To test first, use the public testnet at
 [testnet.trestly.io](https://testnet.trestly.io) ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
@@ -18,7 +17,7 @@ once the launch is verified. Nothing has been independently audited, and a legal
 - It is identified by its covenant ID alone. Anyone can deploy a token named "kUSDT"
   ([Token metadata](/concepts/metadata/#what-metadata-does-not-do)). Take the ID from
   [Status](/overview/status/#addresses) and from the API's `GET /status` (`kaspa.covenantId`), and make it a setting
-  rather than code. These pages give no mainnet ID: it is published on Status once the launch is verified.
+  rather than code. These pages give no mainnet ID: take it from Status.
 - It has 6 decimals ([Units](/protocol/identifiers-and-units/#units)).
 - It is a KCC-20 token with the standard token code, so tools that read KCC-20 read it
   ([Wallets](/integrate/wallets/)).
@@ -66,7 +65,7 @@ Before you take kUSDT, and while you hold it:
 |---|---|---|
 | Each monitor's signal | `GET /api/v1/signal` at each monitor's address on [Status: Addresses](/overview/status/#addresses) | `ok` is true, on both |
 | The coordinator's reserves | `GET /reserves` on the API | `healthy` is true: backing ≥ minted − released (INV-1) |
-| Proof of reserves, read in your browser | The web app's Reserves page (`https://trestly.io/reserves`, once the launch is verified) | It reads the vaults and the minter itself, next to `GET /reserves` |
+| Proof of reserves, read in your browser | The web app's Reserves page (`https://trestly.io/reserves`, once the bridge opens) | It reads the vaults and the minter itself, next to `GET /reserves` |
 | On-chain flags | The minter's `paused` flag, each vault's `paused()`, the pool's `paused` ([how to read them](/integrate/developer-guide/#is-the-bridge-paused)) | All false |
 | The same flags, from the API | `GET /status` (each vault's `paused`, the minter's state) and `GET /pool` (`paused`) | All false, and the same as on chain |
 

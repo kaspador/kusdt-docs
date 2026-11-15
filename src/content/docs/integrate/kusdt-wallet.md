@@ -4,7 +4,7 @@ description: Detect kUSDT Wallet, connect, read KAS and kUSDT balances, ask for 
 ---
 
 :::caution[Mainnet, not audited]
-kUSDT launches on mainnet on 14 November 2026, with real USDT. Nothing has been independently audited, and a legal
+kUSDT launched on mainnet on 15 November 2026, with real USDT. Nothing has been independently audited, and a legal
 review is open ([Audit status](/security/audit-status/)). Build and test your page against the public testnet first
 ([Test on the public testnet](/getting-started/public-testnet/)).
 :::
