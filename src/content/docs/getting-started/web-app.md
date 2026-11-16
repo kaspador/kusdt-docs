@@ -29,7 +29,7 @@ The app never sees a key. It uses two wallets, one per side:
 | Wallet | Signs | Used for |
 |---|---|---|
 | Your EVM wallet: one in this browser (found through EIP-6963, else `window.ethereum`), or a phone wallet through WalletConnect (a QR code from a computer). On a phone with no wallet in the browser, the page also offers links that open it inside MetaMask, Trust Wallet or Coinbase Wallet | Ethereum and BNB Chain transactions | Deposits |
-| [kUSDT Wallet](/getting-started/wallet/), the browser extension, on a computer: it builds, shows and signs its own transactions. Or KasWare (0.11.6 or later, its extension), Kastle (2.62.2 or later, its extension) or Kaspire (its extension, or its Android app on a phone): the page builds each transaction and they sign it, showing the amounts and the fee in their own windows | Kaspa transactions | Bridging back, swaps, liquidity |
+| [kUSDT Wallet](/getting-started/wallet/), the browser extension, on a computer: it builds, shows and signs its own transactions. Or KasWare (0.11.6 or later, its extension) or Kaspire (its extension, or its Android app on a phone): the page builds each transaction and they sign it, showing the amounts and the fee in their own windows. Kastle is not supported | Kaspa transactions | Bridging back, swaps, liquidity |
 
 Without a Kaspa wallet, every Kaspa-side action says where to get kUSDT Wallet and offers KasWare and Kaspire. On a phone, where kUSDT Wallet can't run, the page offers the Kaspire app for swapping, bridging back and the pool, and you can still bridge USDT to your Kaspa address (a normal one, `kaspa:q…`).
 

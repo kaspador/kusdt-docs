@@ -21,10 +21,10 @@ To test, the testnet build is at
 with a `.sha256` beside it. Load it in Chrome with developer mode, "Load unpacked". It works with test coins only;
 never put a recovery phrase that holds real KAS into it ([Test on the public testnet](/getting-started/public-testnet/)).
 
-**Which wallets work with kUSDT.** kUSDT Wallet, KasWare (0.11.6 or later), Kastle (2.62.2 or later, its extension)
-and Kaspire (its extension, and its Android app on a phone) connect to the web app: swap, bridge back, and add to and
-remove from the pool. Kaspium and Kaspa NG don't show kUSDT. On the Ethereum and BNB Chain side, the web app works with
-MetaMask and with WalletConnect.
+**Which wallets work with kUSDT.** kUSDT Wallet, KasWare (0.11.6 or later) and Kaspire (its extension, and its
+Android app on a phone) connect to the web app: swap, bridge back, and add to and remove from the pool. Kastle is not
+supported on the web app, and Kaspium and Kaspa NG don't show kUSDT. On the Ethereum and BNB Chain side, the web app
+works with MetaMask and with WalletConnect.
 
 Already bridged to an address of another wallet? kUSDT Wallet shows the kUSDT of one address of a recovery phrase:
 its first receive address (`m/44'/111111'/0'/0/0`), the first address KasWare, Kaspa NG and Kaspium make from that

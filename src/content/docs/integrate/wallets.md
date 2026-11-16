@@ -75,7 +75,7 @@ submits it. The page never sees a key. Methods, errors and events: [Wallet provi
 kUSDT Wallet's mainnet version is 1.0.0 ([Install](/getting-started/wallet/#install)).
 On the EVM side, the web app works with MetaMask and WalletConnect.
 
-## How KasWare, Kastle and Kaspire sign for the web app
+## How KasWare and Kaspire sign for the web app
 
 The page builds each kUSDT transaction with kUSDT Wallet's engine (the same pool checks, coins, fees and output checks)
 and asks the wallet to sign only the user's inputs, with SIGHASH_ALL. The engine builds on a stand-in key. Before
@@ -89,9 +89,6 @@ is the transaction kUSDT Wallet builds for that address, but for the signatures:
   signature with its sighash byte. For a plain coin that push is the signature script; for a kUSDT state or a position
   the page puts the signature into its witness, in place of the stand-in signature, before its script, which must hash
   to the input's address.
-- **Kastle** (2.62.2 or later): `kastle.signTx(networkId, txJson, [{ inputIndex, signType: "All" }])` for the same
-  inputs, each option naming no script, so each answer is the same 65-byte push and the page places it the same way.
-  Kastle opens a site's covenant transaction only once it can tell which of the wallet's KCC-20 tokens leave.
 - **Kaspire** (extension, or the Android app over WalletConnect): `signPskt` for plain coins, and for kUSDT states and
   positions its script-aware form (`scripts` with `ordered-args`), which builds the input's script itself.
 
