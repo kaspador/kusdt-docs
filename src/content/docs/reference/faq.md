@@ -91,12 +91,14 @@ If such a burn lands anyway, it is held and paid if Tether unblocks the address.
 
 ### Which wallets support kUSDT?
 
-Any wallet with KCC-20 support can read kUSDT states, because kUSDT uses the standard template. The mainnet
-version of the kUSDT Wallet extension is 1.0.0 ([The wallet](/getting-started/wallet/#install)). Always check the
-covenant ID.
+kUSDT Wallet, KasWare (0.11.6 or later) and Kaspire show kUSDT and work with the web app: swap, bridge back and the
+pool. kUSDT Wallet's mainnet version is 1.0.0 ([The wallet](/getting-started/wallet/#install)). On a phone, use the
+Kaspire app. kUSDT uses the standard KCC-20 template, so a wallet that adds KCC-20 support can read it. Always check
+the covenant ID.
 
-On the web app, kUSDT Wallet is the only Kaspa wallet. KasWare and Kastle are not supported: they signed transactions the
-page built and showed neither the amounts nor the network fee in their own windows.
+On the web app, KasWare and Kaspire sign the transactions the page builds and show the balance change, every input and
+output and the fee in their own windows (KasWare since 0.11.6). Kastle is not supported: it showed neither the amounts nor
+the network fee.
 
 For the Ethereum and BNB Chain side, the web app works with MetaMask and with WalletConnect.
 

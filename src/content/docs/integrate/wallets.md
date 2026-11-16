@@ -73,7 +73,27 @@ redeem, swap or add and remove liquidity. The wallet builds every transaction, s
 submits it. The page never sees a key. Methods, errors and events: [Wallet provider](/protocol/wallet-provider/).
 
 kUSDT Wallet's mainnet version is 1.0.0 ([Install](/getting-started/wallet/#install)).
-KasWare is not supported. On the EVM side, the web app works with MetaMask and WalletConnect.
+On the EVM side, the web app works with MetaMask and WalletConnect.
+
+## How KasWare and Kaspire sign for the web app
+
+The page builds each kUSDT transaction with kUSDT Wallet's engine (the same pool checks, coins, fees and output checks)
+and asks the wallet to sign only the user's inputs, with SIGHASH_ALL. The engine builds on a stand-in key. Before
+anything is checked or signed, the page puts the user's key back wherever the stand-in's is: in the user's kUSDT states
+and pool positions, in a state derived from theirs (the kUSDT left over from a partial sale or a deposit), and in the
+covenant witnesses that name it. It gives those outputs the user's scripts and the transaction its new id. The result
+is the transaction kUSDT Wallet builds for that address, but for the signatures:
+
+- **KasWare** (0.11.6 or later): `kasware.signPskt({ txJsonString, options: { signInputs: [{ index, sighashType: 1 }] } })`
+  for every input of the user's, the kUSDT states and pool positions too. Each answer is one 65-byte push, the
+  signature with its sighash byte. For a plain coin that push is the signature script; for a kUSDT state or a position
+  the page puts the signature into its witness, in place of the stand-in signature, before its script, which must hash
+  to the input's address.
+- **Kaspire** (extension, or the Android app over WalletConnect): `signPskt` for plain coins, and for kUSDT states and
+  positions its script-aware form (`scripts` with `ordered-args`), which builds the input's script itself.
+
+Either way the page puts only the wallet's signatures into its own transaction, so the wallet cannot change what is
+sent, and the node checks every script.
 To try a wallet integration before mainnet, use the public testnet at
 [testnet.trestly.io](https://testnet.trestly.io), with the testnet build of kUSDT Wallet and its faucet
 ([Test on the public testnet](/getting-started/public-testnet/)), or run the whole stack locally

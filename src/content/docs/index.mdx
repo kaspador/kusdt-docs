@@ -36,7 +36,7 @@ Ethereum or on BNB Chain. kUSDT has 6 decimals, like USDT on Ethereum.
 
 - On Kaspa, kUSDT is a **KCC-20 covenant token**. KCC-20 is the Kaspa convention for fungible tokens. A kUSDT
   balance is an ordinary Kaspa transaction output whose spending rules every Kaspa node checks. kUSDT uses the
-  standard KCC-20 token code unchanged, so wallets that support KCC-20 can read it.
+  standard KCC-20 token code unchanged, so wallets that support KCC-20 can read it: kUSDT Wallet, KasWare and Kaspire do.
 - On Ethereum and BNB Chain, one **vault** contract per chain holds the locked USDT.
 - A **bridge** of 5 independent signers connects the two sides. Any 3 of them can approve a mint on Kaspa or a
   payout from a vault, and both sides limit how much can move per day.
@@ -52,21 +52,26 @@ Kasplex layer-2 networks, their contracts or their bridges. Its rules run in Kas
 transactions are ordered and confirmed like any KAS payment. [Kaspa L1, not a layer 2](/overview/why-kaspa-l1/)
 explains the difference.
 
-## How it works, in three steps
+## How it works, in four steps
 
 <div class="steps3">
   <div>
     <div class="n">Step 1</div>
-    <div class="h">Deposit</div>
-    <p>You lock USDT in the vault on Ethereum or BNB Chain and name a Kaspa address. The vault numbers the deposit and keeps a 0.50 % fee (at least 0.50 USDT).</p>
+    <div class="h">Get a Kaspa wallet</div>
+    <p>kUSDT works in <a href="/getting-started/wallet/#install">kUSDT Wallet</a>, our browser extension, and in KasWare and Kaspire. On a phone, use the Kaspire app.</p>
   </div>
   <div>
     <div class="n">Step 2</div>
+    <div class="h">Deposit</div>
+    <p>You lock USDT in the vault on Ethereum or BNB Chain and name your Kaspa wallet's address. The vault numbers the deposit and keeps a 0.50 % fee (at least 0.50 USDT).</p>
+  </div>
+  <div>
+    <div class="n">Step 3</div>
     <div class="h">Mint</div>
     <p>Once the deposit is final, at least 3 of the 5 signers sign it. The BridgeMint covenant on Kaspa checks the signatures and the limits, and creates your kUSDT.</p>
   </div>
   <div>
-    <div class="n">Step 3</div>
+    <div class="n">Step 4</div>
     <div class="h">Use or redeem</div>
     <p>Send kUSDT, or swap it for KAS in KasPool. To redeem, you send it to a burn owner that names your EVM address. The signers approve, and the vault pays you USDT.</p>
   </div>

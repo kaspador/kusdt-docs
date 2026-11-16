@@ -103,3 +103,23 @@ Only the pool admin resumes it.
 Anyone can add KAS and kUSDT in the current ratio and receive a **Position**: a covenant UTXO that records
 liquidity shares and the key that owns them. Burning the Position returns at most its share of each reserve.
 The owner can transfer a Position to another key. See [KasPool](/contracts/kaspool/) for the exact rules.
+
+### Fee APR
+
+The web app's Pool page shows the providers' **fee APR**: what they earned from swap fees, counted over a year,
+against the pool's average size. It covers the last 7 days, or the time since the pool opened while it is younger
+than that (the page says which, and how long), so in the first days a single large swap moves it a lot.
+
+- **Live.** The page reads the pool every 8 seconds and brings the figure up to date each time, so a swap shows in it
+  within seconds. Its starting point comes from Trestly's statistics service (`trestly-stats`), which records the pool
+  every 15 minutes: what the providers earned up to its last record, the pool's protocol fee then, and the pool's
+  average worth. The page reads that every 5 minutes. Each newer pool state adds nine times what the protocol fee grew
+  since, because providers keep 0.45 % of a swap's input and the protocol 0.05 %. A smaller protocol fee means the pool
+  admin collected it, and all of it is new.
+- **Dollars.** kUSDT counts as $1 and KAS at the pool's own price.
+- **Swap fees only.** A price move changes what a provider's share is worth, and can cost more than the fees bring.
+  The APR leaves that out. It shows the past and promises nothing.
+- **Where it comes from.** A site sets the service's address as `poolAprUrl` in its `config.json`
+  (`https://trestly-stats.likasvy.workers.dev/api/pool-apr` on mainnet). Without it, the Pool page shows no APR.
+  The service's answer: `{from, to, opened, week, earned: {kas, kusdt}, protocol: {kas, kusdt}, avgTvlUsd, apr}`, in
+  sompi and kUSDT units, or `null` before the pool's first record after it opened.
