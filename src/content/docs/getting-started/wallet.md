@@ -3,18 +3,19 @@ title: The wallet
 description: The kUSDT wallet extension, what it does, how it verifies what it shows, and how to hold kUSDT in any KCC-20 wallet.
 ---
 
-kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the local stack, and it runs on the public testnet at [testnet.trestly.io](https://testnet.trestly.io). Its **mainnet version is 1.0.0**, out since the launch on 15 November 2026 ([Install](#install)).
+kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is built and tested against the local stack, and it runs on the public testnet at [testnet.trestly.io](https://testnet.trestly.io). Its **mainnet version, 1.0.0**, is in the [Chrome Web Store](https://chromewebstore.google.com/detail/kusdt-wallet/nnncenjlgkigbhjhhkbbmnnofbefenob) since 17 November 2026 ([Install](#install)).
 
 ## Install
 
 For Chromium browsers on a computer: Chrome, Brave and Edge. There is no phone version, and the web app says so on a phone.
 
-**Mainnet: kUSDT Wallet 1.0.0.** Download it from [trestly.io/wallet](https://trestly.io/wallet)
-(`kusdt-wallet-1.0.0.zip`, SHA-256 `4cb69598f030fdc265f3f782f8fd01c523d1445df1ab2cf987d2cb7b2c413f09`), unzip it into a folder you keep, and load
-that folder in your browser's extensions page with developer mode on, "Load unpacked". It is in review at the Chrome
-Web Store. The copy from trestly.io doesn't update itself: once the store version is out, install that one instead
-and restore your wallet in it with your recovery phrase. Install no build that claims to be kUSDT Wallet from
-anywhere else.
+**Mainnet: kUSDT Wallet 1.0.0.** Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/kusdt-wallet/nnncenjlgkigbhjhhkbbmnnofbefenob), which also keeps it up
+to date. In Edge, turn on "Allow extensions from other stores" when it asks. Install no build that claims to be kUSDT
+Wallet from anywhere else.
+
+Installed the 1.0.0 zip from trestly.io in the first days after the launch? That copy doesn't update itself: install
+the store version, restore your wallet in it with your recovery phrase, then remove the old copy from your browser's
+extensions page.
 
 To test, the testnet build is at
 [testnet.trestly.io/downloads/kusdt-wallet-testnet.zip](https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip),
