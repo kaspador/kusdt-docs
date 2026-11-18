@@ -59,9 +59,9 @@ integrate and what to test on the public testnet, and leads to two step-by-step 
 | Item | Where |
 |---|---|
 | Networks | Kaspa mainnet, Ethereum (chain ID 1) and BNB Chain (chain ID 56) ([Networks](/protocol/identifiers-and-units/#networks)) |
-| Web app | `https://trestly.io`, which opens after the final checks |
+| Web app | `https://trestly.io` |
 | Coordinator API | The address on [Status: Addresses](/overview/status/#addresses) |
-| Monitor status | Two, read-only, at the addresses on [Status: Addresses](/overview/status/#addresses) once they run (their machines are closed; the status goes out through Cloudflare tunnels). Read both, and the vaults' `paused()` and the minter's and the pool's state. The public testnet's is at `https://testnet.trestly.io/monitor/health` |
+| Monitor status | Two, read-only, at the addresses on [Status: Addresses](/overview/status/#addresses) (their machines are closed; the status goes out through Cloudflare tunnels). Read both, and the vaults' `paused()` and the minter's and the pool's state. The public testnet's is at `https://testnet.trestly.io/monitor/health` |
 | Covenant IDs, the pool, the vaults | [Status: Addresses](/overview/status/#addresses), the API's [`GET /status`](/protocol/coordinator-api/#calls), and the web app's Bridge status (`/network`) |
 
 No mainnet address is written into these pages. Don't copy one into your code from anywhere else: read the IDs and

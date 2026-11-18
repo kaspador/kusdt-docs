@@ -17,7 +17,7 @@ tunnels. Neither service can move funds.
 | Service | Mainnet | Public testnet | Reference |
 |---|---|---|---|
 | The coordinator's API | The address on [Status: Addresses](/overview/status/#addresses) | `https://testnet.trestly.io/api/v1` | [Coordinator API](/protocol/coordinator-api/) |
-| The monitors' status | Two, at the addresses on [Status: Addresses](/overview/status/#addresses), once they run | `https://testnet.trestly.io/monitor` | [The monitor](/security/monitor/) |
+| The monitors' status | Two, at the addresses on [Status: Addresses](/overview/status/#addresses) | `https://testnet.trestly.io/monitor` | [The monitor](/security/monitor/) |
 
 The API is answered from what the coordinator writes. A monitor reads every chain from its own nodes and takes
 nothing from the coordinator, so the two are separate views.

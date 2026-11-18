@@ -3,10 +3,9 @@ title: Status
 description: What exists today, what is tested, and what is not built yet.
 ---
 
-As of 15 November 2026. kUSDT **launched on mainnet on 15 November 2026** (Kaspa, Ethereum and BNB Chain), from
+As of 18 November 2026. kUSDT **launched on mainnet on 15 November 2026** (Kaspa, Ethereum and BNB Chain), from
 the release `mainnet-v0.9.8-rc.25`. The contracts are deployed and their addresses are [below](#addresses). The
-launch is in progress: the web app (Bridge, Swap, Pool, Reserves) opens at [trestly.io](https://trestly.io) after the
-final checks, and until then trestly.io says so. The public testnet runs at [testnet.trestly.io](https://testnet.trestly.io), from the
+bridge is open: the web app (Bridge, Swap, Pool, Reserves) runs at [trestly.io](https://trestly.io). The public testnet runs at [testnet.trestly.io](https://testnet.trestly.io), from the
 same release, for developers and integrators to test against. It ran from 4 November 2026, paused on 14 November
 and came back that evening ([Test on the public testnet](/getting-started/public-testnet/)).
 
@@ -41,7 +40,7 @@ are on the [mainnet checklist](/security/mainnet-checklist/). Bridge only what y
 | Reproducible covenant bytecode | CI | Built | `tools/check-artifacts.mjs` and a CI job recompile and compare, byte for byte |
 | Outside reviews | Code and services | Four so far, each finding answered. Not an audit | See [Audit status](/security/audit-status/) |
 | Public testnet | TN10, Sepolia, BSC testnet | Running at [testnet.trestly.io](https://testnet.trestly.io) since 4 November 2026 (paused on 14 November, back that evening), for testing integrations ([Test on the public testnet](/getting-started/public-testnet/)) | `testnet:e2e` passed: deposits on both chains minted on TN10, 20 kUSDT redeemed to BSC testnet (19.5 USDT paid), the pool opened and a swap, and a burn to a blacklisted address refused, held, then paid once unblocked. It ran on one test host in isolated containers (see [Operations](/developers/operations/#the-testnet-deployment)) |
-| Mainnet deployment | Kaspa, Ethereum, BNB Chain | Deployed on 15 November 2026 from `mainnet-v0.9.8-rc.25`; the bridge opens after the final checks | Addresses [below](#addresses), with the contracts' source verified on Etherscan and BscScan. See the [mainnet checklist](/security/mainnet-checklist/) |
+| Mainnet deployment | Kaspa, Ethereum, BNB Chain | Deployed on 15 November 2026 from `mainnet-v0.9.8-rc.25`; the bridge is open | Addresses [below](#addresses), with the contracts' source verified on Etherscan and BscScan. See the [mainnet checklist](/security/mainnet-checklist/) |
 | Signer operators | Mainnet | Five independent operators; any 3 approve a mint or a payout, 4 for Kaspa governance | The [mainnet checklist](/security/mainnet-checklist/), item 1 |
 
 ## What the simnet run shows
@@ -85,10 +84,6 @@ chains, a send, a redemption through to its release, swaps, and adding and remov
 kUSDT's mainnet, launched on 15 November 2026 from the release `mainnet-v0.9.8-rc.25`. Trust no address, covenant ID
 or API that claims to be kUSDT's and is not listed here.
 
-:::caution[The bridge opens after the final checks]
-The contracts are deployed, but the bridge is not open yet. Wait until [trestly.io](https://trestly.io) opens it
-before you deposit: a deposit sent to a vault now is only minted once the bridge runs.
-:::
 
 ### Kaspa
 
@@ -113,14 +108,14 @@ The same addresses on both chains. Each contract's source is verified on the blo
 
 ### The API and the launch record
 
-- The coordinator API: `https://api.trestly.io/api/v1`, answering once the bridge runs.
+- The coordinator API: `https://api.trestly.io/api/v1`.
 - The launch record, `deployment.json`, SHA-256 `a76316edd3aa23badfafcd60b88275d29230c2a23290e8f8acc547a9dc456443`, from the plan the operators reviewed (SHA-256
   `123d97ef3de6e21149a9642988e861f094e6b9c9612fffca31204b2634ce48fd`). Both are in the open code, under `deployments/`
   ([github.com/kaspador/kusdt-open](https://github.com/kaspador/kusdt-open/tree/main/deployments)). Each operator
   checks the deployment against them with `mainnet:verify`, on their own node and RPCs, before starting their signer.
 
-The two mainnet monitors run on closed machines (nothing open but SSH) and start once the signers and the
-coordinator run; their read-only status addresses are listed here then. The pause they set on any alarm also shows on
+The two mainnet monitors run on closed machines and publish only their read-only status, through Cloudflare tunnels:
+`https://monitor.trestly.io/api/v1/monitor` and `https://monitor.kaspa.news/api/v1/monitor`. The pause they set on any alarm also shows on
 chain ([Is the bridge paused?](/integrate/developer-guide/#is-the-bridge-paused)).
 
 The public testnet has its own addresses, for test coins only: see
