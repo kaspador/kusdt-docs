@@ -32,7 +32,7 @@ As of 15 November 2026. Order follows the project's working plan; apart from the
 - A CI job that recompiles the covenant bytecode and compares it.
 - Four outside reviews, each finding answered on [Audit status](/security/audit-status/). None of them is an audit.
 - This documentation site.
-- kUSDT Wallet 1.0.0 in the [Chrome Web Store](https://chromewebstore.google.com/detail/kusdt-wallet/nnncenjlgkigbhjhhkbbmnnofbefenob), since 17 November 2026.
+- kUSDT Wallet in the [Chrome Web Store](https://chromewebstore.google.com/detail/kusdt-wallet/nnncenjlgkigbhjhhkbbmnnofbefenob) since 17 November 2026, now at version 1.0.2.
 
 ## Now: the mainnet launch
 

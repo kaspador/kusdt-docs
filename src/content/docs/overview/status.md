@@ -28,7 +28,7 @@ are on the [mainnet checklist](/security/mainnet-checklist/). Bridge only what y
 | Signer and coordinator services | Off-chain | Written | The local end-to-end run (below) |
 | Monitor and guardian service | Off-chain | Written | Caught and paused a forged mint in the local end-to-end run (below) |
 | Web app | Browser | Built (`bridge/web`); on the public testnet at [testnet.trestly.io](https://testnet.trestly.io) since 4 November 2026; on mainnet at [trestly.io](https://trestly.io) when the bridge opens | 249 unit tests, end-to-end tests on the live stack, and a suite driving the real wallet extension |
-| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack and on the public testnet. Its mainnet version, 1.0.0, is out ([Install](/getting-started/wallet/#install)) | 227 unit tests, simnet and smoke suites, and tests against the live stack. Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
+| Wallet extension | Browser | Built (`wallet/extension`), tested against the local stack and on the public testnet. Its mainnet version, 1.0.2, is out ([Install](/getting-started/wallet/#install)) | 227 unit tests, simnet and smoke suites, and tests against the live stack. Its page interface is specified ([Wallet provider](/protocol/wallet-provider/)) |
 | Refunds | Services and vault | Working | `local:load`: a deposit skipped and refunded 14.5 USDT |
 | Mainnet fork rehearsal | Forks of Ethereum and BNB Chain | Passed | The vault against the real USDT and BSC-USD |
 | Internal security review | Money paths | Done, fixes applied | See [Audit status](/security/audit-status/) |

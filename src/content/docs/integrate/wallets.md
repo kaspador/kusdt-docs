@@ -72,7 +72,7 @@ kUSDT Wallet injects `window.kusdt`, an EIP-1193-style object. A site asks it to
 redeem, swap or add and remove liquidity. The wallet builds every transaction, shows it to the user, signs and
 submits it. The page never sees a key. Methods, errors and events: [Wallet provider](/protocol/wallet-provider/).
 
-kUSDT Wallet's mainnet version is 1.0.0 ([Install](/getting-started/wallet/#install)).
+kUSDT Wallet's mainnet version is 1.0.2 ([Install](/getting-started/wallet/#install)).
 On the EVM side, the web app works with MetaMask and WalletConnect.
 
 ## How KasWare, Kastle and Kaspire sign for the web app

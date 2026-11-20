@@ -9,7 +9,7 @@ kUSDT Wallet is a browser extension (Manifest V3) in `wallet/extension`. It is b
 
 For Chromium browsers on a computer: Chrome, Brave and Edge. There is no phone version, and the web app says so on a phone.
 
-**Mainnet: kUSDT Wallet 1.0.0.** Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/kusdt-wallet/nnncenjlgkigbhjhhkbbmnnofbefenob), which also keeps it up
+**Mainnet: kUSDT Wallet 1.0.2.** Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/kusdt-wallet/nnncenjlgkigbhjhhkbbmnnofbefenob), which also keeps it up
 to date. In Edge, turn on "Allow extensions from other stores" when it asks. Install no build that claims to be kUSDT
 Wallet from anywhere else.
 

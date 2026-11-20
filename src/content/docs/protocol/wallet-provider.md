@@ -1,22 +1,30 @@
 ---
 title: Wallet provider
-description: The window.kusdt interface that the kUSDT wallet extension injects into web pages.
+description: The window.kusdt interface that kUSDT Wallet and other Kaspa wallets (such as KaPay) inject into web pages.
 ---
 
 :::note[Mainnet version after the launch]
 The wallet extension (`wallet/extension`) implements this interface and was tested against the local stack and the public testnet. Its testnet build is at [testnet.trestly.io](https://testnet.trestly.io/downloads/kusdt-wallet-testnet.zip), for testing pages against this interface ([Test on the public testnet](/getting-started/public-testnet/)). Its mainnet version comes right after the mainnet launch.
 :::
 
-The extension injects `window.kusdt`, an EIP-1193-style object:
+Any Kaspa wallet that builds and signs kUSDT transactions itself can inject `window.kusdt`, an EIP-1193-style object:
 
 ```ts
 window.kusdt.request({ method, params }): Promise<result>
 window.kusdt.on(event, listener)
+window.kusdt.info = { name: 'KaPay', icon: 'data:image/png;base64,…', rdns: 'com.kachat.wallet' } // optional
 ```
 
 The wallet builds every transaction itself, from the WebAssembly transaction builders and the
 [coordinator API](/protocol/coordinator-api/) data. It shows the user what the transaction does, signs it and
 submits it. **The page never sees a key.**
+
+## Discovery and identity
+
+The web app treats any `window.kusdt` object with a `request` function as a wallet:
+
+- **Initialization events.** Inject `window.kusdt` before the page's scripts run, or announce it with `kusdt#initialized` or `kusdt:announceProvider` (`detail: { info, provider }` in the spirit of EIP-6963, or `detail: info` beside `window.kusdt`). The page also dispatches `kusdt:requestProvider` when looking for a provider.
+- **Name and icon (`info`).** Optional `{ name, icon, rdns }` on `window.kusdt.info` or in `kusdt:announceProvider`. `name` is shown in place of "kUSDT Wallet" (for example "Connect KaPay", "Paid in KAS from KaPay"). `icon` must be a `data:image/…` URL (remote URLs are ignored).
 
 ## Methods
 
@@ -25,12 +33,35 @@ submits it. **The page never sees a key.**
 | `kaspa_requestAccounts` | none | `[address]`, after the user approves the site |
 | `kaspa_getNetwork` | none | `"mainnet"`, `"testnet-10"` or `"simnet"` |
 | `kaspa_switchNetwork` | `{network}`: `"testnet-10"`, `"mainnet"` or `"simnet"` | the network the wallet is on afterwards |
+| `kusdt_capabilities` | none | `{methods: [...]}` (or `[...]`) of supported methods (optional, public) |
 | `kusdt_getBalances` | none | `{kas, kusdt}`, in sompi and base units |
 | `kusdt_send` | `{to, amount}` | `{txid}` |
 | `kusdt_redeem` | `{chain, address, amount}` | `{txid, redeemIds}` |
 | `kusdt_swap` | `{side: "buy" or "sell", amountIn, minOut}` | `{txid, amountOut}` |
 | `kusdt_addLiquidity` | `{kasIn, tokensIn}` | `{txid, shares}` |
 | `kusdt_removeLiquidity` | `{position}` | `{txid}` |
+
+## Partial support (`kusdt_capabilities`)
+
+A wallet that only implements a subset of methods (for example a mobile wallet like KaPay that swaps and provides liquidity, refuses `kusdt_redeem` and `kusdt_send` with `4200`, and switches networks only in its own settings) should advertise its supported methods so the site can hide or disable unavailable actions upfront:
+
+```ts
+// Answer to { method: 'kusdt_capabilities' } (or put `methods` on `window.kusdt.info`):
+{
+  methods: [
+    'kaspa_requestAccounts',
+    'kaspa_getNetwork',
+    'kusdt_getBalances',
+    'kusdt_swap',
+    'kusdt_addLiquidity',
+    'kusdt_removeLiquidity',
+  ]
+}
+```
+
+- `kusdt_capabilities` should answer any page without opening an approval prompt (like `kaspa_getNetwork`).
+- Wallets that do not implement `kusdt_capabilities` (such as kUSDT Wallet 1.0.2 and earlier) are assumed to support every method above; if an action call rejects with `4200`, the page marks that action unsupported for the session.
+- If `kaspa_switchNetwork` is omitted from `methods`, the page does not ask the wallet to switch networks and tells the user to switch in the wallet's Settings instead.
 
 Amounts are decimal strings (or safe integers) of the smallest unit. `params` may be the object itself or an
 array whose first item is the object. Since run 21, `params` holding more than 4 096 characters, nested more than 4
