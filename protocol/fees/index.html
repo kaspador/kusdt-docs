@@ -70,18 +70,22 @@
 <p>The proportional part rounds <strong>up</strong> to the next base unit (10⁻⁶ USDT). A release always pays exactly this. A
 deposit pays this while all of it fits under half of its vault’s deposit meter (on mainnet at the launch: the meter and the deposit together at most 6 250 USDT), and more for the part above that, when many deposits were made on its chain in the last 24 hours: see
 <a href="#the-rising-deposit-fee">the rising deposit fee</a> below.</p>
+<p><strong>Since 21 November 2026 the rate is 0 % on both vaults</strong> (the owner’s decision of 19 November 2026, carried out
+through the vault owner’s 48-hour delay). So a release pays exactly its minimum, and a deposit pays the 0.10 USDT
+minimum unless the day’s deposits have filled its vault’s meter past half. At the launch the rate was 0.50 % each
+way, with a 0.50 USDT minimum per deposit.</p>
 <table>
 <thead>
 <tr>
 <th>Parameter</th>
-<th>Default (mainnet)</th>
+<th>Mainnet</th>
 <th>Hard bound in the vault</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code dir="auto">feeBps</code> (both directions)</td>
-<td>50, which is 0.50 %</td>
+<td>0 since 21 November 2026 (50, which is 0.50 %, at the launch)</td>
 <td>at most 100 (1 %)</td>
 </tr>
 <tr>
@@ -96,7 +100,7 @@ deposit pays this while all of it fits under half of its vault’s deposit meter
 </tr>
 <tr>
 <td><code dir="auto">minDepositFee</code></td>
-<td>0.50 USDT (500 000 units)</td>
+<td>0.10 USDT (100 000 units) since 21 November 2026 (0.50 USDT at the launch)</td>
 <td>at most 50 USDT</td>
 </tr>
 <tr>
@@ -123,17 +127,17 @@ deposit pays this while all of it fits under half of its vault’s deposit meter
 <tr>
 <td>Deposit</td>
 <td><code dir="auto">units − fee</code> in kUSDT</td>
-<td>100 USDT, at the plain rate</td>
+<td>Every amount, at the plain rate of 0 % (100 USDT at the launch’s 0.50 %)</td>
 </tr>
 <tr>
 <td>Release on Ethereum</td>
 <td><code dir="auto">units − fee</code> in USDT</td>
-<td>1 000 USDT</td>
+<td>Every amount (1 000 USDT at the launch’s 0.50 %)</td>
 </tr>
 <tr>
 <td>Release on BNB Chain</td>
 <td><code dir="auto">units − fee</code> in BSC-USD</td>
-<td>100 USDT</td>
+<td>Every amount (100 USDT at the launch’s 0.50 %)</td>
 </tr>
 <tr>
 <td>Refund</td>
@@ -158,11 +162,11 @@ meter stands:</p>
 <tbody>
 <tr>
 <td>Under half full</td>
-<td><code dir="auto">feeBps</code>, 0.50 %</td>
+<td><code dir="auto">feeBps</code>: 0 % since 21 November 2026 (0.50 % at the launch)</td>
 </tr>
 <tr>
 <td>From half full to full</td>
-<td>A straight line from 0.50 % up to <code dir="auto">surgeFeeBps</code>, 2.50 %</td>
+<td>A straight line from <code dir="auto">feeBps</code> up to <code dir="auto">surgeFeeBps</code>, 2.50 %</td>
 </tr>
 <tr>
 <td>Full</td>
@@ -172,7 +176,7 @@ meter stands:</p>
 </table>
 <p>A deposit pays each of its units at the rate where the meter stands as that unit goes in, so splitting a deposit
 into smaller ones changes nothing. The total is rounded up, and the minimum deposit fee still applies. With the
-launch values, where each vault’s meter is 12 500 USDT:</p>
+values since 21 November 2026, where each vault’s meter is 12 500 USDT:</p>
 <table>
 <thead>
 <tr>
@@ -185,22 +189,22 @@ launch values, where each vault’s meter is 12 500 USDT:</p>
 <tr>
 <td>1 000 USDT</td>
 <td>Empty</td>
-<td>5.00 USDT (0.50 %)</td>
+<td>0.10 USDT (0.01 %): the minimum</td>
 </tr>
 <tr>
 <td>8 000 USDT</td>
 <td>Empty</td>
-<td>44.90 USDT (0.56 %): 6 250 under half the meter, 1 750 on the line</td>
+<td>6.125 USDT (0.07 %): 6 250 under half the meter, 1 750 on the line</td>
 </tr>
 <tr>
 <td>8 000 USDT</td>
 <td>6 250 USDT (half)</td>
-<td>137.50 USDT (1.71 %): 6 250 on the line, 1 750 at the full rate</td>
+<td>121.875 USDT (1.52 %): 6 250 on the line, 1 750 at the full rate</td>
 </tr>
 <tr>
 <td>1 000 USDT</td>
 <td>9 375 USDT (three quarters)</td>
-<td>16.60 USDT (1.66 %)</td>
+<td>14.50 USDT (1.45 %)</td>
 </tr>
 <tr>
 <td>1 000 USDT</td>
@@ -209,14 +213,15 @@ launch values, where each vault’s meter is 12 500 USDT:</p>
 </tr>
 </tbody>
 </table>
+<p>At the launch’s 0.50 % the same five deposits paid 5.00, 44.90, 137.50, 16.60 and 25.00 USDT.</p>
 <p>A full meter is empty again 24 hours later, and half empty, back at the plain rate, after 12 hours.</p>
 <p><strong>Why.</strong> The signers sign for a limited amount a day, across both chains (see
 <a href="/kusdt-docs/protocol/limits/#at-the-mainnet-launch">Limits</a>). At the flat fee one party could use that up cheaply, and other
 people’s deposits then waited. With the rising fee, the more of the day’s limit is in use, the more the next
 deposit pays. Each meter is a quarter of the signers’ daily limit, so the two meters are full by the time half the
 day’s limit is used. A meter of half the limit (the first choice) drained fast enough that deposits spread over the
-day, one 8 000 USDT deposit into each vault every 7.6 hours, kept the whole limit in use at the plain 0.50 %. At a
-quarter the same steady flow pays about 2.1 %.</p>
+day, one 8 000 USDT deposit into each vault every 7.6 hours, kept the whole limit in use at the plain rate (0.50 % then). At
+a quarter the same steady flow pays about 2.1 % (about 2.2 % at the launch’s 0.50 %).</p>
 <p><strong>Deposits only.</strong> A bridge back to Ethereum or BNB Chain always pays the flat fee. The vault sets a release’s fee
 after you have burnt your kUSDT on Kaspa, and a burn cannot be undone, so you could not refuse a higher fee at that
 point. This also means that using up the day’s limit in the bridge-back direction still costs only the flat fee
