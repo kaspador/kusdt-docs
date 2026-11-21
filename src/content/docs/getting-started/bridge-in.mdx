@@ -55,31 +55,31 @@ and BSC-USD on BNB Chain, `0x55d398326f99059fF775485246999027B3197955` (18 decim
 
 ## What you receive
 
-You receive `minted = units − fee`. The fee is 0.50 % of the deposit, at least 0.50 USDT, as long as the whole
-deposit fits under half of that vault's deposit meter (below): on mainnet at the launch, as long as the meter and
-your deposit together come to at most 6 250 USDT. On an empty meter that is every deposit up to 6 250 USDT; the
-part of a larger one above that pays a little more (the 8 000 USDT row below). The proportional part rounds up to
-the next base unit (10⁻⁶ USDT).
+You receive `minted = units − fee`. Since 21 November 2026 the fee is just the 0.10 USDT minimum (the rate is
+0 %), as long as the whole deposit fits under half of that vault's deposit meter (below): on mainnet, as long as
+the meter and your deposit together come to at most 6 250 USDT. On an empty meter that is every deposit up to
+6 250 USDT; the part of a larger one above that pays the rising rate (the 8 000 USDT row below), rounded up to the
+next base unit (10⁻⁶ USDT). From the launch until then the fee was 0.50 % of the deposit, at least 0.50 USDT.
 
-With the meter empty (mainnet at the launch):
+With the meter empty (mainnet since 21 November 2026):
 
 | Deposit | Fee | kUSDT minted |
 |---|---|---|
-| 10 USDT | 0.50 | 9.50 |
-| 100 USDT | 0.50 | 99.50 |
-| 250 USDT | 1.25 | 248.75 |
-| 1 000 USDT | 5.00 | 995.00 |
-| 8 000 USDT | 44.90 | 7 955.10 |
+| 10 USDT | 0.10 | 9.90 |
+| 100 USDT | 0.10 | 99.90 |
+| 250 USDT | 0.10 | 249.90 |
+| 1 000 USDT | 0.10 | 999.90 |
+| 8 000 USDT | 6.125 | 7 993.875 |
 
-Below 100 USDT the 0.50 USDT minimum applies. Above it, the 0.50 % rate applies, up to 6 250 USDT: 8 000 USDT pays
-0.50 % on its first 6 250 and a little more on the last 1 750, which go in above half the meter.
+Up to 6 250 USDT every deposit pays only the 0.10 USDT minimum. 8 000 USDT pays nothing on its first 6 250 and the
+rising rate on the last 1 750, which go in above half the meter: 6.125 USDT in all.
 
 **When the day's deposits have filled the meter past half, the fee is higher.** With the mainnet values, the
 deposit fee rises with the deposits made on that chain in the last 24 hours. Each vault keeps a meter of them,
 12 500 USDT at the launch (a quarter of the signers' daily limit). The part of a deposit that goes in while the
-meter is under half full pays the plain 0.50 %. From half full the rate rises in a straight line, to 2.50 % when the
-meter is full. So 8 000 USDT pays 68.90 USDT (0.86 %) with 2 500 USDT already in the meter, and 137.50 USDT (1.71 %)
-with 6 250. The meter drains over a
+meter is under half full pays the plain rate, 0 % since 21 November 2026. From half full the rate rises in a
+straight line, to 2.50 % when the meter is full. So 8 000 USDT pays 36.125 USDT (0.45 %) with 2 500 USDT already in
+the meter, and 121.875 USDT (1.52 %) with 6 250. The meter drains over a
 day, so the fee comes back down by itself. The rule and more examples are on
 [Fees](/protocol/fees/#the-rising-deposit-fee). Bridging back never pays more than the flat fee.
 

@@ -24,7 +24,7 @@ change where they are paid, including you. Check the chain and the address befor
 :::
 
 - Burns of an amount at or below the release fee are **never paid**. That is 5 USDT on Ethereum and
-  0.50 USDT on BNB Chain (or 0.50 % of the amount if that is higher).
+  0.50 USDT on BNB Chain.
 - Just above the fee, a burn is paid but the minimum fee takes most of it: on BNB Chain, 0.58 kUSDT pays
   0.08 USDT. When the fee is more than 20 % of the amount, the wallet and the web app say so and name the amount
   from which it is 20 % or less (five times the minimum fee: 25 kUSDT on Ethereum, 2.50 kUSDT on BNB Chain). The
@@ -89,17 +89,18 @@ change where they are paid, including you. Check the chain and the address befor
 
 ## What you receive
 
-The release fee is 0.50 % of the amount, with a minimum of 5 USDT on Ethereum and 0.50 USDT on BNB Chain. It is a
-flat fee: the
-[rising deposit fee](/protocol/fees/#the-rising-deposit-fee) applies to deposits only, never to a bridge back.
+Since 21 November 2026 the release fee is a flat 5 USDT on Ethereum and 0.50 USDT on BNB Chain, whatever the
+amount: the rate is 0 %, so only the minimum is left (from the launch until then it was 0.50 % of the amount, with
+the same minimums). The [rising deposit fee](/protocol/fees/#the-rising-deposit-fee) applies to deposits only, never
+to a bridge back.
 
 | kUSDT burned | Ethereum: fee | Ethereum: you receive | BNB Chain: fee | BNB Chain: you receive |
 |---|---|---|---|---|
 | 10 | 5.00 | 5.00 | 0.50 | 9.50 |
 | 100 | 5.00 | 95.00 | 0.50 | 99.50 |
-| 1 000 | 5.00 | 995.00 | 5.00 | 995.00 |
-| 2 500 | 12.50 | 2 487.50 | 12.50 | 2 487.50 |
-| 10 000 | 50.00 | 9 950.00 | 50.00 | 9 950.00 |
+| 1 000 | 5.00 | 995.00 | 0.50 | 999.50 |
+| 2 500 | 5.00 | 2 495.00 | 0.50 | 2 499.50 |
+| 10 000 | 5.00 | 9 995.00 | 0.50 | 9 999.50 |
 
 ## How long it takes
 

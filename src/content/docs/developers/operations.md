@@ -584,8 +584,9 @@ one vault runs short, for example in a run on Ethereum, an operator rebalances t
 2. Move that USDT to the short chain (an exchange or another bridge).
 3. Deposit it into the short vault; the same kUSDT is minted back.
 
-Backing moves for 0.5 % each way plus the crossing (the deposit pays more while that vault's deposit meter is over
-half full, see [Fees](/protocol/fees/#the-rising-deposit-fee)); no new trust is added, and the monitor sees ordinary deposits and
+Backing moves for the bridge fees each way plus the crossing: since 21 November 2026 only the minimums (5 USDT or
+0.50 USDT for the release, 0.10 USDT for the deposit; 0.5 % each way at the launch), and the deposit pays more while
+that vault's deposit meter is over half full (see [Fees](/protocol/fees/#the-rising-deposit-fee)); no new trust is added, and the monitor sees ordinary deposits and
 releases. The operator needs kUSDT to start with, so keep an inventory sized to a day's release allowance. Holders
 are paid meanwhile as long as the two vaults together cover the supply: a wallet offers the other chain when the one
 they asked for cannot pay now. The vaults back kUSDT together, so a depeg of one chain's stablecoin is shared by all

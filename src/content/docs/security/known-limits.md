@@ -231,8 +231,9 @@ party") where the capacity is close to the signers' limit, and `/health` names e
 
 **Rebalancing uses the bridge's own paths.** No key can move backing from one vault to the other. When one chain runs
 short, an operator holding kUSDT redeems it from the vault that has plenty, moves the USDT across (an exchange or
-another bridge), and deposits it into the short vault, which mints the same kUSDT back. Backing moves for 0.5 % each
-way plus the cost of the crossing, and no new trust is added. See [Operations](/developers/operations/#rebalancing-the-vaults).
+another bridge), and deposits it into the short vault, which mints the same kUSDT back. Backing moves for the bridge fees
+(since 21 November 2026 only the minimums, and the rising deposit fee into a busy vault; 0.5 % each way at the
+launch) plus the cost of the crossing, and no new trust is added. See [Operations](/developers/operations/#rebalancing-the-vaults).
 
 **kUSDT is backed by the two vaults together.** If one chain's stablecoin depegs or is mis-minted, kUSDT minted from
 it can redeem real USDT from the other vault, up to the release allowances (Daybreak [22]). Nothing on either chain
@@ -259,21 +260,23 @@ deposits, [8] for payouts): a deposit made then waits, and is minted when there 
 Raising the limit only raises the money such a party needs.
 
 **Deposits: the fee rises with use.** Decided on 10 November 2026. Each vault's deposit fee goes up as the day's
-deposits on it grow: 0.50 % until its deposit meter is half full, rising in a straight line to 2.50 % at a full
-meter, and 2.50 % while it stays full ([Fees](/protocol/fees/#the-rising-deposit-fee)). Each vault's meter is a
+deposits on it grow: the plain rate (0 % since 21 November 2026, 0.50 % at the launch) until its deposit meter
+is half full, rising in a straight line to 2.50 % at a full meter, and 2.50 % while it stays full ([Fees](/protocol/fees/#the-rising-deposit-fee)). Each vault's meter is a
 quarter of the signers' limit (decided on 14 November 2026), so both meters are full once half the limit is used.
-At the launch values, filling both meters from empty costs 250 USDT in deposit fees on 25 000 USDT, and the other
-25 000 of the day's limit, deposited while the meters are full, pays 2.50 %: about 875 USDT for the whole 50 000,
-against 250 at the flat rate. Spread over the day, one 8 000 USDT deposit into each vault every 7.6 hours, the same
-use pays about 2.1 %. With meters of half the limit, the first choice, that steady flow paid only the plain 0.50 %
-(run 21, R21-ECON-1). This makes the attack cost more. It does not rule it out: a meter drains over a day, so a
+With the values since 21 November 2026, filling both meters from empty costs about 160 USDT in deposit fees on
+25 000 USDT, and the other 25 000 of the day's limit, deposited while the meters are full, pays 2.50 %: about
+780 USDT for the whole 50 000, against only the 0.10 USDT minimum per deposit at a flat rate of 0 % (at the
+launch's 0.50 %: 250 USDT, 875 USDT, and 250 at the flat rate). Spread over the day, one 8 000 USDT deposit into
+each vault every 7.6 hours, the same use pays about 2.1 %. With meters of half the limit, the first choice, that
+steady flow paid only the plain rate (run 21, R21-ECON-1). This makes the attack cost more. It does not rule it out: a meter drains over a day, so a
 party willing to pay can do it again the next day. Honest depositors pay the higher rate too while a meter is more
 than half full, and the web app says so.
 
 **Bridging back: still the flat fee.** The rising fee covers deposits only. A release's fee is set by the vault
 after the kUSDT is burnt, and a burn cannot be undone, so nobody could refuse a higher fee at that point. So
-someone holding kUSDT can still use up the signers' limit for payouts by bridging back that much, for the flat fee
-of 0.50 % (250 USDT on 50 000 at the launch). Other people's payouts then wait, up to a day. Nothing is lost.
+someone holding kUSDT can still use up the signers' limit for payouts by bridging back that much, for the release
+fee alone: since 21 November 2026 a flat 5 USDT on Ethereum or 0.50 USDT on BNB Chain per payout, whatever its size
+(at the launch's 0.50 %, 250 USDT on 50 000). Other people's payouts then wait, up to a day. Nothing is lost.
 
 **Accepted for the launch** (the owner's decision of 14 November 2026): one daily limit shared by everyone, in both
 directions. A per-person limit was the other choice. Planned later: a withdrawal fee that rises as the day's limit
@@ -307,8 +310,8 @@ What remains:
 
 ## Small burns are not paid
 
-A burn whose amount is at or below the release fee (5 USDT on Ethereum, 0.50 USDT on BNB Chain, or 0.50 % if
-higher) is not paid. It is marked `unpayable`, and the tokens are still burned. It is looked at again about once a
+A burn whose amount is at or below the release fee (5 USDT on Ethereum, 0.50 USDT on BNB Chain) is not
+paid. It is marked `unpayable`, and the tokens are still burned. It is looked at again about once a
 minute and paid if the fee falls below its amount; nothing obliges the owner to lower the fee. A burn naming the
 zero address, the vault itself or the token contract's own address is lost for good.
 
@@ -331,15 +334,19 @@ is gone for good. Wallets show it as part of a redemption's cost.
 
 ## Small deposits could cost the funding key more KAS than they pay
 
-Found in the second outside review of rc.22 (D6-6). Open: a parameter change, which is the owner's decision.
+Found in the second outside review of rc.22 (D6-6). Open: a parameter change, which is the owner's decision. On 21
+November 2026 the owner lowered the minimum deposit fee to 0.10 USDT, which brings that point nearer: watch it.
 
 Each mint gives every minted kUSDT state the deployment's token value, 1.5 KAS, and the coordinator's funding key pays
 it. From then on that KAS is the holder's. What pays for it is the deposit fee, which stays in the vault in USDT: at
-least 0.50 USDT a deposit. While KAS is cheap the fee covers the 1.5 KAS several times over. If KAS rose past about
-0.33 USDT (0.50 USDT for 1.5 KAS), a deposit of the minimum would hand its maker more KAS than it paid in fees.
+least 0.10 USDT a deposit since 21 November 2026 (0.50 USDT at the launch). While KAS is cheap the fee covers the
+1.5 KAS: at 0.026 USDT a KAS (21 November 2026) they are worth about 0.04 USDT. If KAS rose past about 0.067 USDT
+(0.10 USDT for 1.5 KAS; 0.33 USDT at the launch's 0.50), a deposit of the minimum would hand its maker more KAS than
+it paid in fees.
 Someone could then make many small deposits, merge the kUSDT states they get (each merge frees the KAS of every state
 but one) and keep that KAS, or bridge the kUSDT back once. With the gas of each deposit and the Kaspa fees counted,
-the review put the point where this pays at about 0.40 to 0.55 USDT a KAS.
+the review put the point where this pays at about 0.40 to 0.55 USDT a KAS for the launch's 0.50 USDT minimum;
+with 0.10 and the same costs per deposit it comes to roughly 0.13 to 0.28.
 
 No user funds are at risk and nothing is minted without a deposit. The cost falls on the operators, who keep the
 funding key topped up, and a key that runs dry stops mints until it is topped up again. The coordinator's `/api/v1/health`
@@ -347,8 +354,8 @@ warns when the funding address holds less than 50 KAS.
 
 **What to watch:**
 
-- The price of KAS against the minimum deposit fee divided by the token value: 0.50 USDT ÷ 1.5 KAS, about 0.33 USDT
-  at the launch values. Above it a minimum deposit brings its maker more KAS than it costs in fees; how much above
+- The price of KAS against the minimum deposit fee divided by the token value: 0.10 USDT ÷ 1.5 KAS, about 0.067 USDT
+  since 21 November 2026 (0.33 USDT at the launch values). Above it a minimum deposit brings its maker more KAS than it costs in fees; how much above
   depends on the gas each deposit costs.
 - How fast the funding key's KAS goes, against the number of deposits minted.
 - Many deposits at or near the minimum from one sender, or to one Kaspa owner.
@@ -356,8 +363,9 @@ warns when the funding address holds less than 50 KAS.
 **The remedy,** for the owner to decide:
 
 - Raise the minimum deposit fee (`setFees` on each vault, through the owner's 48-hour delay; at most 50 USDT). At
-  1.00 USDT the point where it pays roughly doubles. Raising the minimum deposit (`setDepositLimits`) does the same
-  only above 100 USDT, where 0.50 % of it passes the minimum fee: a 200 USDT minimum makes the smallest fee 1.00 USDT.
+  0.50 USDT (the launch value) it is back at about 0.40 to 0.55 USDT a KAS. Raising the minimum deposit
+  (`setDepositLimits`) does not help while the rate is 0 %: below half the meter every deposit pays the minimum fee,
+  whatever its size.
 - Or lower the KAS each minted state carries (`kaspa.tokenValue` in the coordinator's deployment file, 1.5 KAS at the
   launch). The minter refuses a minted output under 1 KAS, so this takes it down by a third at most, and a holder with
   no other KAS then has less to pay a transfer's fee from.

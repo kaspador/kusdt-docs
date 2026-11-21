@@ -51,8 +51,8 @@ with KAS in KasPool ([Swap](/getting-started/swap/)).
 
 ### What does bridging cost?
 
-0.50 % each way. The minimum is 0.50 USDT per deposit, and 5 USDT (Ethereum) or 0.50 USDT (BNB Chain) per
-release. A deposit pays more on a busy day: the deposit fee rises with the deposits made on that chain in the last 24 hours,
+Since 21 November 2026 the rate is 0 % each way, so only the minimum fees are left: 0.10 USDT per deposit, and
+5 USDT (Ethereum) or 0.50 USDT (BNB Chain) per release (at the launch it was 0.50 % each way). A deposit pays more on a busy day: the deposit fee rises with the deposits made on that chain in the last 24 hours,
 up to 2.50 %, and the web app and the wallet send nothing that would mint less than they showed you, within a
 quarter of a percent. Bridging back always pays the flat fee. You also pay gas on the EVM
 chain and a network fee in KAS on Kaspa. See [Fees](/protocol/fees/).

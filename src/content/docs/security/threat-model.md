@@ -61,8 +61,8 @@ A review of every attack we know of, as of 7 November 2026. Status means:
 | Replay across chains, vaults or deployments | The EIP-712 domain, the covenant ID in the digests, each `redeemId` paid once | Tested |
 | Decoy outputs fooling the followers | Successors come only from covenant-bound authorized outputs | Fixed in the security review, with tests |
 | Tether blacklists a recipient or a vault | Nothing is paid to a blocked address; a blocked vault pauses everything | Fixed 4 November 2026 ([Blocked recipients](/security/known-limits/#blocked-recipients)) |
-| Big legitimate flows that use up the allowances | Liveness only: the bridge waits for the refill. It costs the attacker 0.5 % each way | Bounded |
-| One party using up the signers' daily limit | Liveness only. Deposits: the deposit fee rises with the day's deposits, to 2.50 % at a full meter, so filling the limit costs about twice the flat fee and more while it stays full. Bridging back: still the flat 0.50 %, because a release's fee is set after the burn | Deposits: bounded (10 November 2026). Bridging back: open ([known limits](/security/known-limits/#the-daily-limit-can-be-used-up-by-one-party)) |
+| Big legitimate flows that use up the allowances | Liveness only: the bridge waits for the refill. It costs the attacker the bridge fees each way: since 21 November 2026 only the minimums and the rising deposit fee (0.5 % each way at the launch) | Bounded |
+| One party using up the signers' daily limit | Liveness only. Deposits: the deposit fee rises with the day's deposits, to 2.50 % at a full meter, so filling the meters costs about 160 USDT on 25 000 instead of the minimum fees, and more while they stay full. Bridging back: still the flat fee (since 21 November 2026 only the minimum, 5 USDT on Ethereum or 0.50 USDT on BNB Chain per payout), because a release's fee is set after the burn | Deposits: bounded (10 November 2026). Bridging back: open ([known limits](/security/known-limits/#the-daily-limit-can-be-used-up-by-one-party)) |
 
 ### Swap
 

@@ -131,8 +131,8 @@ token.balanceOf(vault) / scale = backing() + feesAccrued
 
 | Parameter | Ethereum | BNB Chain |
 |---|---|---|
-| `feeBps` | 50 (0.50 %) | 50 |
-| `minDepositFee` | 500 000 (0.50 USDT) | 500 000 |
+| `feeBps` | 0 since 21 November 2026 (50, which is 0.50 %, at the launch) | same |
+| `minDepositFee` | 100 000 (0.10 USDT) since 21 November 2026 (500 000 at the launch) | same |
 | `minReleaseFee` | 5 000 000 (5 USDT) | 500 000 (0.50 USDT) |
 | `minDeposit` / `maxDeposit` | 10 000 000 / 8 000 000 000 (10 / 8 000 USDT) at the launch | same |
 | `releaseCapacity` | 50 000 000 000 (50 000 USDT) at the launch | same |
